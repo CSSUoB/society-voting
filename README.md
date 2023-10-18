@@ -12,7 +12,7 @@
 - [x] Account provisioning and login
 - [x] Guild data scraping
 - [ ] Events
-    - [ ] Discord webhook event notifier
+  - [ ] Discord webhook event notifier
 
 ### API
 
@@ -28,3 +28,5 @@
 - [ ] Delete election
 
 - [ ] Run election
+
+### Frontend
