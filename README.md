@@ -8,20 +8,23 @@
 
 ### System
 
- - [x] Database setup
- - [x] Account provisioning and login
- - [x] Guild data scraping
- - [ ] Events
+- [x] Database setup
+- [x] Account provisioning and login
+- [x] Guild data scraping
+- [ ] Events
+    - [ ] Discord webhook event notifier
 
 ### API
- 
+
 #### User
 
- - [x] Change display name
- - [x] Stand/withdraw from election
- - [ ] List all elections
+- [x] Change display name
+- [x] Stand/withdraw from election
+- [ ] List all elections
 
 #### Admin
 
- - [x] Create election
- - [ ] Delete election
+- [x] Create election
+- [ ] Delete election
+
+- [ ] Run election
