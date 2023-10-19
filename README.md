@@ -20,7 +20,8 @@
 
 - [x] Change display name
 - [x] Stand/withdraw from election
-- [ ] List all elections
+- [x] List all elections
+- [ ] Display currently running election in /api/elections
 
 #### Admin
 
