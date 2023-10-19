@@ -13,6 +13,7 @@
 - [x] Guild data scraping
 - [x] Events
   - [ ] Discord webhook event notifier
+- [ ] **Use database transactions!**
 
 ### API
 
