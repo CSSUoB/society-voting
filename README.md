@@ -29,5 +29,8 @@
 - [x] Delete election
 
 - [ ] Run election
+  - [ ] Add `Ballot` table 
+  - [ ] Accept extra ballot options
+  - [ ] Store active election
 
 ### Frontend
