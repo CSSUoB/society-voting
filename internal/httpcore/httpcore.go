@@ -65,7 +65,6 @@ func newSessionTokenCookie(tok string) *fiber.Cookie {
 		Name:        sessionTokenCookieName,
 		Value:       tok,
 		Secure:      true,
-		HTTPOnly:    true,
 		SessionOnly: true,
 	}
 }
@@ -74,7 +73,6 @@ func newSessionTokenDeletionCookie() *fiber.Cookie {
 	return &fiber.Cookie{
 		Name:        sessionTokenCookieName,
 		Secure:      true,
-		HTTPOnly:    true,
 		SessionOnly: true,
 		Expires:     time.Date(2010, 1, 1, 1, 1, 1, 1, time.UTC),
 	}
