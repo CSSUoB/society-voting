@@ -26,7 +26,7 @@
 #### Admin
 
 - [x] Create election
-- [ ] Delete election
+- [x] Delete election
 
 - [ ] Run election
 
