@@ -11,8 +11,9 @@ import (
 type Election struct {
 	bun.BaseModel `json:"-"`
 
-	ID       int    `bun:",pk,autoincrement" json:"id"`
-	RoleName string `json:"roleName"`
+	ID          int    `bun:",pk,autoincrement" json:"id"`
+	RoleName    string `json:"roleName"`
+	Description string `json:"description"`
 }
 
 func (e *Election) Insert() error {

@@ -12,7 +12,8 @@ func (endpoints) apiAdminCreateElection(ctx *fiber.Ctx) error {
 	}
 
 	var request = struct {
-		RoleName string `validate:"required"`
+		RoleName    string `validate:"required"`
+		Description string
 	}{}
 
 	if err := parseAndValidateRequestBody(ctx, &request); err != nil {
@@ -20,7 +21,8 @@ func (endpoints) apiAdminCreateElection(ctx *fiber.Ctx) error {
 	}
 
 	election := &database.Election{
-		RoleName: request.RoleName,
+		RoleName:    request.RoleName,
+		Description: request.Description,
 	}
 
 	if err := election.Insert(); err != nil {
