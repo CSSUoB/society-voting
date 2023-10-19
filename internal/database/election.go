@@ -46,3 +46,12 @@ func GetElection(id int) (*Election, error) {
 	}
 	return res, nil
 }
+
+func GetAllElections() ([]*Election, error) {
+	db := Get()
+	var res []*Election
+	if err := db.DB.NewSelect().Model(&res).Scan(context.Background(), &res); err != nil {
+		return nil, fmt.Errorf("get all Elections: %w", err)
+	}
+	return res, nil
+}
