@@ -39,7 +39,7 @@ func (e *Election) Update() error {
 }
 
 func (e *Election) PopulateCandidates() error {
-	candidates, err := GetAllCandidatesForElection(e.ID)
+	candidates, err := GetUsersStandingForElection(e.ID)
 	if err != nil {
 		return fmt.Errorf("populate Election candidates: %w", err)
 	}
