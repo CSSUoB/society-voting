@@ -31,3 +31,28 @@ func (endpoints) apiAdminCreateElection(ctx *fiber.Ctx) error {
 
 	return ctx.JSON(election)
 }
+
+func (endpoints) apiAdminDeleteElection(ctx *fiber.Ctx) error {
+	if !isAdminSession(ctx) {
+		return fiber.ErrUnauthorized
+	}
+
+	var request = struct {
+		ElectionID int `json:"id" validate:"required"`
+	}{}
+
+	if err := parseAndValidateRequestBody(ctx, &request); err != nil {
+		return err
+	}
+
+	if err := database.DeleteCandidatesForElection(request.ElectionID); err != nil {
+		return fmt.Errorf("apiAdminDeleteElection delete all candidates: %w", err)
+	}
+
+	if err := database.DeleteElectionByID(request.ElectionID); err != nil {
+		return fmt.Errorf("apiAdminDeleteElection delete election: %w", err)
+	}
+
+	ctx.Status(fiber.StatusNoContent)
+	return nil
+}

@@ -41,3 +41,11 @@ func GetUsersStandingForElection(electionID int) ([]*User, error) {
 	}
 	return res, nil
 }
+
+func DeleteCandidatesForElection(electionID int) error {
+	db := Get()
+	if _, err := db.DB.NewDelete().Model((*Candidate)(nil)).Where("election_id = ?", electionID).Exec(context.Background()); err != nil {
+		return fmt.Errorf("delete Candidates for election: %w", err)
+	}
+	return nil
+}

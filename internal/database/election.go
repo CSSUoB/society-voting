@@ -69,3 +69,11 @@ func GetAllElections() ([]*Election, error) {
 	}
 	return res, nil
 }
+
+func DeleteElectionByID(electionID int) error {
+	db := Get()
+	if _, err := db.DB.NewDelete().Model((*Election)(nil)).Where("id = ?", electionID).Exec(context.Background()); err != nil {
+		return fmt.Errorf("delete Election: %w", err)
+	}
+	return nil
+}
