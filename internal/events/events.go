@@ -1,6 +1,10 @@
 package events
 
 import (
+	"bufio"
+	"github.com/valyala/fasthttp"
+	"log/slog"
+	"strings"
 	"sync"
 )
 
@@ -18,12 +22,29 @@ type Message struct {
 	Data  string
 }
 
+func (m *Message) ToSSE() []byte {
+	var sb strings.Builder
+	sb.WriteString("event: ")
+	sb.WriteString(string(m.Topic))
+	sb.WriteRune('\n')
+
+	sp := strings.Split(m.Data, "\n")
+	for i, x := range sp {
+		sp[i] = "data: " + x
+	}
+
+	sb.WriteString(strings.Join(sp, "\n"))
+	sb.WriteString("\n\n")
+
+	return []byte(sb.String())
+}
+
 type channelWithID struct {
 	ID      int
 	Channel chan *Message
 }
 
-func NewReceiver(topics ...Topic) chan *Message {
+func NewReceiver(topics ...Topic) (int, chan *Message) {
 	masterLock.Lock()
 	defer masterLock.Unlock()
 
@@ -43,7 +64,7 @@ func NewReceiver(topics ...Topic) chan *Message {
 
 	topicsByChannelID[id] = topics
 
-	return ch
+	return id, ch
 }
 
 func CloseReceiver(id int) {
@@ -91,5 +112,20 @@ func SendEvent(topic Topic, data string) {
 
 	for _, ch := range chans {
 		ch.Channel <- msg
+	}
+}
+
+func AsStreamWriter(id int, receiver chan *Message) fasthttp.StreamWriter {
+	slog.Debug("starting SSE streamwriter", "id", id)
+	return func(w *bufio.Writer) {
+		for msg := range receiver {
+			_, _ = w.Write(msg.ToSSE())
+			if err := w.Flush(); err != nil {
+				// Client disconnected
+				break
+			}
+		}
+		CloseReceiver(id)
+		slog.Debug("closing SSE connection", "id", id)
 	}
 }
