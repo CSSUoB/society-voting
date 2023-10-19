@@ -11,7 +11,7 @@
 - [x] Database setup
 - [x] Account provisioning and login
 - [x] Guild data scraping
-- [ ] Events
+- [x] Events
   - [ ] Discord webhook event notifier
 
 ### API
