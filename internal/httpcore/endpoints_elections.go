@@ -21,6 +21,12 @@ func (endpoints) apiListElections(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiListElections get all elections: %w", err)
 	}
 
+	for _, election := range elections {
+		if err := election.PopulateCandidates(); err != nil {
+			return fmt.Errorf("apiListElections: %w", err)
+		}
+	}
+
 	return ctx.JSON(elections)
 }
 

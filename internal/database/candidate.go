@@ -32,3 +32,12 @@ func (c *Candidate) Delete() error {
 
 	return nil
 }
+
+func GetAllCandidatesForElection(electionID int) ([]*User, error) {
+	db := Get()
+	var res []*User
+	if err := db.DB.NewSelect().Model(&res).Where(`id IN (SELECT "user_id" FROM "candidates" WHERE "election_id" = ?)`, electionID).Scan(context.Background(), &res); err != nil {
+		return nil, fmt.Errorf("get all Elections: %w", err)
+	}
+	return res, nil
+}

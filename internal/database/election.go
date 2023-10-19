@@ -14,6 +14,8 @@ type Election struct {
 	ID          int    `bun:",pk,autoincrement" json:"id"`
 	RoleName    string `json:"roleName"`
 	Description string `json:"description"`
+
+	Candidates []string `bun:"-" json:"candidates"`
 }
 
 func (e *Election) Insert() error {
@@ -33,6 +35,17 @@ func (e *Election) Update() error {
 		return fmt.Errorf("update Election model: %w", err)
 	}
 
+	return nil
+}
+
+func (e *Election) PopulateCandidates() error {
+	candidates, err := GetAllCandidatesForElection(e.ID)
+	if err != nil {
+		return fmt.Errorf("populate Election candidates: %w", err)
+	}
+	for _, cand := range candidates {
+		e.Candidates = append(e.Candidates, cand.Name)
+	}
 	return nil
 }
 
