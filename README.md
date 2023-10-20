@@ -17,6 +17,8 @@
 
 ### API
 
+- [ ] Allow admin access to non-user-specific sections of the normal API
+
 #### User
 
 - [x] Change display name
