@@ -2,6 +2,7 @@ package events
 
 import (
 	"bufio"
+	"encoding/json"
 	"github.com/valyala/fasthttp"
 	"log/slog"
 	"strings"
@@ -19,24 +20,24 @@ type Topic string
 
 type Message struct {
 	Topic Topic
-	Data  string
+	Data  any
 }
 
-func (m *Message) ToSSE() []byte {
+func (m *Message) ToSSE() ([]byte, error) {
 	var sb strings.Builder
 	sb.WriteString("event: ")
 	sb.WriteString(string(m.Topic))
 	sb.WriteRune('\n')
 
-	sp := strings.Split(m.Data, "\n")
-	for i, x := range sp {
-		sp[i] = "data: " + x
+	jdat, err := json.Marshal(m.Data)
+	if err != nil {
+		return nil, err
 	}
 
-	sb.WriteString(strings.Join(sp, "\n"))
+	sb.Write(jdat)
 	sb.WriteString("\n\n")
 
-	return []byte(sb.String())
+	return []byte(sb.String()), nil
 }
 
 type channelWithID struct {
@@ -100,7 +101,7 @@ func CloseReceiver(id int) {
 	}
 }
 
-func SendEvent(topic Topic, data string) {
+func SendEvent(topic Topic, data any) {
 	masterLock.RLock()
 	defer masterLock.RUnlock()
 
@@ -119,7 +120,12 @@ func AsStreamWriter(id int, receiver chan *Message) fasthttp.StreamWriter {
 	slog.Debug("starting SSE streamwriter", "id", id)
 	return func(w *bufio.Writer) {
 		for msg := range receiver {
-			_, _ = w.Write(msg.ToSSE())
+			sseData, err := msg.ToSSE()
+			if err != nil {
+				slog.Error("failed to generate SSE event from message", "error", err)
+				break
+			}
+			_, _ = w.Write(sseData)
 			if err := w.Flush(); err != nil {
 				// Client disconnected
 				break
