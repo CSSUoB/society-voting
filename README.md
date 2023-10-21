@@ -44,5 +44,7 @@
   - [x] Store active election
 - [x] Stop and finalise election
 - [ ] Election status SSE
+- [ ] Delete user
+- [ ] Remove candidate
 
 ### Frontend
