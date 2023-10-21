@@ -1,12 +1,14 @@
 package httpcore
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"git.tdpain.net/codemicro/society-voting/internal/database"
 	"git.tdpain.net/codemicro/society-voting/internal/events"
 	"git.tdpain.net/codemicro/society-voting/internal/instantRunoff"
 	"github.com/gofiber/fiber/v2"
+	"log/slog"
 	"time"
 )
 
@@ -215,6 +217,8 @@ func (endpoints) apiAdminStopElection(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiAdminStopElection commit tx: %w", err)
 	}
 
+	events.SendEvent(events.TopicElectionEnded, nil)
+
 	// Return election results
 
 	var response = struct {
@@ -224,4 +228,70 @@ func (endpoints) apiAdminStopElection(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.JSON(response)
+}
+
+func (endpoints) apiAdminRunningElectionSSE(ctx *fiber.Ctx) error {
+	if _, ok := getSessionAuth(ctx, authAdminUser); !ok {
+		return fiber.ErrUnauthorized
+	}
+
+	activeElection, err := database.GetActiveElection()
+	if err != nil {
+		if errors.Is(err, database.ErrNotFound) {
+			return &fiber.Error{
+				Code:    fiber.StatusConflict,
+				Message: "There is no election in progress.",
+			}
+		}
+		return fmt.Errorf("apiAdminRunningElectionSSE get active election: %w", err)
+	}
+
+	receiverID, receiver := events.NewReceiver(events.TopicVoteReceived)
+	electionEndReceiverID, electionEndReceiver := events.NewReceiver(events.TopicElectionEnded)
+
+	ctx.Set("Content-Type", "text/event-stream")
+	fr := ctx.Response()
+	fr.SetBodyStreamWriter(
+		func(w *bufio.Writer) {
+			count, err := database.CountVotesForElection(activeElection.ID)
+			if err != nil {
+				slog.Error("SSE error", "error", fmt.Errorf("apiAdminRunningElectionSSE count votes: %w", err))
+				goto cleanup
+			}
+
+		loop:
+			for {
+				select {
+				case msg := <-receiver:
+					count += 1
+					msg.Data = count
+					sseData, err := msg.ToSSE()
+					if err != nil {
+						slog.Error("SSE error", "error", fmt.Errorf("failed to generate SSE event from message: %w", err))
+						continue loop
+					}
+					_, _ = w.Write(sseData)
+					if err := w.Flush(); err != nil {
+						// Client disconnected
+						break loop
+					}
+				case <-electionEndReceiver:
+					var err error
+					for err == nil {
+						// if we force the client to disconnect, it'll just try to reconnect.
+						// wait for it to disconnect, which will cause an error on Flush
+						err = w.Flush()
+						time.Sleep(time.Second * 5)
+					}
+					break loop
+				}
+			}
+
+		cleanup:
+			events.CloseReceiver(receiverID)
+			events.CloseReceiver(electionEndReceiverID)
+		},
+	)
+
+	return nil
 }

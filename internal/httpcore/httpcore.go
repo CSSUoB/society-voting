@@ -43,6 +43,7 @@ func ListenAndServe(addr string) error {
 
 	app.Post("/api/admin/election", e.apiAdminCreateElection)
 	app.Delete("/api/admin/election", e.apiAdminDeleteElection)
+	app.Get("/api/admin/election/sse", e.apiAdminRunningElectionSSE)
 	app.Post("/api/admin/election/start", e.apiAdminStartElection)
 	app.Post("/api/admin/election/stop", e.apiAdminStopElection)
 
