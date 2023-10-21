@@ -47,5 +47,6 @@
 - [ ] Election status SSE
 - [x] Delete user
 - [x] Remove candidate
+- [ ] Make active election endpoint return the number of eligible voters
 
 ### Frontend
