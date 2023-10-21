@@ -113,7 +113,8 @@ func SendEvent(topic Topic, data any) {
 	chans := channelsByTopic[topic]
 
 	for _, ch := range chans {
-		ch.Channel <- msg
+		m := *msg
+		ch.Channel <- &m
 	}
 }
 
