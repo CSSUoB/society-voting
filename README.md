@@ -18,6 +18,7 @@
 ### API
 
 - [ ] Allow admin access to non-user-specific sections of the normal API
+- [ ] Add `isRON` flag to `BallotEntry`
 
 #### User
 
