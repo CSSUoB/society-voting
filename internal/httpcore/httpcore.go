@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"git.tdpain.net/codemicro/society-voting/internal/config"
+	"git.tdpain.net/codemicro/society-voting/web"
 	"github.com/bwmarrin/go-alone"
 	validate "github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -23,6 +24,13 @@ func ListenAndServe(addr string) error {
 	e := endpoints{}
 
 	app.Get("/", e.authCheck)
+	app.Get("/app", func(ctx *fiber.Ctx) error {
+		_, isAuthed := getSessionAuth(ctx, authAdminUser|authRegularUser)
+		if !isAuthed {
+			return ctx.Redirect("/")
+		}
+		return ctx.Next()
+	}, web.GetHandler())
 
 	app.Get("/auth/login", e.authLogin)
 	app.Post("/auth/login", e.authLogin)
