@@ -6,6 +6,7 @@ import (
 	"git.tdpain.net/codemicro/society-voting/internal/database"
 	"git.tdpain.net/codemicro/society-voting/internal/events"
 	"git.tdpain.net/codemicro/society-voting/internal/instantRunoff"
+	"git.tdpain.net/codemicro/society-voting/internal/util"
 	"github.com/gofiber/fiber/v2"
 	"time"
 )
@@ -49,12 +50,22 @@ func (endpoints) apiAdminDeleteElection(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	if err := database.DeleteCandidatesForElection(request.ElectionID); err != nil {
+	tx, err := database.GetTx()
+	if err != nil {
+		return fmt.Errorf("apiAdminDeleteElection start tx: %w", err)
+	}
+	defer util.Warn(tx.Rollback())
+
+	if err := database.DeleteCandidatesForElection(request.ElectionID, tx); err != nil {
 		return fmt.Errorf("apiAdminDeleteElection delete all candidates: %w", err)
 	}
 
-	if err := database.DeleteElectionByID(request.ElectionID); err != nil {
+	if err := database.DeleteElectionByID(request.ElectionID, tx); err != nil {
 		return fmt.Errorf("apiAdminDeleteElection delete election: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("apiAdminDeleteElection commit tx: %w", err)
 	}
 
 	ctx.Status(fiber.StatusNoContent)
@@ -66,13 +77,6 @@ func (endpoints) apiAdminStartElection(ctx *fiber.Ctx) error {
 		return fiber.ErrUnauthorized
 	}
 
-	if _, err := database.GetActiveElection(); err == nil {
-		return &fiber.Error{
-			Code:    fiber.StatusConflict,
-			Message: "There is already an election in progress.",
-		}
-	}
-
 	var request = struct {
 		ElectionID int      `json:"id" validate:"required"`
 		ExtraNames []string `json:"extraNames" validate:"dive,required"`
@@ -82,7 +86,20 @@ func (endpoints) apiAdminStartElection(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	election, err := database.GetElection(request.ElectionID)
+	tx, err := database.GetTx()
+	if err != nil {
+		return fmt.Errorf("apiAdminStartElection start tx: %w", err)
+	}
+	defer util.Warn(tx.Rollback())
+
+	if _, err := database.GetActiveElection(tx); err == nil {
+		return &fiber.Error{
+			Code:    fiber.StatusConflict,
+			Message: "There is already an election in progress.",
+		}
+	}
+
+	election, err := database.GetElection(request.ElectionID, tx)
 	if err != nil {
 		if errors.Is(err, database.ErrNotFound) {
 			return fiber.ErrNotFound
@@ -92,13 +109,13 @@ func (endpoints) apiAdminStartElection(ctx *fiber.Ctx) error {
 
 	election.IsActive = true
 
-	if err := election.Update(); err != nil {
+	if err := election.Update(tx); err != nil {
 		return fmt.Errorf("apiAdminStartElection update election: %w", err)
 	}
 
 	var ballot []*database.BallotEntry
 	{
-		candidates, err := database.GetUsersStandingForElection(request.ElectionID)
+		candidates, err := database.GetUsersStandingForElection(request.ElectionID, tx)
 		if err != nil {
 			return fmt.Errorf("apiAdminStartElection get users standing for election: %w", err)
 		}
@@ -110,10 +127,14 @@ func (endpoints) apiAdminStartElection(ctx *fiber.Ctx) error {
 
 		names = append(names, request.ExtraNames...)
 
-		ballot, err = database.CreateBallot(request.ElectionID, names)
+		ballot, err = database.CreateBallot(request.ElectionID, names, tx)
 		if err != nil {
 			return fmt.Errorf("apiAdminStartElection create ballot: %w", err)
 		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("apiAdminStartElection commit tx: %w", err)
 	}
 
 	events.SendEvent(events.TopicElectionStarted, election.ID)
@@ -134,7 +155,13 @@ func (endpoints) apiAdminStopElection(ctx *fiber.Ctx) error {
 		return fiber.ErrUnauthorized
 	}
 
-	election, err := database.GetActiveElection()
+	tx, err := database.GetTx()
+	if err != nil {
+		return fmt.Errorf("apiAdminStopElection start tx: %w", err)
+	}
+	defer util.Warn(tx.Rollback())
+
+	election, err := database.GetActiveElection(tx)
 	if err != nil {
 		if errors.Is(err, database.ErrNotFound) {
 			return &fiber.Error{
@@ -147,7 +174,7 @@ func (endpoints) apiAdminStopElection(ctx *fiber.Ctx) error {
 
 	// Count votes
 
-	votes, err := database.GetAllVotesForElection(election.ID)
+	votes, err := database.GetAllVotesForElection(election.ID, tx)
 	if err != nil {
 		return fmt.Errorf("apiAdminStopElection get all votes: %w", err)
 	}
@@ -159,7 +186,7 @@ func (endpoints) apiAdminStopElection(ctx *fiber.Ctx) error {
 		})
 	}
 
-	ballotEntries, err := database.GetAllBallotEntriesForElection(election.ID)
+	ballotEntries, err := database.GetAllBallotEntriesForElection(election.ID, tx)
 	if err != nil {
 		return fmt.Errorf("apiAdminStopElection get all ballot entries: %w", err)
 	}
@@ -173,16 +200,20 @@ func (endpoints) apiAdminStopElection(ctx *fiber.Ctx) error {
 	resultText = fmt.Sprintf("ELECTION OF %s BY %d MEMBERS ON %s UTC\n=================================================================\n", election.RoleName, len(votes), time.Now().UTC().Format(time.DateTime)) + resultText
 
 	// Delete votes, ballot and election
-	if err := database.DeleteAllVotesForElection(election.ID); err != nil {
+	if err := database.DeleteAllVotesForElection(election.ID, tx); err != nil {
 		return fmt.Errorf("apiAdminStopElection delete all votes: %w", err)
 	}
 
-	if err := database.DeleteBallotForElection(election.ID); err != nil {
+	if err := database.DeleteBallotForElection(election.ID, tx); err != nil {
 		return fmt.Errorf("apiAdminStopElection delete ballot: %w", err)
 	}
 
-	if err := election.Delete(); err != nil {
+	if err := election.Delete(tx); err != nil {
 		return fmt.Errorf("apiAdminStopElection delete election: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("apiAdminStopElection commit tx: %w", err)
 	}
 
 	// Return election results

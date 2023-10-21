@@ -24,7 +24,7 @@ func run() error {
 		})))
 	}
 
-	if err := database.Get().Migrate(); err != nil {
+	if err := database.Migrate(database.Get()); err != nil {
 		return fmt.Errorf("migrate dataase: %w", err)
 	}
 

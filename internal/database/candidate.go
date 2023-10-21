@@ -13,38 +13,38 @@ type Candidate struct {
 	ElectionID int    `json:"electionID"`
 }
 
-func (c *Candidate) Insert() error {
-	db := Get()
+func (c *Candidate) Insert(x ...bun.IDB) error {
+	db := fromVariadic(x)
 
-	if _, err := db.DB.NewInsert().Model(c).Exec(context.Background()); err != nil {
+	if _, err := db.NewInsert().Model(c).Exec(context.Background()); err != nil {
 		return fmt.Errorf("insert Candidate model: %w", err)
 	}
 
 	return nil
 }
 
-func (c *Candidate) Delete() error {
-	db := Get()
+func (c *Candidate) Delete(x ...bun.IDB) error {
+	db := fromVariadic(x)
 
-	if _, err := db.DB.NewDelete().Model(c).Where("user_id = ? and election_id = ?", c.UserID, c.ElectionID).Exec(context.Background()); err != nil {
+	if _, err := db.NewDelete().Model(c).Where("user_id = ? and election_id = ?", c.UserID, c.ElectionID).Exec(context.Background()); err != nil {
 		return fmt.Errorf("delete Candidate model: %w", err)
 	}
 
 	return nil
 }
 
-func GetUsersStandingForElection(electionID int) ([]*User, error) {
-	db := Get()
+func GetUsersStandingForElection(electionID int, x ...bun.IDB) ([]*User, error) {
+	db := fromVariadic(x)
 	var res []*User
-	if err := db.DB.NewSelect().Model(&res).Where(`id IN (SELECT "user_id" FROM "candidates" WHERE "election_id" = ?)`, electionID).Scan(context.Background(), &res); err != nil {
+	if err := db.NewSelect().Model(&res).Where(`id IN (SELECT "user_id" FROM "candidates" WHERE "election_id" = ?)`, electionID).Scan(context.Background(), &res); err != nil {
 		return nil, fmt.Errorf("get all Elections: %w", err)
 	}
 	return res, nil
 }
 
-func DeleteCandidatesForElection(electionID int) error {
-	db := Get()
-	if _, err := db.DB.NewDelete().Model((*Candidate)(nil)).Where("election_id = ?", electionID).Exec(context.Background()); err != nil {
+func DeleteCandidatesForElection(electionID int, x ...bun.IDB) error {
+	db := fromVariadic(x)
+	if _, err := db.NewDelete().Model((*Candidate)(nil)).Where("election_id = ?", electionID).Exec(context.Background()); err != nil {
 		return fmt.Errorf("delete Candidates for election: %w", err)
 	}
 	return nil

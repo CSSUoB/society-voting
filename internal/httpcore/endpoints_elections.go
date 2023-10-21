@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"git.tdpain.net/codemicro/society-voting/internal/database"
 	"git.tdpain.net/codemicro/society-voting/internal/events"
+	"git.tdpain.net/codemicro/society-voting/internal/util"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -62,7 +63,13 @@ func (endpoints) apiGetActiveElectionInformation(ctx *fiber.Ctx) error {
 		return fiber.ErrUnauthorized
 	}
 
-	election, err := database.GetActiveElection()
+	tx, err := database.GetTx()
+	if err != nil {
+		return fmt.Errorf("apiGetActiveElectionInformation start tx: %w", err)
+	}
+	defer util.Warn(tx.Rollback())
+
+	election, err := database.GetActiveElection(tx)
 	if err != nil {
 		if errors.Is(err, database.ErrNotFound) {
 			return &fiber.Error{
@@ -73,9 +80,13 @@ func (endpoints) apiGetActiveElectionInformation(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiVote get active election: %wz", err)
 	}
 
-	ballot, err := database.GetAllBallotEntriesForElection(election.ID)
+	ballot, err := database.GetAllBallotEntriesForElection(election.ID, tx)
 	if err != nil {
 		return fmt.Errorf("apiGetActiveElectionInformation get ballot: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("apiGetActiveElectionInformation commit tx: %w", err)
 	}
 
 	var response = struct {
@@ -107,7 +118,13 @@ func (endpoints) apiVote(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	election, err := database.GetActiveElection()
+	tx, err := database.GetTx()
+	if err != nil {
+		return fmt.Errorf("apiVote start tx: %w", err)
+	}
+	defer util.Warn(tx.Rollback())
+
+	election, err := database.GetActiveElection(tx)
 	if err != nil {
 		if errors.Is(err, database.ErrNotFound) {
 			return &fiber.Error{
@@ -118,7 +135,7 @@ func (endpoints) apiVote(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiVote get active election: %wz", err)
 	}
 
-	hasVotedAlready, err := database.HasUserVotedInElection(user.StudentID, election.ID)
+	hasVotedAlready, err := database.HasUserVotedInElection(user.StudentID, election.ID, tx)
 	if err != nil {
 		return fmt.Errorf("apiVote check if user %s has already voted: %w", user.StudentID, err)
 	}
@@ -134,8 +151,12 @@ func (endpoints) apiVote(ctx *fiber.Ctx) error {
 		ElectionID: election.ID,
 		UserID:     user.StudentID,
 		Choices:    request.Vote,
-	}).Insert(); err != nil {
+	}).Insert(tx); err != nil {
 		return fmt.Errorf("apiVote insert user vote: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("apiVote commit tx: %w", err)
 	}
 
 	events.SendEvent(events.TopicVoteReceived, nil)

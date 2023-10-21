@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"git.tdpain.net/codemicro/society-voting/internal/database"
+	"git.tdpain.net/codemicro/society-voting/internal/util"
 	"github.com/gofiber/fiber/v2"
 	"github.com/mattn/go-sqlite3"
 )
@@ -64,7 +65,13 @@ func (endpoints) apiStandForElection(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	election, err := database.GetElection(request.ElectionID)
+	tx, err := database.GetTx()
+	if err != nil {
+		return fmt.Errorf("apiStandForElection start tx: %w", err)
+	}
+	defer util.Warn(tx.Rollback())
+
+	election, err := database.GetElection(request.ElectionID, tx)
 	if err != nil {
 		if errors.Is(err, database.ErrNotFound) {
 			return fiber.ErrNotFound
@@ -77,16 +84,23 @@ func (endpoints) apiStandForElection(ctx *fiber.Ctx) error {
 		ElectionID: election.ID,
 	}
 
-	if err := candidate.Insert(); err != nil {
+	if err := candidate.Insert(tx); err != nil {
 		if e2 := errors.Unwrap(err); e2 != nil {
 			var e sqlite3.Error
 			if errors.As(e2, &e) {
 				if e.Code == sqlite3.ErrConstraint {
-					return fiber.ErrBadRequest
+					return &fiber.Error{
+						Code:    fiber.StatusConflict,
+						Message: "You're already standing in this election.",
+					}
 				}
 			}
 		}
 		return fmt.Errorf("apiStandForElection create candidacy: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("apiStandForElection commit tx: %w", err)
 	}
 
 	ctx.Status(fiber.StatusNoContent)

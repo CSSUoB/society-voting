@@ -13,7 +13,7 @@
 - [x] Guild data scraping
 - [x] Events
   - [ ] Discord webhook event notifier
-- [ ] **Use database transactions!**
+- [x] Use database transactions!
 - [ ] Change package namespace
 - [ ] Save election results to dedicated table
 - [ ] Make election results prettier

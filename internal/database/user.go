@@ -16,30 +16,30 @@ type User struct {
 	PasswordHash []byte `json:"-"`
 }
 
-func (u *User) Insert() error {
-	db := Get()
+func (u *User) Insert(x ...bun.IDB) error {
+	db := fromVariadic(x)
 
-	if _, err := db.DB.NewInsert().Model(u).Exec(context.Background()); err != nil {
+	if _, err := db.NewInsert().Model(u).Exec(context.Background()); err != nil {
 		return fmt.Errorf("insert User model: %w", err)
 	}
 
 	return nil
 }
 
-func (u *User) Update() error {
-	db := Get()
+func (u *User) Update(x ...bun.IDB) error {
+	db := fromVariadic(x)
 
-	if _, err := db.DB.NewUpdate().Model(u).Where("id = ?", u.StudentID).Exec(context.Background()); err != nil {
+	if _, err := db.NewUpdate().Model(u).Where("id = ?", u.StudentID).Exec(context.Background()); err != nil {
 		return fmt.Errorf("update user model: %w", err)
 	}
 
 	return nil
 }
 
-func GetUser(id string) (*User, error) {
-	db := Get()
+func GetUser(id string, x ...bun.IDB) (*User, error) {
+	db := fromVariadic(x)
 	res := new(User)
-	if err := db.DB.NewSelect().Model(res).Where("id = ?", id).Scan(context.Background(), res); err != nil {
+	if err := db.NewSelect().Model(res).Where("id = ?", id).Scan(context.Background(), res); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNotFound
 		}

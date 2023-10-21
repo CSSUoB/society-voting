@@ -21,15 +21,15 @@ var Migrations = migrate.NewMigrations()
 var ErrNotFound = errors.New("not found")
 
 type DB struct {
-	DB *bun.DB
+	DB bun.IDB
 }
 
 var (
-	datab    *DB
+	datab    *bun.DB
 	loadOnce = new(sync.Once)
 )
 
-func Get() *DB {
+func Get() *bun.DB {
 	var outerErr error
 	loadOnce.Do(func() {
 		conf := config.Get().Database
@@ -50,7 +50,7 @@ func Get() *DB {
 			b.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
 		}
 
-		datab = &DB{b}
+		datab = b
 	})
 
 	if outerErr != nil {
@@ -61,10 +61,22 @@ func Get() *DB {
 	return datab
 }
 
-func (db *DB) Migrate() error {
+func GetTx() (bun.Tx, error) {
+	db := Get()
+	return db.Begin()
+}
+
+func fromVariadic(x []bun.IDB) bun.IDB {
+	if len(x) == 0 {
+		return Get()
+	}
+	return x[0]
+}
+
+func Migrate(db *bun.DB) error {
 	slog.Info("running database migrations")
 
-	mig := migrate.NewMigrator(db.DB, Migrations)
+	mig := migrate.NewMigrator(db, Migrations)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()

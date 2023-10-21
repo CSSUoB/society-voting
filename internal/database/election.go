@@ -23,37 +23,37 @@ type ElectionWithCandidates struct {
 	Candidates []string `json:"candidates"`
 }
 
-func (e *Election) Insert() error {
-	db := Get()
+func (e *Election) Insert(x ...bun.IDB) error {
+	db := fromVariadic(x)
 
-	if err := db.DB.NewInsert().Model(e).Returning("id").Scan(context.Background(), &e.ID); err != nil {
+	if err := db.NewInsert().Model(e).Returning("id").Scan(context.Background(), &e.ID); err != nil {
 		return fmt.Errorf("insert Election model: %w", err)
 	}
 
 	return nil
 }
 
-func (e *Election) Update() error {
-	db := Get()
+func (e *Election) Update(x ...bun.IDB) error {
+	db := fromVariadic(x)
 
-	if _, err := db.DB.NewUpdate().Model(e).Where("id = ?", e.ID).Exec(context.Background()); err != nil {
+	if _, err := db.NewUpdate().Model(e).Where("id = ?", e.ID).Exec(context.Background()); err != nil {
 		return fmt.Errorf("update Election model: %w", err)
 	}
 
 	return nil
 }
 
-func (e *Election) Delete() error {
-	db := Get()
+func (e *Election) Delete(x ...bun.IDB) error {
+	db := fromVariadic(x)
 
-	if _, err := db.DB.NewDelete().Model(e).Where("id = ?", e.ID).Exec(context.Background()); err != nil {
+	if _, err := db.NewDelete().Model(e).Where("id = ?", e.ID).Exec(context.Background()); err != nil {
 		return fmt.Errorf("delete Election model: %w", err)
 	}
 
 	return nil
 }
 
-func (e *Election) WithCandidates() (*ElectionWithCandidates, error) {
+func (e *Election) WithCandidates(x ...bun.IDB) (*ElectionWithCandidates, error) {
 	candidates, err := GetUsersStandingForElection(e.ID)
 	if err != nil {
 		return nil, fmt.Errorf("populate Election candidates: %w", err)
@@ -68,10 +68,10 @@ func (e *Election) WithCandidates() (*ElectionWithCandidates, error) {
 	}, nil
 }
 
-func GetElection(id int) (*Election, error) {
-	db := Get()
+func GetElection(id int, x ...bun.IDB) (*Election, error) {
+	db := fromVariadic(x)
 	res := new(Election)
-	if err := db.DB.NewSelect().Model(res).Where("id = ?", id).Scan(context.Background(), res); err != nil {
+	if err := db.NewSelect().Model(res).Where("id = ?", id).Scan(context.Background(), res); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNotFound
 		}
@@ -80,27 +80,27 @@ func GetElection(id int) (*Election, error) {
 	return res, nil
 }
 
-func GetAllElections() ([]*Election, error) {
-	db := Get()
+func GetAllElections(x ...bun.IDB) ([]*Election, error) {
+	db := fromVariadic(x)
 	var res []*Election
-	if err := db.DB.NewSelect().Model(&res).Scan(context.Background(), &res); err != nil {
+	if err := db.NewSelect().Model(&res).Scan(context.Background(), &res); err != nil {
 		return nil, fmt.Errorf("get all Elections: %w", err)
 	}
 	return res, nil
 }
 
-func DeleteElectionByID(electionID int) error {
-	db := Get()
-	if _, err := db.DB.NewDelete().Model((*Election)(nil)).Where("id = ?", electionID).Exec(context.Background()); err != nil {
+func DeleteElectionByID(electionID int, x ...bun.IDB) error {
+	db := fromVariadic(x)
+	if _, err := db.NewDelete().Model((*Election)(nil)).Where("id = ?", electionID).Exec(context.Background()); err != nil {
 		return fmt.Errorf("delete Election: %w", err)
 	}
 	return nil
 }
 
-func GetActiveElection() (*Election, error) {
-	db := Get()
+func GetActiveElection(x ...bun.IDB) (*Election, error) {
+	db := fromVariadic(x)
 	res := new(Election)
-	if count, err := db.DB.NewSelect().Model(res).Where("is_active = 1").ScanAndCount(context.Background(), res); err != nil {
+	if count, err := db.NewSelect().Model(res).Where("is_active = 1").ScanAndCount(context.Background(), res); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNotFound
 		}

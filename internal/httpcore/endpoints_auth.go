@@ -9,6 +9,7 @@ import (
 	"git.tdpain.net/codemicro/society-voting/internal/database"
 	"git.tdpain.net/codemicro/society-voting/internal/guildScraper"
 	"git.tdpain.net/codemicro/society-voting/internal/httpcore/htmlutil"
+	"git.tdpain.net/codemicro/society-voting/internal/util"
 	"github.com/gofiber/fiber/v2"
 	g "github.com/maragudk/gomponents"
 	"github.com/maragudk/gomponents/html"
@@ -78,7 +79,13 @@ func (endpoints) authLogin(ctx *fiber.Ctx) error {
 
 		// Provision user if needed
 
-		user, err := database.GetUser(studentID)
+		tx, err := database.GetTx()
+		if err != nil {
+			return fmt.Errorf("authLogin start tx: %w", err)
+		}
+		defer util.Warn(tx.Rollback())
+
+		user, err := database.GetUser(studentID, tx)
 		if err != nil {
 			if !errors.Is(err, database.ErrNotFound) {
 				return fmt.Errorf("authLogin call getUser: %w", err)
@@ -106,13 +113,17 @@ func (endpoints) authLogin(ctx *fiber.Ctx) error {
 				PasswordHash: passwordHash[:],
 			}
 
-			if err := user.Insert(); err != nil {
+			if err := user.Insert(tx); err != nil {
 				return fmt.Errorf("authLogin insert new user: %w", err)
 			}
 		} else {
 			if subtle.ConstantTimeCompare(passwordHash[:], user.PasswordHash) == 0 {
 				goto incorrectPassword
 			}
+		}
+
+		if err := tx.Commit(); err != nil {
+			return fmt.Errorf("authLogin commit tx: %w", err)
 		}
 
 		// Issue token
