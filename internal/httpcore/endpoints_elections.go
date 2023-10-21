@@ -22,13 +22,17 @@ func (endpoints) apiListElections(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiListElections get all elections: %w", err)
 	}
 
+	var res []*database.ElectionWithCandidates
+
 	for _, election := range elections {
-		if err := election.PopulateCandidates(); err != nil {
+		if ec, err := election.WithCandidates(); err != nil {
 			return fmt.Errorf("apiListElections: %w", err)
+		} else {
+			res = append(res, ec)
 		}
 	}
 
-	return ctx.JSON(elections)
+	return ctx.JSON(res)
 }
 
 func (endpoints) apiElectionsSSE(ctx *fiber.Ctx) error {
