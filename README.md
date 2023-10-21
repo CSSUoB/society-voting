@@ -44,7 +44,7 @@
   - [x] Create ballot in setup endpoint
   - [x] Store active election
 - [x] Stop and finalise election
-- [ ] Election status SSE
+- [x] Election status SSE
 - [x] Delete user
 - [x] Remove candidate
 - [x] Make active election endpoint return the number of eligible voters
