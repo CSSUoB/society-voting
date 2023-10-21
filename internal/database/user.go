@@ -55,3 +55,12 @@ func DeleteUser(id string, x ...bun.IDB) error {
 	}
 	return nil
 }
+
+func CountUsers(x ...bun.IDB) (int, error) {
+	db := fromVariadic(x)
+	n, err := db.NewSelect().Model((*User)(nil)).Count(context.Background())
+	if err != nil {
+		return 0, fmt.Errorf("count Users: %w", err)
+	}
+	return n, nil
+}

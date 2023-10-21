@@ -72,6 +72,11 @@ func (endpoints) apiGetActiveElectionInformation(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiGetActiveElectionInformation get ballot: %w", err)
 	}
 
+	numUsers, err := database.CountUsers(tx)
+	if err != nil {
+		return fmt.Errorf("apiGetActiveElectionInformation count users: %w", err)
+	}
+
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("apiGetActiveElectionInformation commit tx: %w", err)
 	}
@@ -79,9 +84,11 @@ func (endpoints) apiGetActiveElectionInformation(ctx *fiber.Ctx) error {
 	var response = struct {
 		Election *database.Election      `json:"election"`
 		Ballot   []*database.BallotEntry `json:"ballot"`
+		NumUsers int                     `json:"numEligibleVoters"`
 	}{
 		Election: election,
 		Ballot:   ballot,
+		NumUsers: numUsers,
 	}
 
 	return ctx.JSON(response)
