@@ -14,6 +14,7 @@
 - [x] Events
   - [ ] Discord webhook event notifier
 - [ ] **Use database transactions!**
+- [ ] Change package namespace
 
 ### API
 
