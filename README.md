@@ -20,7 +20,7 @@
 
 ### API
 
-- [ ] Allow admin access to non-user-specific sections of the normal API
+- [x] Allow admin access to non-user-specific sections of the normal API
 - [x] Add `isRON` flag to `BallotEntry`
 - [ ] Vote validation code
 
