@@ -54,9 +54,12 @@ var (
 
 func init() {
 	secret := make([]byte, 512)
-	if _, err := rand.Read(secret); err != nil {
-		slog.Error("unable to generate random secret for token signing", "error", err)
-		os.Exit(1)
+	if !config.Get().Debug {
+		// This is so that the access tokens doesn't change from run-to-run for ease of testing
+		if _, err := rand.Read(secret); err != nil {
+			slog.Error("unable to generate random secret for token signing", "error", err)
+			os.Exit(1)
+		}
 	}
 
 	signer = goalone.New(secret)
