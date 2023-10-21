@@ -47,3 +47,11 @@ func GetUser(id string, x ...bun.IDB) (*User, error) {
 	}
 	return res, nil
 }
+
+func DeleteUser(id string, x ...bun.IDB) error {
+	db := fromVariadic(x)
+	if _, err := db.NewDelete().Model((*User)(nil)).Where("id = ?", id).Exec(context.Background()); err != nil {
+		return fmt.Errorf("delete User: %w", err)
+	}
+	return nil
+}

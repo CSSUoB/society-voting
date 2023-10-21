@@ -138,17 +138,35 @@ func (endpoints) apiStandForElection(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiWithdrawFromElection(ctx *fiber.Ctx) error {
-	userID, isAuthed := getSessionAuth(ctx, authRegularUser)
+	var electionID int
+
+	userID, isAuthed := getSessionAuth(ctx, authRegularUser|authAdminUser)
 	if !isAuthed {
 		return fiber.ErrUnauthorized
 	}
 
-	var request = struct {
-		ElectionID int `json:"id" validate:"ne=0"`
-	}{}
+	if userID == "admin" {
+		var request = struct {
+			ElectionID int    `json:"id" validate:"ne=0"`
+			UserID     string `json:"userID" validate:"ne=0"`
+		}{}
 
-	if err := parseAndValidateRequestBody(ctx, &request); err != nil {
-		return err
+		if err := parseAndValidateRequestBody(ctx, &request); err != nil {
+			return err
+		}
+
+		userID = request.UserID
+		electionID = request.ElectionID
+	} else {
+		var request = struct {
+			ElectionID int `json:"id" validate:"ne=0"`
+		}{}
+
+		if err := parseAndValidateRequestBody(ctx, &request); err != nil {
+			return err
+		}
+
+		electionID = request.ElectionID
 	}
 
 	tx, err := database.GetTx()
@@ -169,7 +187,7 @@ func (endpoints) apiWithdrawFromElection(ctx *fiber.Ctx) error {
 
 	candidate := &database.Candidate{
 		UserID:     user.StudentID,
-		ElectionID: request.ElectionID,
+		ElectionID: electionID,
 	}
 
 	if err := candidate.Delete(tx); err != nil {

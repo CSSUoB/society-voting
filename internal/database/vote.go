@@ -50,3 +50,11 @@ func DeleteAllVotesForElection(electionID int, x ...bun.IDB) error {
 	}
 	return nil
 }
+
+func DeleteAllVotesForUser(userID string, x ...bun.IDB) error {
+	db := fromVariadic(x)
+	if _, err := db.NewDelete().Model((*Vote)(nil)).Where("user_id = ?", userID).Exec(context.Background()); err != nil {
+		return fmt.Errorf("delete user Votes: %w", err)
+	}
+	return nil
+}
