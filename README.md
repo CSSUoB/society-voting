@@ -31,7 +31,7 @@
 - [x] List all elections
 - [x] Display currently running election in /api/elections
 - [x] Vote endpoint
-- [ ] Make only the main election list endpoint return the candidate list
+- [x] Make only the main election list endpoint return the candidate list
 
 #### Admin
 
