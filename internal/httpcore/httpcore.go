@@ -40,8 +40,13 @@ func ListenAndServe(addr string) error {
 	app.Get("/api/elections", e.apiListElections)
 	app.Get("/api/elections/sse", e.apiElectionsSSE)
 
+	app.Get("/api/elections/current", e.apiGetActiveElectionInformation)
+	app.Post("/api/elections/current/vote", e.apiVote)
+
 	app.Post("/api/admin/election", e.apiAdminCreateElection)
 	app.Delete("/api/admin/election", e.apiAdminDeleteElection)
+	app.Post("/api/admin/election/start", e.apiAdminStartElection)
+	app.Post("/api/admin/election/stop", e.apiAdminStopElection)
 
 	slog.Info("HTTP server alive", "address", addr)
 	return app.Listen(addr)

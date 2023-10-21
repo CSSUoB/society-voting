@@ -15,6 +15,8 @@ type Election struct {
 	RoleName    string `json:"roleName"`
 	Description string `json:"description"`
 
+	IsActive bool `json:"isActive"`
+
 	Candidates []string `bun:"-" json:"candidates"`
 }
 
@@ -33,6 +35,16 @@ func (e *Election) Update() error {
 
 	if _, err := db.DB.NewUpdate().Model(e).Where("id = ?", e.ID).Exec(context.Background()); err != nil {
 		return fmt.Errorf("update Election model: %w", err)
+	}
+
+	return nil
+}
+
+func (e *Election) Delete() error {
+	db := Get()
+
+	if _, err := db.DB.NewDelete().Model(e).Where("id = ?", e.ID).Exec(context.Background()); err != nil {
+		return fmt.Errorf("delete Election model: %w", err)
 	}
 
 	return nil
@@ -76,4 +88,18 @@ func DeleteElectionByID(electionID int) error {
 		return fmt.Errorf("delete Election: %w", err)
 	}
 	return nil
+}
+
+func GetActiveElection() (*Election, error) {
+	db := Get()
+	res := new(Election)
+	if count, err := db.DB.NewSelect().Model(res).Where("is_active = 1").ScanAndCount(context.Background(), res); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("get active Election: %w", err)
+	} else if count != 1 {
+		return nil, fmt.Errorf("database corrupted: expected 0 active elections, found %d", count)
+	}
+	return res, nil
 }

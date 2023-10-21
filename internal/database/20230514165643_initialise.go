@@ -21,9 +21,25 @@ func init() {
 				return fmt.Errorf("create Candidate table: %w", err)
 			}
 
+			if _, err := db.NewCreateTable().Model((*BallotEntry)(nil)).Exec(ctx); err != nil {
+				return fmt.Errorf("create BallotEntry table: %w", err)
+			}
+
+			if _, err := db.NewCreateTable().Model((*Vote)(nil)).Exec(ctx); err != nil {
+				return fmt.Errorf("create Vote table: %w", err)
+			}
+
 			return nil
 		},
 		func(ctx context.Context, db *bun.DB) error {
+			if _, err := db.NewDropTable().Model((*Vote)(nil)).Exec(ctx); err != nil {
+				return fmt.Errorf("drop Vote table: %w", err)
+			}
+
+			if _, err := db.NewDropTable().Model((*BallotEntry)(nil)).Exec(ctx); err != nil {
+				return fmt.Errorf("drop BallotEntry table: %w", err)
+			}
+
 			if _, err := db.NewDropTable().Model((*Candidate)(nil)).Exec(ctx); err != nil {
 				return fmt.Errorf("drop Candidate table: %w", err)
 			}
