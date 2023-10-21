@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"git.tdpain.net/codemicro/society-voting/internal/database"
 	"git.tdpain.net/codemicro/society-voting/internal/events"
-	"git.tdpain.net/codemicro/society-voting/internal/util"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -55,7 +54,7 @@ func (endpoints) apiGetActiveElectionInformation(ctx *fiber.Ctx) error {
 	if err != nil {
 		return fmt.Errorf("apiGetActiveElectionInformation start tx: %w", err)
 	}
-	defer util.Warn(tx.Rollback())
+	defer tx.Rollback()
 
 	election, err := database.GetActiveElection(tx)
 	if err != nil {
@@ -107,7 +106,7 @@ func (endpoints) apiVote(ctx *fiber.Ctx) error {
 	if err != nil {
 		return fmt.Errorf("apiVote start tx: %w", err)
 	}
-	defer util.Warn(tx.Rollback())
+	defer tx.Rollback()
 
 	user, err := database.GetUser(userID, tx)
 	if err != nil {

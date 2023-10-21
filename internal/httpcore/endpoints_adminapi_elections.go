@@ -6,7 +6,6 @@ import (
 	"git.tdpain.net/codemicro/society-voting/internal/database"
 	"git.tdpain.net/codemicro/society-voting/internal/events"
 	"git.tdpain.net/codemicro/society-voting/internal/instantRunoff"
-	"git.tdpain.net/codemicro/society-voting/internal/util"
 	"github.com/gofiber/fiber/v2"
 	"time"
 )
@@ -54,7 +53,7 @@ func (endpoints) apiAdminDeleteElection(ctx *fiber.Ctx) error {
 	if err != nil {
 		return fmt.Errorf("apiAdminDeleteElection start tx: %w", err)
 	}
-	defer util.Warn(tx.Rollback())
+	defer tx.Rollback()
 
 	if err := database.DeleteCandidatesForElection(request.ElectionID, tx); err != nil {
 		return fmt.Errorf("apiAdminDeleteElection delete all candidates: %w", err)
@@ -90,7 +89,7 @@ func (endpoints) apiAdminStartElection(ctx *fiber.Ctx) error {
 	if err != nil {
 		return fmt.Errorf("apiAdminStartElection start tx: %w", err)
 	}
-	defer util.Warn(tx.Rollback())
+	defer tx.Rollback()
 
 	if _, err := database.GetActiveElection(tx); err == nil {
 		return &fiber.Error{
@@ -159,7 +158,7 @@ func (endpoints) apiAdminStopElection(ctx *fiber.Ctx) error {
 	if err != nil {
 		return fmt.Errorf("apiAdminStopElection start tx: %w", err)
 	}
-	defer util.Warn(tx.Rollback())
+	defer tx.Rollback()
 
 	election, err := database.GetActiveElection(tx)
 	if err != nil {

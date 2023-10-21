@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"git.tdpain.net/codemicro/society-voting/internal/database"
-	"git.tdpain.net/codemicro/society-voting/internal/util"
 	"github.com/gofiber/fiber/v2"
 	"github.com/mattn/go-sqlite3"
 )
@@ -90,7 +89,7 @@ func (endpoints) apiStandForElection(ctx *fiber.Ctx) error {
 	if err != nil {
 		return fmt.Errorf("apiStandForElection start tx: %w", err)
 	}
-	defer util.Warn(tx.Rollback())
+	defer tx.Rollback()
 
 	user, err := database.GetUser(userID, tx)
 	if err != nil {
@@ -156,7 +155,7 @@ func (endpoints) apiWithdrawFromElection(ctx *fiber.Ctx) error {
 	if err != nil {
 		return fmt.Errorf("apiWithdrawFromElection start tx: %w", err)
 	}
-	defer util.Warn(tx.Rollback())
+	defer tx.Rollback()
 
 	user, err := database.GetUser(userID, tx)
 	if err != nil {
