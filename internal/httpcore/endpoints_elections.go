@@ -10,11 +10,7 @@ import (
 )
 
 func (endpoints) apiListElections(ctx *fiber.Ctx) error {
-	_, isAuthed, err := getSessionAuth(ctx)
-	if err != nil {
-		return err
-	}
-	if !isAuthed {
+	if _, ok := getSessionAuth(ctx, authAdminUser|authRegularUser); !ok {
 		return fiber.ErrUnauthorized
 	}
 
@@ -37,11 +33,7 @@ func (endpoints) apiListElections(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiElectionsSSE(ctx *fiber.Ctx) error {
-	_, isAuthed, err := getSessionAuth(ctx)
-	if err != nil {
-		return err
-	}
-	if !isAuthed {
+	if _, ok := getSessionAuth(ctx, authAdminUser|authRegularUser); !ok {
 		return fiber.ErrUnauthorized
 	}
 
@@ -55,11 +47,7 @@ func (endpoints) apiElectionsSSE(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiGetActiveElectionInformation(ctx *fiber.Ctx) error {
-	_, isAuthed, err := getSessionAuth(ctx)
-	if err != nil {
-		return err
-	}
-	if !isAuthed {
+	if _, ok := getSessionAuth(ctx, authAdminUser|authRegularUser); !ok {
 		return fiber.ErrUnauthorized
 	}
 
@@ -101,10 +89,7 @@ func (endpoints) apiGetActiveElectionInformation(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiVote(ctx *fiber.Ctx) error {
-	user, isAuthed, err := getSessionAuth(ctx)
-	if err != nil {
-		return err
-	}
+	userID, isAuthed := getSessionAuth(ctx, authRegularUser)
 	if !isAuthed {
 		return fiber.ErrUnauthorized
 	}
@@ -123,6 +108,16 @@ func (endpoints) apiVote(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiVote start tx: %w", err)
 	}
 	defer util.Warn(tx.Rollback())
+
+	user, err := database.GetUser(userID, tx)
+	if err != nil {
+		if errors.Is(err, database.ErrNotFound) {
+			// User has been deleted
+			ctx.Cookie(newSessionTokenDeletionCookie())
+			return fiber.ErrUnauthorized
+		}
+		return fmt.Errorf("apiVote get user: %w", err)
+	}
 
 	election, err := database.GetActiveElection(tx)
 	if err != nil {

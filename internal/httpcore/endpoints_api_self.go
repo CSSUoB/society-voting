@@ -10,22 +10,26 @@ import (
 )
 
 func (endpoints) apiMe(ctx *fiber.Ctx) error {
-	user, isAuthed, err := getSessionAuth(ctx)
-	if err != nil {
-		return err
-	}
+	userID, isAuthed := getSessionAuth(ctx, authRegularUser)
 	if !isAuthed {
 		return fiber.ErrUnauthorized
+	}
+
+	user, err := database.GetUser(userID)
+	if err != nil {
+		if errors.Is(err, database.ErrNotFound) {
+			// User has been deleted
+			ctx.Cookie(newSessionTokenDeletionCookie())
+			return fiber.ErrUnauthorized
+		}
+		return fmt.Errorf("apiVote get user: %w", err)
 	}
 
 	return ctx.JSON(user)
 }
 
 func (endpoints) apiSetOwnName(ctx *fiber.Ctx) error {
-	user, isAuthed, err := getSessionAuth(ctx)
-	if err != nil {
-		return err
-	}
+	userID, isAuthed := getSessionAuth(ctx, authRegularUser)
 	if !isAuthed {
 		return fiber.ErrUnauthorized
 	}
@@ -38,10 +42,30 @@ func (endpoints) apiSetOwnName(ctx *fiber.Ctx) error {
 		return err
 	}
 
+	tx, err := database.GetTx()
+	if err != nil {
+		return fmt.Errorf("apiSetOwnName start tx: %w", err)
+	}
+	defer tx.Rollback()
+
+	user, err := database.GetUser(userID, tx)
+	if err != nil {
+		if errors.Is(err, database.ErrNotFound) {
+			// User has been deleted
+			ctx.Cookie(newSessionTokenDeletionCookie())
+			return fiber.ErrUnauthorized
+		}
+		return fmt.Errorf("apiSetOwnName get user: %w", err)
+	}
+
 	user.Name = request.Name
 
-	if err := user.Update(); err != nil {
+	if err := user.Update(tx); err != nil {
 		return fmt.Errorf("apiSetOwnName update user: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("apiSetOwnName commit tx: %w")
 	}
 
 	ctx.Status(fiber.StatusNoContent)
@@ -49,10 +73,7 @@ func (endpoints) apiSetOwnName(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiStandForElection(ctx *fiber.Ctx) error {
-	user, isAuthed, err := getSessionAuth(ctx)
-	if err != nil {
-		return err
-	}
+	userID, isAuthed := getSessionAuth(ctx, authRegularUser)
 	if !isAuthed {
 		return fiber.ErrUnauthorized
 	}
@@ -70,6 +91,16 @@ func (endpoints) apiStandForElection(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiStandForElection start tx: %w", err)
 	}
 	defer util.Warn(tx.Rollback())
+
+	user, err := database.GetUser(userID, tx)
+	if err != nil {
+		if errors.Is(err, database.ErrNotFound) {
+			// User has been deleted
+			ctx.Cookie(newSessionTokenDeletionCookie())
+			return fiber.ErrUnauthorized
+		}
+		return fmt.Errorf("apiStandForElection get user: %w", err)
+	}
 
 	election, err := database.GetElection(request.ElectionID, tx)
 	if err != nil {
@@ -108,10 +139,7 @@ func (endpoints) apiStandForElection(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiWithdrawFromElection(ctx *fiber.Ctx) error {
-	user, isAuthed, err := getSessionAuth(ctx)
-	if err != nil {
-		return err
-	}
+	userID, isAuthed := getSessionAuth(ctx, authRegularUser)
 	if !isAuthed {
 		return fiber.ErrUnauthorized
 	}
@@ -124,13 +152,33 @@ func (endpoints) apiWithdrawFromElection(ctx *fiber.Ctx) error {
 		return err
 	}
 
+	tx, err := database.GetTx()
+	if err != nil {
+		return fmt.Errorf("apiWithdrawFromElection start tx: %w", err)
+	}
+	defer util.Warn(tx.Rollback())
+
+	user, err := database.GetUser(userID, tx)
+	if err != nil {
+		if errors.Is(err, database.ErrNotFound) {
+			// User has been deleted
+			ctx.Cookie(newSessionTokenDeletionCookie())
+			return fiber.ErrUnauthorized
+		}
+		return fmt.Errorf("apiWithdrawFromElection get user: %w", err)
+	}
+
 	candidate := &database.Candidate{
 		UserID:     user.StudentID,
 		ElectionID: request.ElectionID,
 	}
 
-	if err := candidate.Delete(); err != nil {
+	if err := candidate.Delete(tx); err != nil {
 		return fmt.Errorf("apiWithdrawFromElection delete candidacy: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("apiWithdrawFromElection commit tx: %w", err)
 	}
 
 	ctx.Status(fiber.StatusNoContent)

@@ -9,7 +9,6 @@ import (
 	"git.tdpain.net/codemicro/society-voting/internal/database"
 	"git.tdpain.net/codemicro/society-voting/internal/guildScraper"
 	"git.tdpain.net/codemicro/society-voting/internal/httpcore/htmlutil"
-	"git.tdpain.net/codemicro/society-voting/internal/util"
 	"github.com/gofiber/fiber/v2"
 	g "github.com/maragudk/gomponents"
 	"github.com/maragudk/gomponents/html"
@@ -17,10 +16,7 @@ import (
 )
 
 func (endpoints) authCheck(ctx *fiber.Ctx) error {
-	_, isAuthed, err := getSessionAuth(ctx)
-	if err != nil {
-		return err
-	}
+	_, isAuthed := getSessionAuth(ctx, authAdminUser|authRegularUser)
 
 	var nextURL string
 
@@ -83,7 +79,7 @@ func (endpoints) authLogin(ctx *fiber.Ctx) error {
 		if err != nil {
 			return fmt.Errorf("authLogin start tx: %w", err)
 		}
-		defer util.Warn(tx.Rollback())
+		defer tx.Rollback()
 
 		user, err := database.GetUser(studentID, tx)
 		if err != nil {

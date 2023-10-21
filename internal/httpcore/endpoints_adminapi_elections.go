@@ -12,7 +12,7 @@ import (
 )
 
 func (endpoints) apiAdminCreateElection(ctx *fiber.Ctx) error {
-	if !isAdminSession(ctx) {
+	if _, ok := getSessionAuth(ctx, authAdminUser); !ok {
 		return fiber.ErrUnauthorized
 	}
 
@@ -38,7 +38,7 @@ func (endpoints) apiAdminCreateElection(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiAdminDeleteElection(ctx *fiber.Ctx) error {
-	if !isAdminSession(ctx) {
+	if _, ok := getSessionAuth(ctx, authAdminUser); !ok {
 		return fiber.ErrUnauthorized
 	}
 
@@ -73,7 +73,7 @@ func (endpoints) apiAdminDeleteElection(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiAdminStartElection(ctx *fiber.Ctx) error {
-	if !isAdminSession(ctx) {
+	if _, ok := getSessionAuth(ctx, authAdminUser); !ok {
 		return fiber.ErrUnauthorized
 	}
 
@@ -151,7 +151,7 @@ func (endpoints) apiAdminStartElection(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiAdminStopElection(ctx *fiber.Ctx) error {
-	if !isAdminSession(ctx) {
+	if _, ok := getSessionAuth(ctx, authAdminUser); !ok {
 		return fiber.ErrUnauthorized
 	}
 

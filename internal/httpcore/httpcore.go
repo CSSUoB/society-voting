@@ -4,9 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"git.tdpain.net/codemicro/society-voting/internal/config"
-	"git.tdpain.net/codemicro/society-voting/internal/database"
 	"github.com/bwmarrin/go-alone"
 	validate "github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -109,36 +107,35 @@ func validateData(datatype string, token string) (string, bool) {
 	return string(originalData[len(datatype)+1:]), true
 }
 
-func getSessionAuth(ctx *fiber.Ctx) (*database.User, bool, error) {
-	cookieVal := ctx.Cookies(sessionTokenCookieName)
-	decodedVal, tokenOkay := validateData("token", cookieVal)
+const (
+	authRegularUser uint = 1 << iota
+	authAdminUser
+)
 
-	if cookieVal == "" || !tokenOkay {
-		return nil, false, nil
+func getSessionAuth(ctx *fiber.Ctx, authType uint) (string, bool) {
+	cookieVal := ctx.Cookies(sessionTokenCookieName)
+
+	if cookieVal == "" {
+		return "", false
 	}
 
-	user, err := database.GetUser(decodedVal)
-	if err != nil {
-		if errors.Is(err, database.ErrNotFound) {
-			// If the user has been deleted
-			ctx.Cookie(newSessionTokenDeletionCookie())
-			return nil, false, nil
+	if authType&authRegularUser != 0 {
+		decodedToken, tokenOkay := validateData("token", cookieVal)
+
+		if tokenOkay {
+			return decodedToken, true
 		}
-		return nil, false, err
 	}
 
-	return user, true, nil
-}
+	if authType&authAdminUser != 0 {
+		decodedAdmin, adminOkay := validateData("admin", cookieVal)
 
-func isAdminSession(ctx *fiber.Ctx) bool {
-	cookieVal := ctx.Cookies(sessionTokenCookieName)
-	_, tokenOkay := validateData("admin", cookieVal)
-
-	if cookieVal == "" || !tokenOkay {
-		return false
+		if adminOkay {
+			return decodedAdmin, true
+		}
 	}
 
-	return true
+	return "", false
 }
 
 func parseAndValidateRequestBody(ctx *fiber.Ctx, x any) error {
