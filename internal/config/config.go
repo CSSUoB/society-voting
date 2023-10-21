@@ -71,6 +71,16 @@ func Get() *Config {
 				AdminToken:  cl.Required("platform.adminToken").AsString(),
 			},
 		}
+
+		if conf.Debug {
+			fmt.Println(
+				"\033[91m┌────────────────────────────────────────────────────────┐\n" +
+					"│ WARNING: YOU ARE RUNNING IN DEBUG MODE                 │\n" +
+					"│                                                        │\n" +
+					"│ Do not run debug mode in production as it has insecure │\n" +
+					"│ side effects                                           │\n" +
+					"└────────────────────────────────────────────────────────┘\033[39m")
+		}
 	})
 
 	if outerErr != nil {
