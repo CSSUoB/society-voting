@@ -1,6 +1,7 @@
 package httpcore
 
 import (
+	"crypto/subtle"
 	"errors"
 	"fmt"
 	"git.tdpain.net/codemicro/society-voting/internal/database"
@@ -108,6 +109,13 @@ func (endpoints) apiVote(ctx *fiber.Ctx) error {
 
 	if err := parseAndValidateRequestBody(ctx, &request); err != nil {
 		return err
+	}
+
+	if subtle.ConstantTimeCompare([]byte(request.Code), []byte(voteCode)) == 0 {
+		return &fiber.Error{
+			Code:    fiber.StatusForbidden,
+			Message: "Incorrect vote code!",
+		}
 	}
 
 	tx, err := database.GetTx()

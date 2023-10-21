@@ -1,7 +1,7 @@
 package httpcore
 
 import (
-	"crypto/rand"
+	cryptoRand "crypto/rand"
 	"encoding/hex"
 	"encoding/json"
 	"git.tdpain.net/codemicro/society-voting/internal/config"
@@ -9,6 +9,7 @@ import (
 	validate "github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"log/slog"
+	"math/rand"
 	"os"
 	"strings"
 	"time"
@@ -17,10 +18,6 @@ import (
 type endpoints struct{}
 
 func ListenAndServe(addr string) error {
-	if config.Get().Debug {
-		slog.Debug("debug token", "token", signData("token", "1111111"))
-	}
-
 	app := fiber.New()
 
 	e := endpoints{}
@@ -48,26 +45,31 @@ func ListenAndServe(addr string) error {
 
 	app.Delete("/api/admin/user/delete", e.apiAdminDeleteUser)
 
-	slog.Info("HTTP server alive", "address", addr)
+	slog.Info("HTTP server alive", "address", addr, "voteCode", voteCode)
 	return app.Listen(addr)
 }
 
 var (
 	signer    *goalone.Sword
 	validator = validate.New(validate.WithRequiredStructEnabled())
+	voteCode  string
 )
 
 func init() {
 	secret := make([]byte, 512)
 	if !config.Get().Debug {
 		// This is so that the access tokens doesn't change from run-to-run for ease of testing
-		if _, err := rand.Read(secret); err != nil {
+		if _, err := cryptoRand.Read(secret); err != nil {
 			slog.Error("unable to generate random secret for token signing", "error", err)
 			os.Exit(1)
 		}
 	}
 
 	signer = goalone.New(secret)
+
+	for i := 0; i < 4; i += 1 {
+		voteCode += string(rune('A' + rand.Intn(26)))
+	}
 }
 
 var sessionTokenCookieName = "vot-tok"
