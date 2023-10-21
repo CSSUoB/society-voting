@@ -3,6 +3,7 @@ package events
 import (
 	"bufio"
 	"encoding/json"
+	"fmt"
 	"github.com/valyala/fasthttp"
 	"log/slog"
 	"strings"
@@ -117,12 +118,11 @@ func SendEvent(topic Topic, data any) {
 }
 
 func AsStreamWriter(id int, receiver chan *Message) fasthttp.StreamWriter {
-	slog.Debug("starting SSE streamwriter", "id", id)
 	return func(w *bufio.Writer) {
 		for msg := range receiver {
 			sseData, err := msg.ToSSE()
 			if err != nil {
-				slog.Error("failed to generate SSE event from message", "error", err)
+				slog.Error("SSE error", "error", fmt.Errorf("failed to generate SSE event from message: %w", err))
 				break
 			}
 			_, _ = w.Write(sseData)
@@ -132,6 +132,5 @@ func AsStreamWriter(id int, receiver chan *Message) fasthttp.StreamWriter {
 			}
 		}
 		CloseReceiver(id)
-		slog.Debug("closing SSE connection", "id", id)
 	}
 }
