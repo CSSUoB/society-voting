@@ -4,16 +4,17 @@ import (
 	cryptoRand "crypto/rand"
 	"encoding/hex"
 	"encoding/json"
-	"github.com/CSSUoB/society-voting/internal/config"
-	"github.com/CSSUoB/society-voting/web"
-	"github.com/bwmarrin/go-alone"
-	validate "github.com/go-playground/validator/v10"
-	"github.com/gofiber/fiber/v2"
 	"log/slog"
 	"math/rand"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/CSSUoB/society-voting/internal/config"
+	"github.com/CSSUoB/society-voting/web"
+	goalone "github.com/bwmarrin/go-alone"
+	validate "github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2"
 )
 
 type endpoints struct{}
@@ -26,7 +27,8 @@ func ListenAndServe(addr string) error {
 	app.Use("/", func(ctx *fiber.Ctx) error {
 		_, isAuthed := getSessionAuth(ctx, authAdminUser|authRegularUser)
 
-		if isAuthed {
+		if isAuthed || strings.HasPrefix(ctx.OriginalURL(), "/auth/") {
+
 			return ctx.Next()
 		}
 
