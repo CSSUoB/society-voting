@@ -23,13 +23,14 @@ func ListenAndServe(addr string) error {
 
 	e := endpoints{}
 
-	app.Get("/", e.authCheck)
-	app.Get("/app", func(ctx *fiber.Ctx) error {
+	app.Use("/", func(ctx *fiber.Ctx) error {
 		_, isAuthed := getSessionAuth(ctx, authAdminUser|authRegularUser)
-		if !isAuthed {
-			return ctx.Redirect("/")
+
+		if isAuthed {
+			return ctx.Next()
 		}
-		return ctx.Next()
+
+		return ctx.Redirect("/auth/login")
 	}, web.GetHandler())
 
 	app.Get("/auth/login", e.authLogin)
