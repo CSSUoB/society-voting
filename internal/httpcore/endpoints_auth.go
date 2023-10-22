@@ -15,22 +15,6 @@ import (
 	"strconv"
 )
 
-func (endpoints) authCheck(ctx *fiber.Ctx) error {
-	_, isAuthed := getSessionAuth(ctx, authAdminUser|authRegularUser)
-
-	var nextURL string
-
-	if isAuthed {
-		// redirect to app
-		nextURL = "/app"
-	} else {
-		// redirect to login page
-		nextURL = "/auth/login"
-	}
-
-	return ctx.Redirect(nextURL)
-}
-
 func (endpoints) authLogin(ctx *fiber.Ctx) error {
 	var requestProblem string
 
@@ -126,7 +110,7 @@ func (endpoints) authLogin(ctx *fiber.Ctx) error {
 		ctx.Cookie(newSessionTokenCookie(signData("token", studentID)))
 
 		// Redirect to app
-		return ctx.Redirect("/app")
+		return ctx.Redirect("/")
 	} else {
 		return fiber.ErrMethodNotAllowed
 	}

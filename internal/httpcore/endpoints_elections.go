@@ -240,19 +240,27 @@ func (endpoints) apiStandForElection(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiStandForElection commit tx: %w", err)
 	}
 
+	events.SendEvent(events.TopicUserElectionStand, &events.UserElectionStandData{
+		User:     user,
+		Election: election,
+	})
+
 	ctx.Status(fiber.StatusNoContent)
 	return nil
 }
 
 func (endpoints) apiWithdrawFromElection(ctx *fiber.Ctx) error {
-	var electionID int
+	var (
+		electionID int
+		userID     string
+	)
 
-	userID, isAuthed := getSessionAuth(ctx, authRegularUser|authAdminUser)
+	actingUserID, isAuthed := getSessionAuth(ctx, authRegularUser|authAdminUser)
 	if !isAuthed {
 		return fiber.ErrUnauthorized
 	}
 
-	if userID == "admin" {
+	if actingUserID == "admin" {
 		var request = struct {
 			ElectionID int    `json:"id" validate:"ne=0"`
 			UserID     string `json:"userID" validate:"ne=0"`
@@ -273,6 +281,7 @@ func (endpoints) apiWithdrawFromElection(ctx *fiber.Ctx) error {
 			return err
 		}
 
+		userID = actingUserID
 		electionID = request.ElectionID
 	}
 
@@ -285,11 +294,29 @@ func (endpoints) apiWithdrawFromElection(ctx *fiber.Ctx) error {
 	user, err := database.GetUser(userID, tx)
 	if err != nil {
 		if errors.Is(err, database.ErrNotFound) {
+			if actingUserID == "admin" {
+				fmt.Println(userID)
+				return &fiber.Error{
+					Code:    fiber.StatusNotFound,
+					Message: "User with that ID not found.",
+				}
+			}
 			// User has been deleted
 			ctx.Cookie(newSessionTokenDeletionCookie())
 			return fiber.ErrUnauthorized
 		}
 		return fmt.Errorf("apiWithdrawFromElection get user: %w", err)
+	}
+
+	election, err := database.GetElection(electionID, tx)
+	if err != nil {
+		if errors.Is(err, database.ErrNotFound) {
+			return &fiber.Error{
+				Code:    fiber.StatusNotFound,
+				Message: "Election with that ID not found",
+			}
+		}
+		return fmt.Errorf("apiWithdrawFromElection get election with id %d: %w", electionID, err)
 	}
 
 	candidate := &database.Candidate{
@@ -304,6 +331,12 @@ func (endpoints) apiWithdrawFromElection(ctx *fiber.Ctx) error {
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("apiWithdrawFromElection commit tx: %w", err)
 	}
+
+	events.SendEvent(events.TopicUserElectionWithdraw, &events.UserElectionWithdrawData{
+		ByForce:  actingUserID == "admin",
+		User:     user,
+		Election: election,
+	})
 
 	ctx.Status(fiber.StatusNoContent)
 	return nil

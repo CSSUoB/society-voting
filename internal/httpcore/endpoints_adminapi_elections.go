@@ -141,7 +141,7 @@ func (endpoints) apiAdminStartElection(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiAdminStartElection commit tx: %w", err)
 	}
 
-	events.SendEvent(events.TopicElectionStarted, election.ID)
+	events.SendEvent(events.TopicElectionStarted, election)
 
 	var response = struct {
 		Election *database.Election      `json:"election"`
@@ -220,7 +220,10 @@ func (endpoints) apiAdminStopElection(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiAdminStopElection commit tx: %w", err)
 	}
 
-	events.SendEvent(events.TopicElectionEnded, nil)
+	events.SendEvent(events.TopicElectionEnded, &events.ElectionEndedData{
+		Election: election,
+		Result:   resultText,
+	})
 
 	// Return election results
 

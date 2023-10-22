@@ -27,8 +27,14 @@ type Database struct {
 }
 
 type Platform struct {
-	SocietyName string
-	AdminToken  string
+	SocietyName    string
+	AdminToken     string
+	DiscordWebhook *DiscordWebhook
+}
+
+type DiscordWebhook struct {
+	URL      string
+	ThreadID string
 }
 
 type Config struct {
@@ -69,6 +75,10 @@ func Get() *Config {
 			Platform: &Platform{
 				SocietyName: cl.WithDefault("platform.societyName", "Society").AsString(),
 				AdminToken:  cl.Required("platform.adminToken").AsString(),
+				DiscordWebhook: &DiscordWebhook{
+					URL:      cl.Get("platform.discordWebhook.url").AsString(),
+					ThreadID: cl.Get("platform.discordWebhook.threadID").AsString(),
+				},
 			},
 		}
 
