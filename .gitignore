@@ -1,5 +1,7 @@
 run/
 memberspage.html
+config.yml
+voting.sqlite3.db
 
 ### Go ###
 # Binaries for programs and plugins
@@ -21,3 +23,18 @@ memberspage.html
 ### Go Patch ###
 /vendor/
 /Godeps/
+
+### Svelte ###
+web/dist/
+web/.DS_Store
+web/node_modules
+web/.svelte-kit
+web/package
+web/.env
+web/.env.*
+!web/.env.example
+web/vite.config.js.timestamp-*
+web/vite.config.ts.timestamp-*
+
+# IDE configs
+.vscode/
