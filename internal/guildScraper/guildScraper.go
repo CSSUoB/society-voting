@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"git.tdpain.net/codemicro/society-voting/internal/config"
+	"github.com/CSSUoB/society-voting/internal/config"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/carlmjohnson/requests"
 	"strings"

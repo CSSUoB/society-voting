@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"git.tdpain.net/codemicro/society-voting/internal/config"
+	"github.com/CSSUoB/society-voting/internal/config"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"

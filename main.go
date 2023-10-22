@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"git.tdpain.net/codemicro/society-voting/internal/config"
-	"git.tdpain.net/codemicro/society-voting/internal/database"
-	"git.tdpain.net/codemicro/society-voting/internal/httpcore"
+	"github.com/CSSUoB/society-voting/internal/config"
+	"github.com/CSSUoB/society-voting/internal/database"
+	"github.com/CSSUoB/society-voting/internal/httpcore"
 	"log/slog"
 	"os"
 )
