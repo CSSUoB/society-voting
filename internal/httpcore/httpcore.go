@@ -45,6 +45,7 @@ func ListenAndServe(addr string) error {
 
 	app.Get("/auth/login", e.authLogin)
 	app.Post("/auth/login", e.authLogin)
+	app.Get("/auth/logout", e.authLogout)
 
 	app.Get("/api/me", e.apiMe)
 	app.Put("/api/me/name", e.apiSetOwnName)

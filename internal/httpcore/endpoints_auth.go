@@ -163,3 +163,15 @@ staticPage:
 
 	return htmlutil.SendPage(ctx, page)
 }
+
+func (endpoints) authLogout(ctx *fiber.Ctx) error {
+	ctx.Cookie(newSessionTokenDeletionCookie())
+	titleLine := config.Get().Platform.SocietyName + " voting"
+
+	return htmlutil.SendPage(ctx, htmlutil.SkeletonPage(
+		titleLine,
+		html.H1(g.Text("You're all signed out!")),
+		html.Br(),
+		html.A(g.Attr("href", "/auth/login"), g.Text("Click here to login again")),
+	))
+}
