@@ -41,7 +41,7 @@ func (endpoints) apiElectionsSSE(ctx *fiber.Ctx) error {
 	ctx.Set("Content-Type", "text/event-stream")
 	fr := ctx.Response()
 	fr.SetBodyStreamWriter(
-		events.AsStreamWriter(events.NewReceiver(events.TopicElectionStarted)),
+		events.AsStreamWriter(events.NewReceiver(events.TopicElectionStarted, events.TopicElectionEnded)),
 	)
 
 	return nil
