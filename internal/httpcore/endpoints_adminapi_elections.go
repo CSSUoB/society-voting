@@ -201,7 +201,7 @@ func (endpoints) apiAdminStopElection(ctx *fiber.Ctx) error {
 	}
 
 	resultText := instantRunoff.Run(irVotes, ballotNames)
-	resultText = fmt.Sprintf("ELECTION OF %s BY %d MEMBERS ON %s UTC\n=================================================================\n", election.RoleName, len(votes), time.Now().UTC().Format(time.DateTime)) + resultText
+	resultText = fmt.Sprintf("ELECTION OF %s BY %d MEMBERS ON %s UTC\n=================================================================\n\n", election.RoleName, len(votes), time.Now().UTC().Format(time.DateTime)) + resultText
 
 	// Delete votes, ballot and election
 	if err := database.DeleteAllVotesForElection(election.ID, tx); err != nil {

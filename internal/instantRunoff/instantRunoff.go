@@ -41,8 +41,7 @@ func Run(votes []*Vote, nameMap map[int]string) string {
 
 	round := 1
 	for {
-		log.WriteString("================================================================\n")
-		log.WriteString("ROUND ")
+		log.WriteString("Round ")
 		log.WriteString(strconv.Itoa(round))
 		log.WriteRune('\n')
 
@@ -79,7 +78,7 @@ func Run(votes []*Vote, nameMap map[int]string) string {
 
 		log.WriteString("Eliminated ")
 		log.WriteString(nameMap[eliminatedID])
-		log.WriteRune('\n')
+		log.WriteString("\n\n---\n\n")
 
 		round += 1
 	}

@@ -16,7 +16,7 @@
 - [x] Use database transactions!
 - [ ] Change package namespace
 - [ ] Save election results to dedicated table
-- [ ] Make election results prettier
+- [x] Make election results prettier
 
 ### API
 
