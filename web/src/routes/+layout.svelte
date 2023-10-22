@@ -4,6 +4,12 @@
 	import Upcoming from "./upcoming.svelte";
 	import Current from "./current.svelte";
 	import Users from "./users.svelte";
+	import { userStore, type User } from "../store";
+
+	/** @type {import('./$types').PageData} */
+	export let data: { user: User };
+
+	$: userStore.set(data.user);
 </script>
 
 <div class="container">
