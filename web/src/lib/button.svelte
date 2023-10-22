@@ -4,9 +4,11 @@
 	export let text: Optional<string> = null;
 	export let icon: Optional<string> = null;
 	export let kind: "flat" | "inline" | "emphasis" | "primary" = "flat";
+	export let type: "button" | "submit" | "reset" | null | undefined = undefined;
+	export let name: Optional<string> = null;
 </script>
 
-<button class={`${kind} ${icon && !text ? "icon-only" : ""}`}>
+<button on:click class={`${kind} ${icon && !text ? "icon-only" : ""}`} {type} {name}>
 	{#if text}
 		{text}
 	{/if}
@@ -17,15 +19,52 @@
 
 <style>
 	button {
+		--border-colour: #1c2e58;
+		--background-colour: #eee;
+		--background-colour--shadow: #ccc;
+		--background-colour--focus: #ddd;
+		--background-colour--shadow--focus: #bbb;
+		--border-width: 2px;
+		--elevation: 5px;
 		height: 36px;
-		padding: 0 16px;
+		padding: 0 16px calc(var(--elevation) + 2px) 16px;
 		font-family: "JetBrains Mono", monospace;
 		font-weight: bold;
 		border-radius: 999em;
-		border: 2px solid;
+		border: var(--border-width) solid var(--border-colour);
+		background-color: var(--background-colour--shadow);
 		display: flex;
 		align-items: center;
 		gap: 4px;
+		position: relative;
+		z-index: 0;
+	}
+
+	button::after {
+		content: "";
+		position: absolute;
+		width: 100%;
+		height: 100%;
+		top: calc(-1 * var(--elevation));
+		left: -1px;
+		border-radius: 999em;
+		background-color: var(--background-colour);
+		z-index: -1;
+		border: 1px dashed var(--border-colour);
+	}
+
+	button:hover,
+	button:focus {
+		background-color: var(--background-colour--shadow--focus);
+	}
+
+	button:hover::after,
+	button:focus::after {
+		background-color: var(--background-colour--focus);
+	}
+
+	button:active {
+		--elevation: 0px;
 	}
 
 	button.icon-only {
@@ -36,10 +75,31 @@
 	}
 
 	button.flat {
-		border: 1px solid #ddd;
+		--background-colour--shadow: #eee;
+		--background-colour--shadow--focus: #ddd;
+		--border-width: 1px;
+		--elevation: -2px;
 	}
 
 	button.primary {
-		background-color: #03e421;
+		--border-colour: #000;
+		--background-colour: #03e421;
+		--background-colour--shadow: #03c41d;
+		--background-colour--focus: #03c91d;
+		--background-colour--shadow--focus: #04a71a;
+	}
+
+	button.inline {
+		border: 1px dashed var(--border-colour);
+		--background-colour--shadow: transparent;
+		--background-colour--shadow--focus: rgba(0, 0, 0, 0.2);
+		text-decoration: underline;
+		height: 24px;
+		--elevation: -2px;
+	}
+
+	button.inline::after,
+	button.flat::after {
+		display: none;
 	}
 </style>
