@@ -8,19 +8,29 @@ import (
 )
 
 func (endpoints) apiMe(ctx *fiber.Ctx) error {
-	userID, isAuthed := getSessionAuth(ctx, authRegularUser)
+	userID, isAuthed := getSessionAuth(ctx, authRegularUser|authAdminUser)
 	if !isAuthed {
 		return fiber.ErrUnauthorized
 	}
 
-	user, err := database.GetUser(userID)
-	if err != nil {
-		if errors.Is(err, database.ErrNotFound) {
-			// User has been deleted
-			ctx.Cookie(newSessionTokenDeletionCookie())
-			return fiber.ErrUnauthorized
+	var user *database.User
+
+	if userID == "admin" {
+		user = &database.User{
+			StudentID: "admin",
+			Name:      "Administrator",
 		}
-		return fmt.Errorf("apiVote get user: %w", err)
+	} else {
+		u, err := database.GetUser(userID)
+		if err != nil {
+			if errors.Is(err, database.ErrNotFound) {
+				// User has been deleted
+				ctx.Cookie(newSessionTokenDeletionCookie())
+				return fiber.ErrUnauthorized
+			}
+			return fmt.Errorf("apiVote get user: %w", err)
+		}
+		user = u
 	}
 
 	return ctx.JSON(user)
