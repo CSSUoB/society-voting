@@ -1,4 +1,4 @@
-module git.tdpain.net/codemicro/society-voting
+module github.com/CSSUoB/society-voting
 
 go 1.21.1
 

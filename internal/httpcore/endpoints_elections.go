@@ -4,8 +4,8 @@ import (
 	"crypto/subtle"
 	"errors"
 	"fmt"
-	"git.tdpain.net/codemicro/society-voting/internal/database"
-	"git.tdpain.net/codemicro/society-voting/internal/events"
+	"github.com/CSSUoB/society-voting/internal/database"
+	"github.com/CSSUoB/society-voting/internal/events"
 	"github.com/gofiber/fiber/v2"
 	"github.com/mattn/go-sqlite3"
 )

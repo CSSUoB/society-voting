@@ -3,7 +3,7 @@ package httpcore
 import (
 	"errors"
 	"fmt"
-	"git.tdpain.net/codemicro/society-voting/internal/database"
+	"github.com/CSSUoB/society-voting/internal/database"
 	"github.com/gofiber/fiber/v2"
 )
 

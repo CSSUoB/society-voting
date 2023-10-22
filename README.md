@@ -14,7 +14,7 @@
 - [x] Events
   - [ ] Discord webhook event notifier
 - [x] Use database transactions!
-- [ ] Change package namespace
+- [x] Change package namespace
 - [ ] Save election results to dedicated table
 - [x] Make election results prettier
 
