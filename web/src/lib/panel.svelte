@@ -38,17 +38,18 @@
 	}
 
 	span.header {
-		display: grid;
-		grid-template-columns: auto 1fr auto;
+		display: flex;
 		gap: 8px;
 		align-items: flex-start;
 		margin-bottom: 12px;
+		flex-wrap: wrap;
 	}
 
 	h1 {
 		margin-bottom: -3px;
 		text-overflow: ellipsis;
 		overflow: hidden;
+		flex-grow: 1;
 	}
 
 	span.material-symbols-rounded {
