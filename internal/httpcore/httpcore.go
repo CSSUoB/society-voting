@@ -44,6 +44,9 @@ func ListenAndServe(addr string) error {
 
 	app.Delete("/api/admin/user/delete", e.apiAdminDeleteUser)
 
+	app.Get("/presenter", e.presenterPage)
+	app.Get("/presenter/qr", e.presenterQRCode)
+
 	app.Use("/", func(ctx *fiber.Ctx) error {
 		_, isAuthed := getSessionAuth(ctx, authAdminUser|authRegularUser)
 
