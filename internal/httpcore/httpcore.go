@@ -152,7 +152,10 @@ func getSessionAuth(ctx *fiber.Ctx, authType uint) (string, bool) {
 
 func parseAndValidateRequestBody(ctx *fiber.Ctx, x any) error {
 	if err := json.Unmarshal(ctx.Body(), x); err != nil {
-		return fiber.ErrBadRequest
+		return &fiber.Error{
+			Code:    fiber.StatusBadRequest,
+			Message: "Invalid request JSON (" + err.Error() + ")",
+		}
 	}
 
 	if err := validator.Struct(x); err != nil {

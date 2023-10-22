@@ -208,7 +208,10 @@ func (endpoints) apiStandForElection(ctx *fiber.Ctx) error {
 	election, err := database.GetElection(request.ElectionID, tx)
 	if err != nil {
 		if errors.Is(err, database.ErrNotFound) {
-			return fiber.ErrNotFound
+			return &fiber.Error{
+				Code:    fiber.StatusNotFound,
+				Message: "Election with that ID not found",
+			}
 		}
 		return fmt.Errorf("apiStandForElection get election with id %d: %w", request.ElectionID, err)
 	}

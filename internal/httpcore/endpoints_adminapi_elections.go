@@ -103,7 +103,10 @@ func (endpoints) apiAdminStartElection(ctx *fiber.Ctx) error {
 	election, err := database.GetElection(request.ElectionID, tx)
 	if err != nil {
 		if errors.Is(err, database.ErrNotFound) {
-			return fiber.ErrNotFound
+			return &fiber.Error{
+				Code:    fiber.StatusNotFound,
+				Message: "Election with that ID not found",
+			}
 		}
 		return fmt.Errorf("apiAdminStartElection get election by ID: %w", err)
 	}

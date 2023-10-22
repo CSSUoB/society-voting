@@ -23,7 +23,7 @@
 - [x] Allow admin access to non-user-specific sections of the normal API
 - [x] Add `isRON` flag to `BallotEntry`
 - [x] Vote validation code
-- [ ] Add error messages to all status code-only responses where applicable
+- [x] Add error messages to all status code-only responses where applicable
 
 #### User
 
