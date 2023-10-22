@@ -35,6 +35,7 @@ func (m *Message) ToSSE() ([]byte, error) {
 		return nil, err
 	}
 
+	sb.WriteString("data: ")
 	sb.Write(jdat)
 	sb.WriteString("\n\n")
 

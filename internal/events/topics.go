@@ -12,17 +12,17 @@ const (
 )
 
 type UserElectionStandData struct {
-	User     *database.User
-	Election *database.Election
+	User     *database.User     `json:"user"`
+	Election *database.Election `json:"election"`
 }
 
 type UserElectionWithdrawData struct {
-	User     *database.User
-	Election *database.Election
-	ByForce  bool
+	User     *database.User     `json:"user"`
+	Election *database.Election `json:"election"`
+	ByForce  bool               `json:"byForce"`
 }
 
 type ElectionEndedData struct {
-	Election *database.Election
-	Result   string
+	Election *database.Election `json:"election"`
+	Result   string             `json:"result"`
 }
