@@ -26,12 +26,14 @@
 </script>
 
 <Panel title="Hi {user.name.split(' ')[0]}!" headerIcon="waving_hand">
-	<Button
-		slot="header-action"
-		text="Use a different name"
-		kind="emphasis"
-		on:click={() => dialog.showModal()}
-	/>
+	{#if user.studentID !== "admin"}
+		<Button
+			slot="header-action"
+			text="Use a different name"
+			kind="emphasis"
+			on:click={() => dialog.showModal()}
+		/>
+	{/if}
 	<p>Welcome to CSS' voting system! View, stand for, and vote in currently running elections.</p>
 	<br />
 
