@@ -4,6 +4,7 @@ import (
 	cryptoRand "crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"github.com/CSSUoB/society-voting/internal/config"
 	"github.com/CSSUoB/society-voting/web"
 	"github.com/bwmarrin/go-alone"
@@ -19,7 +20,26 @@ import (
 type endpoints struct{}
 
 func ListenAndServe(addr string) error {
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
+			var (
+				code = fiber.StatusInternalServerError
+				e    *fiber.Error
+				msg  string
+			)
+			if errors.As(err, &e) {
+				code = e.Code
+				msg = err.Error()
+			} else {
+				slog.Error("fiber runtime error", "error", err, "URL", ctx.OriginalURL())
+				msg = "Internal Server Error"
+			}
+			ctx.Set(fiber.HeaderContentType, fiber.MIMETextPlainCharsetUTF8)
+			return ctx.Status(code).SendString(msg)
+		},
+		DisableStartupMessage: !config.Get().Debug,
+		AppName:               "society-voting",
+	})
 
 	e := endpoints{}
 
