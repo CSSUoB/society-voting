@@ -171,7 +171,6 @@ func (endpoints) authLogout(ctx *fiber.Ctx) error {
 	return htmlutil.SendPage(ctx, htmlutil.SkeletonPage(
 		titleLine,
 		html.H1(g.Text("You're all signed out!")),
-		html.Br(),
 		html.A(g.Attr("href", "/auth/login"), g.Text("Click here to login again")),
 	))
 }
