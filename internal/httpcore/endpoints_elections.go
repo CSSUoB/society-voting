@@ -157,6 +157,27 @@ func (endpoints) apiVote(ctx *fiber.Ctx) error {
 		}
 	}
 
+	ballotOptions, err := database.GetAllBallotEntriesForElection(election.ID, tx)
+	if err != nil {
+		return fmt.Errorf("apiVote get all ballot entries: %w", err)
+	}
+
+	for _, id := range request.Vote {
+		var found bool
+		for _, b := range ballotOptions {
+			if b.ID == id {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return &fiber.Error{
+				Code:    fiber.StatusBadRequest,
+				Message: fmt.Sprintf("%d is not a valid ballot option.", id),
+			}
+		}
+	}
+
 	if err := (&database.Vote{
 		ElectionID: election.ID,
 		UserID:     user.StudentID,

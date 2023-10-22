@@ -33,7 +33,7 @@
 - [x] Display currently running election in /api/elections
 - [x] Vote endpoint
 - [x] Make only the main election list endpoint return the candidate list
-- [ ] Ensure vote IDs are real ballot options
+- [x] Ensure vote IDs are real ballot options
 
 #### Admin
 
