@@ -170,7 +170,7 @@ func (endpoints) apiAdminStopElection(ctx *fiber.Ctx) error {
 		if errors.Is(err, database.ErrNotFound) {
 			return &fiber.Error{
 				Code:    fiber.StatusConflict,
-				Message: "There is no active election that you can vote in.",
+				Message: "There is no active election to stop.",
 			}
 		}
 		return fmt.Errorf("apiVote get active election: %wz", err)
@@ -210,6 +210,10 @@ func (endpoints) apiAdminStopElection(ctx *fiber.Ctx) error {
 
 	if err := database.DeleteBallotForElection(election.ID, tx); err != nil {
 		return fmt.Errorf("apiAdminStopElection delete ballot: %w", err)
+	}
+
+	if err := database.DeleteCandidatesForElection(election.ID, tx); err != nil {
+		return fmt.Errorf("apiAdminStopElection delete candidates: %w", err)
 	}
 
 	if err := election.Delete(tx); err != nil {
