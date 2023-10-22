@@ -123,7 +123,7 @@ func sendEmbed(embed *MinimalEmbed) error {
 		}
 
 		for i, file := range embed.Files {
-			part, _ := writer.CreateFormFile(fmt.Sprintf("files[%d]", i), fmt.Sprintf("%s %s.txt", file.Filename, time.Now().UTC().Format("2006-01-02")))
+			part, _ := writer.CreateFormFile(fmt.Sprintf("files[%d]", i), file.Filename)
 			_, _ = part.Write([]byte(file.Content))
 		}
 
