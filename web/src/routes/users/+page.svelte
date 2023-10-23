@@ -19,6 +19,10 @@
 	};
 </script>
 
+<svelte:head>
+	<title>Users</title>
+</svelte:head>
+
 <Panel title="Manage users" headerIcon="admin_panel_settings">
 	<Button slot="header-action" icon="search" kind="emphasis" text="Search users" />
 	<List items={data.users} let:prop={user}>
