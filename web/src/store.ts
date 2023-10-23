@@ -6,4 +6,13 @@ export interface User {
     admin: boolean;
 }
 
+export interface Election {
+    roleName: string;
+    description: string;
+    isActive: boolean;
+    id: number;
+    candidates: null;
+}
+
 export const userStore = writable<User>(null!);
+export const electionStore = writable<Array<Election>>([]);

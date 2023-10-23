@@ -5,5 +5,7 @@ export const API = {
     ME: `/api/me`,
     ME_NAME: `/api/me/name`,
 
+    ELECTION: `api/election`,
+
     ADMIN_ELECTION: `api/admin/election`
 } as const;
