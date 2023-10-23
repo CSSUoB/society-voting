@@ -18,9 +18,15 @@ type Election struct {
 	IsActive bool `json:"isActive"`
 }
 
+type ElectionCandidate struct {
+	Name string `json:"name"`
+	ID string `json:"-"`
+	IsMe bool `json:"isMe"`
+}
+
 type ElectionWithCandidates struct {
 	Election
-	Candidates []string `json:"candidates"`
+	Candidates []*ElectionCandidate `json:"candidates"`
 }
 
 func (e *Election) Insert(x ...bun.IDB) error {
@@ -58,13 +64,13 @@ func (e *Election) WithCandidates(x ...bun.IDB) (*ElectionWithCandidates, error)
 	if err != nil {
 		return nil, fmt.Errorf("populate Election candidates: %w", err)
 	}
-	var candidateStrings []string
+	var candidateModels []*ElectionCandidate
 	for _, cand := range candidates {
-		candidateStrings = append(candidateStrings, cand.Name)
+		candidateModels = append(candidateModels, &ElectionCandidate{Name: cand.Name, ID: cand.StudentID})
 	}
 	return &ElectionWithCandidates{
 		Election:   *e,
-		Candidates: candidateStrings,
+		Candidates: candidateModels,
 	}, nil
 }
 

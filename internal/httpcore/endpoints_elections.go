@@ -11,7 +11,8 @@ import (
 )
 
 func (endpoints) apiListElections(ctx *fiber.Ctx) error {
-	if _, ok := getSessionAuth(ctx, authAdminUser|authRegularUser); !ok {
+	userID, isAuthed := getSessionAuth(ctx, authAdminUser|authRegularUser)
+	if !isAuthed {
 		return fiber.ErrUnauthorized
 	}
 
@@ -26,6 +27,9 @@ func (endpoints) apiListElections(ctx *fiber.Ctx) error {
 		if ec, err := election.WithCandidates(); err != nil {
 			return fmt.Errorf("apiListElections: %w", err)
 		} else {
+			for _, cand := range ec.Candidates {
+				cand.IsMe = cand.ID == userID
+			}
 			res = append(res, ec)
 		}
 	}
