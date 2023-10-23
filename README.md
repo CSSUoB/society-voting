@@ -20,7 +20,6 @@ Ensure that the following keys are changed:
  - `platform.discordWebhook.threadID` should be set to a Discord thread ID that webhook messages should be sent in. This is optional. If specified, the thread should be in the same channel that the webhook is associated with.
 
 ```yaml
-debug: true
 http:
   host: "0.0.0.0"
 guild:
