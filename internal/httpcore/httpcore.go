@@ -13,6 +13,7 @@ import (
 	"log/slog"
 	"math/rand"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -70,18 +71,26 @@ func ListenAndServe(addr string) error {
 	app.Get("/presenter/qr", e.presenterQRCode)
 
 	app.Use("/", func(ctx *fiber.Ctx) error {
-		_, isAuthed := getSessionAuth(ctx, authAdminUser|authRegularUser)
-
-		if isAuthed {
-			return ctx.Next()
+		if p := ctx.Path(); p != "/" && !urlFileRegexp.MatchString(p) {
+			// override path to serve everything as if it were requested to /
+			ctx.Path("/")
+			return ctx.RestartRouting()
 		}
 
-		return ctx.Redirect("/auth/login")
+		_, isAuthed := getSessionAuth(ctx, authAdminUser|authRegularUser)
+
+		if !isAuthed {
+			return ctx.Redirect("/auth/login")
+		}
+
+		return ctx.Next()
 	}, web.GetHandler())
 
 	slog.Info("HTTP server alive", "address", addr, "voteCode", voteCode)
 	return app.Listen(addr)
 }
+
+var urlFileRegexp = regexp.MustCompile(`[\w\-/]+\.(css|js|svg|json)`)
 
 var (
 	signer    *goalone.Sword
