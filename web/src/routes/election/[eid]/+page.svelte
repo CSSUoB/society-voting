@@ -59,7 +59,11 @@
 	<List items={election.candidates ?? []} let:prop={candidate}>
 		<li class="candidate">
 			<Avatar name={candidate.name} />
-			<p>{candidate.name}</p>
+			<p>
+				{candidate.name}{#if candidate.isMe}
+					<span><small>You</small></span>
+				{/if}
+			</p>
 			{#if candidate.isMe}
 				<Button text="Withdraw" on:click={() => standOrWithdraw(election.id, false)} />
 			{/if}
@@ -94,5 +98,16 @@
 	li.candidate p {
 		text-overflow: ellipsis;
 		overflow: hidden;
+	}
+
+	li.candidate p > span {
+		margin-left: 8px;
+		background: #000;
+		color: #fff;
+		padding: 0 8px;
+		border-radius: 4px;
+		text-transform: uppercase;
+		font-family: "JetBrains Mono";
+		font-weight: bold;
 	}
 </style>
