@@ -1,0 +1,37 @@
+name: Build and publish Docker image
+
+on:
+  push:
+    branches:    
+      - "build"
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: "ghcr.io/cssuob/society-voting"
+
+concurrency:
+  group: build-docker-image
+  cancel-in-progress: true
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      
+    - name: Make image tags
+      id: make_tags
+      run: |
+        echo "::set-output name=LATEST::$IMAGE_NAME:latest"
+        echo "::set-output name=VERSIONED::$IMAGE_NAME:$(git rev-parse --short HEAD)"
+      
+    - name: Build Docker image
+      run: docker build . --file Dockerfile --tag ${{ steps.make_tags.outputs.LATEST }} --tag ${{ steps.make_tags.outputs.VERSIONED }}
+      
+    - name: Login to ghcr.io
+      run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io --username cssuob --password-stdin
+      
+    - name: Push image
+      run: docker push --all-tags $IMAGE_NAME
