@@ -5,7 +5,6 @@
 	import Input from "$lib/input.svelte";
 	import Panel from "$lib/panel.svelte";
 	import { user, type User } from "../store";
-	import { onDestroy } from "svelte";
 
 	let dialog: HTMLDialogElement;
 	const updateName = async (e: CustomEvent<any>) => {

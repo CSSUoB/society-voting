@@ -1,6 +1,5 @@
 <script lang="ts">
 	import Panel from "$lib/panel.svelte";
-	import { onDestroy } from "svelte";
 	import { elections } from "../store";
 	import { goto } from "$app/navigation";
 	const images = [

@@ -5,7 +5,6 @@
 	import Current from "./current.svelte";
 	import Users from "./users.svelte";
 	import { user, type User, elections, type Election } from "../store";
-	import { onDestroy } from "svelte";
 
 	/** @type {import('./$types').PageData} */
 	export let data: { user: User; elections: Election[] };

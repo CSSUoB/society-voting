@@ -5,7 +5,6 @@
 	import Dialog from "$lib/dialog.svelte";
 	import Input from "$lib/input.svelte";
 	import { API } from "$lib/endpoints";
-	import { onDestroy } from "svelte";
 	import List from "$lib/list.svelte";
 	import { _getElections } from "./+layout";
 	import { goto } from "$app/navigation";
