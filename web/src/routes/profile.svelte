@@ -20,7 +20,7 @@
 		});
 
 		if (response.ok) {
-			$: userStore.set({ ...user, name: e.detail.name });
+			userStore.set({ ...user, name: e.detail.name });
 		}
 	};
 

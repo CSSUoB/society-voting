@@ -1,14 +1,22 @@
 <script lang="ts">
 	import Panel from "$lib/panel.svelte";
 	import { get } from "svelte/store";
-	import { userStore } from "../store";
+	import { userStore, type Election, electionStore } from "../store";
 	import Button from "$lib/button.svelte";
 	import Dialog from "$lib/dialog.svelte";
 	import Input from "$lib/input.svelte";
 	import { API } from "$lib/endpoints";
+	import { onDestroy } from "svelte";
+	import List from "$lib/list.svelte";
+	import { _getElections } from "./+layout";
 
 	const user = get(userStore);
 	let dialog: HTMLDialogElement;
+
+	let elections: Array<Election>;
+
+	const unsubscribe = electionStore.subscribe((e) => (elections = e));
+	onDestroy(unsubscribe);
 
 	const createElection = async (e: CustomEvent<any>) => {
 		const response = await fetch(API.ADMIN_ELECTION, {
@@ -17,12 +25,18 @@
 		});
 
 		if (response.ok) {
-			alert("Created election!");
+			electionStore.set(await _getElections());
 		}
 	};
 </script>
 
 <Panel title="Upcoming elections" headerIcon="campaign">
+	<List items={elections.filter((e) => !e.isActive)} let:prop={election}>
+		<li class="election">
+			<p>{election.roleName}</p>
+			<Button icon="arrow_forward" />
+		</li>
+	</List>
 	{#if user.admin}
 		<Button
 			kind="emphasis"
@@ -43,3 +57,17 @@
 		<Button text="Create election" kind="emphasis" name="submit" />
 	</svelte:fragment>
 </Dialog>
+
+<style>
+	li.election {
+		display: grid;
+		grid-template-columns: 1fr auto;
+		gap: 8px;
+		align-items: center;
+		padding: 8px 0;
+	}
+
+	li.election:not(:last-child) {
+		border-bottom: 1px solid #eee;
+	}
+</style>
