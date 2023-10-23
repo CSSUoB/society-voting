@@ -43,7 +43,7 @@ func (endpoints) apiSetOwnName(ctx *fiber.Ctx) error {
 	}
 
 	var request = struct {
-		Name string `json:"name" validate:"required"`
+		Name string `json:"name" validate:"required,max=64"`
 	}{}
 
 	if err := parseAndValidateRequestBody(ctx, &request); err != nil {

@@ -18,8 +18,8 @@ func (endpoints) apiAdminCreateElection(ctx *fiber.Ctx) error {
 	}
 
 	var request = struct {
-		RoleName    string `validate:"required"`
-		Description string
+		RoleName    string `validate:"required,max=64"`
+		Description string `validate:"max=1024"`
 	}{}
 
 	if err := parseAndValidateRequestBody(ctx, &request); err != nil {
