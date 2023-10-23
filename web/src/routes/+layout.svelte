@@ -13,8 +13,7 @@
 	$: user.set(data.user);
 	$: elections.set(data.elections);
 
-	$: currentElections = $elections?.filter((e) => e.isActive) ?? [];
-	$: upcomingElections = $elections?.filter((e) => !e.isActive) ?? [];
+	$: currentElection = $elections?.find((e) => e.isActive);
 </script>
 
 <div class="container">
@@ -23,7 +22,7 @@
 	<main>
 		<div class="rail">
 			<Profile />
-			{#if !data.user.admin && currentElections.length > 0}
+			{#if !data.user.admin && currentElection}
 				<Current />
 			{/if}
 			<Upcoming />
