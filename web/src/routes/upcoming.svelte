@@ -9,6 +9,7 @@
 	import { onDestroy } from "svelte";
 	import List from "$lib/list.svelte";
 	import { _getElections } from "./+layout";
+	import { goto } from "$app/navigation";
 
 	const user = get(userStore);
 	let dialog: HTMLDialogElement;
@@ -34,7 +35,7 @@
 	<List items={elections.filter((e) => !e.isActive)} let:prop={election}>
 		<li class="election">
 			<p>{election.roleName}</p>
-			<Button icon="arrow_forward" />
+			<Button icon="arrow_forward" on:click={() => goto(`/election/${election.id}`)} />
 		</li>
 	</List>
 	{#if user.admin}

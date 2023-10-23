@@ -16,6 +16,9 @@
 
 	const unsubscribe = electionStore.subscribe((e) => (elections = e));
 	onDestroy(unsubscribe);
+
+	$: currentElections = elections.filter((e) => e.isActive);
+	$: upcomingElections = elections.filter((e) => !e.isActive);
 </script>
 
 <div class="container">
@@ -24,7 +27,7 @@
 	<main>
 		<div class="rail">
 			<Profile />
-			{#if !data.user.admin && elections.some((e) => e.isActive)}
+			{#if !data.user.admin && currentElections.length > 0}
 				<Current />
 			{/if}
 			<Upcoming />
