@@ -9,6 +9,7 @@ export const API = {
     ELECTION_STAND: `/api/election/stand`,
 
     ADMIN_ELECTION: `/api/admin/election`,
+    ADMIN_ELECTION_START: `/api/admin/election/start`,
     ADMIN_USER: `/api/admin/user`,
     ADMIN_USER_DELETE: `/api/admin/user/delete`,
 } as const;

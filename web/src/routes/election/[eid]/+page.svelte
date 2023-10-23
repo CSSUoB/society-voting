@@ -27,6 +27,24 @@
 			elections.set(await _getElections());
 		}
 	};
+
+	let floorCandidatesInput: HTMLTextAreaElement;
+	const startElection = async (id: number) => {
+		const extraNames = floorCandidatesInput.value
+			.trim()
+			.split("\n")
+			.filter((x) => x)
+			.map((x) => x.trim());
+		const response = await fetch(API.ADMIN_ELECTION_START, {
+			method: "POST",
+			body: JSON.stringify({ id, extraNames }),
+		});
+
+		if (response.ok) {
+			elections.set(await _getElections());
+			goto("/");
+		}
+	};
 </script>
 
 <svelte:head>
@@ -69,13 +87,28 @@
 			{/if}
 		</li>
 	</List>
+	{#if (election.candidates?.length ?? 0) === 0}
+		<p>There are no candidates currently running in this election</p>
+	{/if}
 </Panel>
 
-<Panel title="Admin stuff" headerIcon="admin_panel_settings">
-	<li class="candidate">
-		<Button text="Start election" />
-	</li>
-</Panel>
+{#if $user.admin}
+	<Panel title="Admin stuff" headerIcon="admin_panel_settings">
+		<div class="admin-controls">
+			<h3>Candidates standing from the floor</h3>
+			<textarea
+				bind:this={floorCandidatesInput}
+				placeholder="Enter each candidate's name in a new line"
+			/>
+			<Button
+				kind="primary"
+				text="Save candidates and start election"
+				on:click={() => startElection(election.id)}
+			/>
+			<Button text="Delete election" />
+		</div>
+	</Panel>
+{/if}
 
 <style>
 	img.banner-image {
@@ -109,5 +142,12 @@
 		text-transform: uppercase;
 		font-family: "JetBrains Mono";
 		font-weight: bold;
+	}
+
+	div.admin-controls {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 8px;
 	}
 </style>
