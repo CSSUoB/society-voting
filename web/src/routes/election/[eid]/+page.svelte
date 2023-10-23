@@ -12,7 +12,7 @@
 	import { _getElections } from "../../+layout";
 
 	export let data: { id: number };
-	$: election = $elections.find((e) => e.id === data.id)!;
+	$: election = $elections?.find((e) => e.id === data.id)!;
 	$: if (!election) {
 		goto("/", { replaceState: true });
 	}

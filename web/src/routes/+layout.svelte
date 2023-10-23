@@ -13,8 +13,8 @@
 	$: user.set(data.user);
 	$: elections.set(data.elections);
 
-	$: currentElections = $elections.filter((e) => e.isActive);
-	$: upcomingElections = $elections.filter((e) => !e.isActive);
+	$: currentElections = $elections?.filter((e) => e.isActive) ?? [];
+	$: upcomingElections = $elections?.filter((e) => !e.isActive) ?? [];
 </script>
 
 <div class="container">

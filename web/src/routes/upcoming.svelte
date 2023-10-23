@@ -24,7 +24,7 @@
 </script>
 
 <Panel title="Upcoming elections" headerIcon="campaign">
-	<List items={$elections.filter((e) => !e.isActive)} let:prop={election}>
+	<List items={$elections?.filter((e) => !e.isActive) ?? []} let:prop={election}>
 		<li class="election">
 			<p>{election.roleName}</p>
 			<Button icon="arrow_forward" on:click={() => goto(`/election/${election.id}`)} />
