@@ -8,7 +8,9 @@ export async function load({ fetch, params }) {
     if (!response.ok) {
         throw redirect(302, API.AUTH_LOGIN);
     }
+    const user = await response.json();
+
     return {
-        user: await response.json()
+        user: { ...user, admin: user.studentID === "admin" }
     };
 }

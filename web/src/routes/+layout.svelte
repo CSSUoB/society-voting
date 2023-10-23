@@ -18,9 +18,13 @@
 	<main>
 		<div class="rail">
 			<Profile />
-			<Current />
+			{#if !data.user.admin}
+				<Current />
+			{/if}
 			<Upcoming />
-			<Users />
+			{#if data.user.admin}
+				<Users />
+			{/if}
 		</div>
 		<div class="rail">
 			<slot />

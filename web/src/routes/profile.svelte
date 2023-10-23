@@ -30,7 +30,7 @@
 </script>
 
 <Panel title="Hi {user.name.split(' ')[0]}!" headerIcon="waving_hand">
-	{#if user.studentID !== "admin"}
+	{#if !user.admin}
 		<Button
 			slot="header-action"
 			text="Use a different name"
