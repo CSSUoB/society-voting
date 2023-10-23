@@ -1,3 +1,4 @@
+import type { Optional } from '$lib/optional';
 import { writable } from 'svelte/store'
 
 export interface User {
@@ -11,7 +12,7 @@ export interface Election {
     description: string;
     isActive: boolean;
     id: number;
-    candidates: null;
+    candidates: Optional<Array<{ name: string, isMe: boolean }>>;
 }
 
 export const user = writable<User>(null!);

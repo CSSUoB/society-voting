@@ -6,6 +6,7 @@ export const API = {
     ME_NAME: `/api/me/name`,
 
     ELECTION: `/api/election`,
+    ELECTION_STAND: `/api/election/stand`,
 
     ADMIN_ELECTION: `/api/admin/election`,
     ADMIN_USER: `/api/admin/user`,

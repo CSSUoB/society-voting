@@ -11,7 +11,7 @@
 		"cc5500,112233", // brown
 	];
 
-	let colour = colours[name.charCodeAt(0) % colours.length ?? 0];
+	$: colour = colours[name.charCodeAt(0) % colours.length ?? 0];
 </script>
 
 <!-- TODO: Hash names before sending to external API -->
