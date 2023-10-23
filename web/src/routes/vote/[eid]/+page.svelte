@@ -8,6 +8,10 @@
 	let candidates = [{ name: "" }];
 </script>
 
+<svelte:head>
+	<title>Vote for: X</title>
+</svelte:head>
+
 <Panel title="Electing: President">
 	<p>
 		Lorem ipsum dolor sit amet consectetur adipisicing elit. Quas recusandae asperiores amet iure

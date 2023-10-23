@@ -1,5 +1,8 @@
 <script lang="ts">
 	import Panel from "$lib/panel.svelte";
+	import { onDestroy } from "svelte";
+	import { electionStore, type Election } from "../store";
+	import { goto } from "$app/navigation";
 	const images = [
 		"original",
 		"christmas",
@@ -11,7 +14,26 @@
 		"halloween",
 	];
 	const image = images[Math.floor(Math.random() * images.length)];
+
+	let elections: Array<Election>;
+	const unsubscribe = electionStore.subscribe((e) => (elections = e));
+	onDestroy(unsubscribe);
+
+	$: currentElections = elections?.filter((e) => e.isActive) ?? [];
+	$: upcomingElections = elections?.filter((e) => !e.isActive) ?? [];
+
+	$: if (currentElections.length > 0) {
+		goto(`/vote/${currentElections[0].id}`);
+	}
+
+	$: if (upcomingElections.length > 0) {
+		goto(`/election/${upcomingElections[0].id}`);
+	}
 </script>
+
+<svelte:head>
+	<title>CSS Elects</title>
+</svelte:head>
 
 <Panel title="There are no upcoming elections">
 	<p>Check this space later for updates. Here's a random TeX for now.</p>
