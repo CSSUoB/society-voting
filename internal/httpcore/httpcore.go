@@ -112,7 +112,7 @@ func newSessionTokenCookie(tok string) *fiber.Cookie {
 	return &fiber.Cookie{
 		Name:        sessionTokenCookieName,
 		Value:       tok,
-		Secure:      true,
+		Secure:      !config.Get().Debug,
 		SessionOnly: true,
 	}
 }
@@ -120,7 +120,7 @@ func newSessionTokenCookie(tok string) *fiber.Cookie {
 func newSessionTokenDeletionCookie() *fiber.Cookie {
 	return &fiber.Cookie{
 		Name:        sessionTokenCookieName,
-		Secure:      true,
+		Secure:      !config.Get().Debug,
 		SessionOnly: true,
 		Expires:     time.Date(2010, 1, 1, 1, 1, 1, 1, time.UTC),
 	}
