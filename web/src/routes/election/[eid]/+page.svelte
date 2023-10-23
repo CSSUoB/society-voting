@@ -6,40 +6,63 @@
 	import Panel from "$lib/panel.svelte";
 
 	import run from "$lib/assets/run_for_election.svg";
+	import { elections, user } from "../../../store";
+	import { goto } from "$app/navigation";
+	import { API } from "$lib/endpoints";
+	import { _getElections } from "../../+layout";
 
-	let candidates = [{ name: "" }];
+	export let data: { id: number };
+	$: election = $elections.find((e) => e.id === data.id)!;
+	$: if (!election) {
+		goto("/", { replaceState: true });
+	}
+
+	const standOrWithdraw = async (id: number, stand: boolean) => {
+		const response = await fetch(API.ELECTION_STAND, {
+			method: stand ? "POST" : "DELETE",
+			body: JSON.stringify({ id }),
+		});
+
+		if (response.ok) {
+			elections.set(await _getElections());
+		}
+	};
 </script>
 
 <svelte:head>
-	<title>Electing: X</title>
+	<title>Electing: {election.roleName}</title>
 </svelte:head>
-
-<Panel title="Electing: President">
-	<p>
-		Lorem ipsum dolor sit amet consectetur adipisicing elit. Quas recusandae asperiores amet iure
-		vitae magni quibusdam nulla minima, soluta ad pariatur autem dolor veritatis facere ullam culpa
-		nostrum velit! Nesciunt.
-	</p>
+<Panel title={`Electing: ${election.roleName}`}>
+	<p>{election.description}</p>
 </Panel>
 
-<Banner title="Interested in running?" kind="emphasis">
-	<img slot="image" src={run} alt="" class="banner-image" />
-	<svelte:fragment slot="content">
-		<p>
-			If you're thinking of running for election, go for it! Being on committee is super rewarding,
-			super good fun, and a great way to bolster your CV and give back to the community.
-		</p>
-		<br />
-		<Button text="Stand for election" kind="primary" />
-	</svelte:fragment>
-</Banner>
+{#if !$user.admin && !election.candidates?.some((c) => c.isMe)}
+	<Banner title="Interested in running?" kind="emphasis">
+		<img slot="image" src={run} alt="" class="banner-image" />
+		<svelte:fragment slot="content">
+			<p>
+				If you're thinking of running for election, go for it! Being on committee is super
+				rewarding, super good fun, and a great way to bolster your CV and give back to the
+				community.
+			</p>
+			<br />
+			<Button
+				text="Stand for election"
+				kind="primary"
+				on:click={() => standOrWithdraw(election.id, true)}
+			/>
+		</svelte:fragment>
+	</Banner>
+{/if}
 
 <Panel title="Candidates" headerIcon="groups">
-	<List items={candidates} let:prop={candidate}>
+	<List items={election.candidates ?? []} let:prop={candidate}>
 		<li class="candidate">
 			<Avatar name={candidate.name} />
 			<p>{candidate.name}</p>
-			<Button text="Withdraw" />
+			{#if candidate.isMe}
+				<Button text="Withdraw" on:click={() => standOrWithdraw(election.id, false)} />
+			{/if}
 		</li>
 	</List>
 </Panel>
