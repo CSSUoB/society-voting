@@ -44,3 +44,16 @@ func (endpoints) apiAdminDeleteUser(ctx *fiber.Ctx) error {
 	ctx.Status(fiber.StatusNoContent)
 	return nil
 }
+
+func (endpoints) apiAdminListUsers(ctx *fiber.Ctx) error {
+	if _, isAuthed := getSessionAuth(ctx, authAdminUser); !isAuthed {
+		return fiber.ErrUnauthorized
+	}
+
+	users, err := database.GetAllUsers()
+	if err != nil {
+		return fmt.Errorf("apiAdminListUsers get all users: %w", err)
+	}
+
+	return ctx.JSON(users)
+}

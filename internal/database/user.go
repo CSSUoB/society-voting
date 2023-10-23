@@ -64,3 +64,12 @@ func CountUsers(x ...bun.IDB) (int, error) {
 	}
 	return n, nil
 }
+
+func GetAllUsers(x ...bun.IDB) ([]*User, error) {
+	db := fromVariadic(x)
+	var res []*User
+	if err := db.NewSelect().Model(&res).Scan(context.Background(), &res); err != nil {
+		return nil, fmt.Errorf("get all Users: %w", err)
+	}
+	return res, nil
+}
