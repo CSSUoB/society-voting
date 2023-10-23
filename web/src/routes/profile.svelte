@@ -23,6 +23,10 @@
 			$: userStore.set({ ...user, name: e.detail.name });
 		}
 	};
+
+	const logOut = () => {
+		window.location.replace(API.AUTH_LOGOUT);
+	};
 </script>
 
 <Panel title="Hi {user.name.split(' ')[0]}!" headerIcon="waving_hand">
@@ -39,7 +43,7 @@
 
 	<span class="log-out">
 		<p>Not you?</p>
-		<Button text="Log out" kind="inline" />
+		<Button text="Log out" kind="inline" on:click={logOut} />
 	</span>
 </Panel>
 <Dialog bind:dialog title="Use a different name" on:submit={updateName}>
