@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Panel from "$lib/panel.svelte";
 	import { onDestroy } from "svelte";
-	import { electionStore, type Election } from "../store";
+	import { elections } from "../store";
 	import { goto } from "$app/navigation";
 	const images = [
 		"original",
@@ -15,12 +15,8 @@
 	];
 	const image = images[Math.floor(Math.random() * images.length)];
 
-	let elections: Array<Election>;
-	const unsubscribe = electionStore.subscribe((e) => (elections = e));
-	onDestroy(unsubscribe);
-
-	$: currentElections = elections?.filter((e) => e.isActive) ?? [];
-	$: upcomingElections = elections?.filter((e) => !e.isActive) ?? [];
+	$: currentElections = $elections?.filter((e) => e.isActive) ?? [];
+	$: upcomingElections = $elections?.filter((e) => !e.isActive) ?? [];
 
 	$: if (currentElections.length > 0) {
 		goto(`/vote/${currentElections[0].id}`);

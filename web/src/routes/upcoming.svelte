@@ -1,7 +1,6 @@
 <script lang="ts">
 	import Panel from "$lib/panel.svelte";
-	import { get } from "svelte/store";
-	import { userStore, type Election, electionStore } from "../store";
+	import { user, elections } from "../store";
 	import Button from "$lib/button.svelte";
 	import Dialog from "$lib/dialog.svelte";
 	import Input from "$lib/input.svelte";
@@ -11,14 +10,7 @@
 	import { _getElections } from "./+layout";
 	import { goto } from "$app/navigation";
 
-	const user = get(userStore);
 	let dialog: HTMLDialogElement;
-
-	let elections: Array<Election>;
-
-	const unsubscribe = electionStore.subscribe((e) => (elections = e));
-	onDestroy(unsubscribe);
-
 	const createElection = async (e: CustomEvent<any>) => {
 		const response = await fetch(API.ADMIN_ELECTION, {
 			method: "POST",
@@ -26,19 +18,19 @@
 		});
 
 		if (response.ok) {
-			electionStore.set(await _getElections());
+			elections.set(await _getElections());
 		}
 	};
 </script>
 
 <Panel title="Upcoming elections" headerIcon="campaign">
-	<List items={elections.filter((e) => !e.isActive)} let:prop={election}>
+	<List items={$elections.filter((e) => !e.isActive)} let:prop={election}>
 		<li class="election">
 			<p>{election.roleName}</p>
 			<Button icon="arrow_forward" on:click={() => goto(`/election/${election.id}`)} />
 		</li>
 	</List>
-	{#if user.admin}
+	{#if $user.admin}
 		<Button
 			kind="emphasis"
 			text="Create a new election"

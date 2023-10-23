@@ -4,13 +4,8 @@
 	import { API } from "$lib/endpoints";
 	import Input from "$lib/input.svelte";
 	import Panel from "$lib/panel.svelte";
-	import { userStore, type User } from "../store";
+	import { user, type User } from "../store";
 	import { onDestroy } from "svelte";
-
-	let user: User;
-
-	const unsubscribe = userStore.subscribe((u) => (user = u));
-	onDestroy(unsubscribe);
 
 	let dialog: HTMLDialogElement;
 	const updateName = async (e: CustomEvent<any>) => {
@@ -20,7 +15,7 @@
 		});
 
 		if (response.ok) {
-			userStore.set({ ...user, name: e.detail.name });
+			user.set({ ...$user, name: e.detail.name });
 		}
 	};
 
@@ -29,9 +24,9 @@
 	};
 </script>
 
-<Panel title="Hi {user.name.split(' ')[0]}!" headerIcon="waving_hand">
+<Panel title="Hi {$user.name.split(' ')[0]}!" headerIcon="waving_hand">
 	<svelte:fragment slot="header-action">
-		{#if !user.admin}
+		{#if !$user.admin}
 			<Button text="Use a different name" kind="emphasis" on:click={() => dialog.showModal()} />
 		{/if}
 	</svelte:fragment>
@@ -45,7 +40,7 @@
 </Panel>
 <Dialog bind:dialog title="Use a different name" on:submit={updateName}>
 	<p>Enter a new name to use</p>
-	<Input value={user.name} name="name" />
+	<Input value={$user.name} name="name" />
 	<svelte:fragment slot="actions">
 		<Button text="Cancel" />
 		<Button text="Update name" kind="emphasis" name="submit" />

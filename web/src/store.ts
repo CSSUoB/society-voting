@@ -14,5 +14,5 @@ export interface Election {
     candidates: null;
 }
 
-export const userStore = writable<User>(null!);
-export const electionStore = writable<Array<Election>>([]);
+export const user = writable<User>(null!);
+export const elections = writable<Array<Election>>([]);

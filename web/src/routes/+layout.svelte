@@ -4,21 +4,17 @@
 	import Upcoming from "./upcoming.svelte";
 	import Current from "./current.svelte";
 	import Users from "./users.svelte";
-	import { userStore, type User, type Election, electionStore } from "../store";
+	import { user, type User, elections, type Election } from "../store";
 	import { onDestroy } from "svelte";
 
 	/** @type {import('./$types').PageData} */
 	export let data: { user: User; elections: Election[] };
-	let elections: Array<Election>;
 
-	$: userStore.set(data.user);
-	$: electionStore.set(data.elections);
+	$: user.set(data.user);
+	$: elections.set(data.elections);
 
-	const unsubscribe = electionStore.subscribe((e) => (elections = e));
-	onDestroy(unsubscribe);
-
-	$: currentElections = elections.filter((e) => e.isActive);
-	$: upcomingElections = elections.filter((e) => !e.isActive);
+	$: currentElections = $elections.filter((e) => e.isActive);
+	$: upcomingElections = $elections.filter((e) => !e.isActive);
 </script>
 
 <div class="container">
