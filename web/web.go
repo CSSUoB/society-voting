@@ -10,7 +10,7 @@ import (
 //go:generate npm install
 //go:generate npm run build
 
-//go:embed dist/*
+//go:embed dist/* dist/_app
 var fs embed.FS
 
 func GetHandler() fiber.Handler {
