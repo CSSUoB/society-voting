@@ -53,7 +53,7 @@ func (endpoints) authLogin(ctx *fiber.Ctx) error {
 				goto incorrectPassword
 			} else {
 				ctx.Cookie(newSessionTokenCookie(signData("admin", "admin")))
-				return ctx.Redirect("/app")
+				return ctx.Redirect("/")
 			}
 		}
 
