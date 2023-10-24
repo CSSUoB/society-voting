@@ -6,9 +6,10 @@
 	export let kind: "flat" | "inline" | "emphasis" | "primary" = "flat";
 	export let type: "button" | "submit" | "reset" | null | undefined = undefined;
 	export let name: Optional<string> = null;
+	export let disabled = false;
 </script>
 
-<button on:click class={`${kind} ${icon && !text ? "icon-only" : ""}`} {type} {name}>
+<button on:click class={`${kind} ${icon && !text ? "icon-only" : ""}`} {type} {name} {disabled}>
 	{#if text}
 		{text}
 	{/if}
@@ -53,17 +54,21 @@
 		border: 1px dashed var(--border-colour);
 	}
 
-	button:hover,
-	button:focus {
+	button:disabled {
+		opacity: 0.8;
+	}
+
+	button:not(:disabled):hover,
+	button:not(:disabled):focus {
 		background-color: var(--background-colour--shadow--focus);
 	}
 
-	button:hover::after,
-	button:focus::after {
+	button:not(:disabled):hover::after,
+	button:not(:disabled):focus::after {
 		background-color: var(--background-colour--focus);
 	}
 
-	button:active {
+	button:not(:disabled):active {
 		--elevation: 0px;
 	}
 
