@@ -1,73 +1,97 @@
 <script lang="ts">
-	import Avatar from "$lib/avatar.svelte";
-	import ButtonGroup from "$lib/button-group.svelte";
-	import Button from "$lib/button.svelte";
 	import List from "$lib/list.svelte";
 	import Panel from "$lib/panel.svelte";
+	import { user, type CurrentElection } from "../../store";
+	import BallotEntry from "./ballot-entry.svelte";
+	import type { BallotEntry as BallotEntryT } from "../../store";
+	import Button from "$lib/button.svelte";
+	import { API } from "$lib/endpoints";
 
-	let candidates = [{ name: "" }];
+	export let data: CurrentElection;
+	let ballot: Array<BallotEntryT | undefined> = Array.from(Array(data.ballot.length));
+	let errors = Array.from(Array(ballot.length));
+	let codeInput: HTMLInputElement;
+
+	const updateAndValidate = (index: number, changeEvent: Event) => {
+		const id: number = parseInt((changeEvent.target as HTMLSelectElement).value);
+		const candidate = data.ballot.find((c) => c.id === id);
+		ballot = ballot.map((b, i) => (i === index ? candidate : b));
+
+		errors = ballot.map((b, i) => {
+			if (b === undefined && ballot.slice(i).filter((x) => x).length > 0)
+				return "You cannot have gaps in your ranking";
+			if (b === undefined) return undefined;
+			if (ballot.filter((bb) => bb?.id === b.id).length !== 1)
+				return `You cannot rank ${b.isRON ? b.name : b.name.split(" ")[0]} more than once`;
+			return undefined;
+		});
+	};
+
+	const submit = async () => {
+		if (errors.filter((x) => x).length > 0) return;
+		const votes = ballot.filter((x) => x).map((b) => b?.id);
+		const response = await fetch(API.ELECTION_CURRENT_VOTE, {
+			method: "POST",
+			body: JSON.stringify({ vote: votes, code: codeInput.value.trim().toUpperCase() }),
+		});
+		if (!response.ok) {
+			// show error code
+			return;
+		}
+		// disallow voting again
+		// show vote tex sticker
+	};
 </script>
 
 <svelte:head>
-	<title>Vote for: X</title>
+	<title>Vote for: {data.election.roleName}</title>
 </svelte:head>
 
-<Panel title="Electing: President">
-	<p>
-		Lorem ipsum dolor sit amet consectetur adipisicing elit. Quas recusandae asperiores amet iure
-		vitae magni quibusdam nulla minima, soluta ad pariatur autem dolor veritatis facere ullam culpa
-		nostrum velit! Nesciunt.
-	</p>
+<Panel title={`Electing: ${data.election.roleName}`}>
+	<p>{data.election.description}</p>
 </Panel>
 
-<Panel title="Your ballot">
-	<p>Rank candidates in order of your choice. You do not need to rank all candidates.</p>
-	<List items={candidates} let:prop={candidate}>
-		<li class="candidate">
-			<p class="candidate-position">{candidate.index + 1}</p>
-			<Avatar name={candidate.name} />
-			<p>{candidate.name}</p>
-			<ButtonGroup>
-				<Button icon="arrow_upward" />
-				<Button icon="arrow_downward" />
-			</ButtonGroup>
-		</li>
-	</List>
-</Panel>
+{#if !$user.admin}
+	<Panel title="Your ballot">
+		<p>There are {data.ballot.length - 1} candidates on the ballot.</p>
+		<p>Rank candidates in order of your choice. You do not need to rank all candidates.</p>
+		<List items={ballot} let:prop={candidate}>
+			<BallotEntry
+				ballot={data.ballot}
+				{candidate}
+				error={errors[candidate.index]}
+				on:change={(e) => updateAndValidate(candidate.index, e)}
+			/>
+		</List>
+	</Panel>
 
-<Panel title="Submit" kind="emphasis">
-	<p />
-</Panel>
+	<Panel title="Submit" kind="emphasis">
+		<div class="submit-container">
+			<input bind:this={codeInput} placeholder="Enter election code" type="text" />
+			<Button
+				kind="primary"
+				text="Submit vote"
+				icon="check"
+				on:click={() => submit()}
+				disabled={errors.filter((x) => x).length > 0}
+			/>
+		</div>
+	</Panel>
+{/if}
 
 <style>
-	li.candidate {
-		padding: 8px 4px;
-		display: grid;
-		grid-template-columns: 48px auto 1fr auto;
-		align-items: center;
-		gap: 8px;
-	}
-
-	li.candidate:not(:last-child) {
-		border-bottom: 2px solid #eee;
-	}
-
-	li.candidate p {
-		text-overflow: ellipsis;
-		overflow: hidden;
-	}
-
-	p.candidate-position {
+	.submit-container {
 		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 1.5rem;
-		font-family: "JetBrains Mono", monospace;
-		font-weight: bolder;
-		background-color: #1c2e58;
-		color: #fff;
-		height: 48px;
-		border-radius: 999em;
-		position: relative;
+		flex-direction: column;
+		gap: 8px;
+		align-items: flex-start;
+	}
+
+	.submit-container > input {
+		height: 36px;
+		padding: 2px 12px;
+		border-radius: 8px;
+		border: 2px solid #000;
+		text-transform: u;
 	}
 </style>
