@@ -18,10 +18,8 @@
 	$: upcomingElections = $elections?.filter((e) => !e.isActive) ?? [];
 
 	$: if (currentElections.length > 0) {
-		goto(`/vote/${currentElections[0].id}`);
-	}
-
-	$: if (upcomingElections.length > 0) {
+		goto(`/vote`);
+	} else if (upcomingElections.length > 0) {
 		goto(`/election/${upcomingElections[0].id}`);
 	}
 </script>
