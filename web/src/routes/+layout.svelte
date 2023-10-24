@@ -5,6 +5,7 @@
 	import Current from "./current.svelte";
 	import Users from "./users.svelte";
 	import { user, type User, elections, type Election } from "../store";
+	import FetchUnderway from "$lib/fetch-underway.svelte";
 
 	/** @type {import('./$types').PageData} */
 	export let data: { user: User; elections: Election[] };
@@ -35,6 +36,7 @@
 	</main>
 	<span />
 </div>
+<FetchUnderway />
 
 <style>
 	div.container {

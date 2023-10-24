@@ -2,13 +2,14 @@
 	import Button from "$lib/button.svelte";
 	import { API } from "$lib/endpoints";
 	import Panel from "$lib/panel.svelte";
-	import type { CurrentElection } from "../../store";
+	import { fetching, type CurrentElection } from "../../store";
 
 	export let data: CurrentElection;
 	let electionRunning = true;
 	let results = "";
 
 	const endElection = async () => {
+		$fetching = true;
 		const response = await fetch(API.ADMIN_ELECTION_STOP, {
 			method: "POST",
 		});
@@ -17,6 +18,7 @@
 		}
 		electionRunning = false;
 		results = (await response.json()).result;
+		$fetching = false;
 	};
 
 	const downloadResults = (results: string) => {

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import List from "$lib/list.svelte";
 	import Panel from "$lib/panel.svelte";
-	import { user, type CurrentElection } from "../../store";
+	import { user, type CurrentElection, fetching } from "../../store";
 	import BallotEntry from "./ballot-entry.svelte";
 	import type { BallotEntry as BallotEntryT } from "../../store";
 	import Button from "$lib/button.svelte";
@@ -29,6 +29,7 @@
 
 	const submit = async () => {
 		if (errors.filter((x) => x).length > 0) return;
+		$fetching = true;
 		const votes = ballot.filter((x) => x).map((b) => b?.id);
 		const response = await fetch(API.ELECTION_CURRENT_VOTE, {
 			method: "POST",
@@ -40,6 +41,7 @@
 		}
 		// disallow voting again
 		// show vote tex sticker
+		$fetching = false;
 	};
 </script>
 

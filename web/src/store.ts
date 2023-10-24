@@ -28,3 +28,4 @@ export interface CurrentElection {
 
 export const user = writable<User>(null!);
 export const elections = writable<Array<Election> | null>(null);
+export const fetching = writable<boolean>(false);

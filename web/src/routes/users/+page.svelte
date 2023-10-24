@@ -3,11 +3,12 @@
 	import { API } from "$lib/endpoints";
 	import List from "$lib/list.svelte";
 	import Panel from "$lib/panel.svelte";
-	import type { User } from "../../store";
+	import { fetching, type User } from "../../store";
 
 	export let data: { users: Array<User> };
 
 	const removeUser = async (userID: string) => {
+		$fetching = true;
 		const response = await fetch(API.ADMIN_USER_DELETE, {
 			method: "DELETE",
 			body: JSON.stringify({ userID }),
@@ -16,6 +17,7 @@
 		if (response.ok) {
 			data = { ...data, users: data.users.filter((u) => u.studentID !== userID) };
 		}
+		$fetching = false;
 	};
 </script>
 

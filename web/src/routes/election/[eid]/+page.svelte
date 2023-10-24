@@ -6,7 +6,7 @@
 	import Panel from "$lib/panel.svelte";
 
 	import run from "$lib/assets/run_for_election.svg";
-	import { elections, user } from "../../../store";
+	import { elections, fetching, user } from "../../../store";
 	import { goto } from "$app/navigation";
 	import { API } from "$lib/endpoints";
 	import { _getElections } from "../../+layout";
@@ -15,9 +15,12 @@
 	$: election = $elections?.find((e) => e.id === data.id);
 	$: if (!election) {
 		goto("/", { replaceState: true });
+	} else if (election.isActive) {
+		goto("/vote");
 	}
 
 	const standOrWithdraw = async (id: number, stand: boolean) => {
+		$fetching = true;
 		const response = await fetch(API.ELECTION_STAND, {
 			method: stand ? "POST" : "DELETE",
 			body: JSON.stringify({ id }),
@@ -26,10 +29,12 @@
 		if (response.ok) {
 			elections.set(await _getElections());
 		}
+		$fetching = false;
 	};
 
 	let floorCandidatesInput: HTMLTextAreaElement;
 	const startElection = async (id: number) => {
+		$fetching = true;
 		const extraNames = floorCandidatesInput.value
 			.trim()
 			.split("\n")
@@ -44,9 +49,11 @@
 			elections.set(await _getElections());
 			goto("/stats");
 		}
+		$fetching = false;
 	};
 
 	const deleteElection = async (id: number) => {
+		$fetching = true;
 		const response = await fetch(API.ADMIN_ELECTION, {
 			method: "DELETE",
 			body: JSON.stringify({ id }),
@@ -56,6 +63,7 @@
 			elections.set(await _getElections());
 			goto("/");
 		}
+		$fetching = false;
 	};
 </script>
 
