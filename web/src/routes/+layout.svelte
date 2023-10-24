@@ -38,10 +38,10 @@
 
 <style>
 	div.container {
-		height: 100svh;
+		height: 100vh;
 		display: grid;
 		grid-template-rows: auto 1fr;
-		grid-template-columns: 1fr min(100vw, 1600px) 1fr;
+		grid-template-columns: 1fr min(100%, 1600px) 1fr;
 		grid-template-areas:
 			"nav nav  nav"
 			".   main .";
@@ -50,6 +50,8 @@
 		background-size: min(1200px, 80vw);
 		background-blend-mode: soft-light;
 		overflow-y: auto;
+		overflow-x: hidden;
+		width: 100vw;
 	}
 
 	main {
