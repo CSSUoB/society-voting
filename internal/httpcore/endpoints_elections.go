@@ -52,7 +52,8 @@ func (endpoints) apiElectionsSSE(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiGetActiveElectionInformation(ctx *fiber.Ctx) error {
-	if _, ok := getSessionAuth(ctx, authAdminUser|authRegularUser); !ok {
+	userID, isAuthed := getSessionAuth(ctx, authAdminUser|authRegularUser)
+	if !isAuthed {
 		return fiber.ErrUnauthorized
 	}
 
@@ -83,6 +84,15 @@ func (endpoints) apiGetActiveElectionInformation(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiGetActiveElectionInformation count users: %w", err)
 	}
 
+	var hasVoted bool
+	if userID != "admin" {
+		hv, err := database.HasUserVotedInElection(userID, election.ID, tx)
+		if err != nil {
+			return fmt.Errorf("apiGetActiveElectionInformation check if user has voted: %w", err)
+		}
+		hasVoted = hv
+	}
+
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("apiGetActiveElectionInformation commit tx: %w", err)
 	}
@@ -91,10 +101,12 @@ func (endpoints) apiGetActiveElectionInformation(ctx *fiber.Ctx) error {
 		Election *database.Election      `json:"election"`
 		Ballot   []*database.BallotEntry `json:"ballot"`
 		NumUsers int                     `json:"numEligibleVoters"`
+		HasVoted bool                    `json:"hasVoted"`
 	}{
 		Election: election,
 		Ballot:   ballot,
 		NumUsers: numUsers,
+		HasVoted: hasVoted,
 	}
 
 	return ctx.JSON(response)
