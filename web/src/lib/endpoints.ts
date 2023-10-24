@@ -7,9 +7,12 @@ export const API = {
 
     ELECTION: `/api/election`,
     ELECTION_STAND: `/api/election/stand`,
+    ELECTION_CURRENT: `/api/election/current`,
+    ELECTION_CURRENT_VOTE: `/api/election/current/vote`,
 
     ADMIN_ELECTION: `/api/admin/election`,
     ADMIN_ELECTION_START: `/api/admin/election/start`,
+    ADMIN_ELECTION_STOP: `/api/admin/election/stop`,
     ADMIN_USER: `/api/admin/user`,
     ADMIN_USER_DELETE: `/api/admin/user/delete`,
 } as const;

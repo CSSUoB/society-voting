@@ -15,5 +15,16 @@ export interface Election {
     candidates: Optional<Array<{ name: string, isMe: boolean }>>;
 }
 
+export interface BallotEntry {
+    id: number;
+    name: string;
+    isRON: boolean;
+}
+
+export interface CurrentElection {
+    election: Election;
+    ballot: Array<BallotEntry>;
+}
+
 export const user = writable<User>(null!);
 export const elections = writable<Array<Election> | null>(null);

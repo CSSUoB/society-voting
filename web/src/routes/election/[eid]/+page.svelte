@@ -12,7 +12,7 @@
 	import { _getElections } from "../../+layout";
 
 	export let data: { id: number };
-	$: election = $elections?.find((e) => e.id === data.id)!;
+	$: election = $elections?.find((e) => e.id === data.id);
 	$: if (!election) {
 		goto("/", { replaceState: true });
 	}
@@ -42,19 +42,31 @@
 
 		if (response.ok) {
 			elections.set(await _getElections());
+			goto("/stats");
+		}
+	};
+
+	const deleteElection = async (id: number) => {
+		const response = await fetch(API.ADMIN_ELECTION, {
+			method: "DELETE",
+			body: JSON.stringify({ id }),
+		});
+
+		if (response.ok) {
+			elections.set(await _getElections());
 			goto("/");
 		}
 	};
 </script>
 
 <svelte:head>
-	<title>Electing: {election.roleName}</title>
+	<title>Electing: {election?.roleName}</title>
 </svelte:head>
-<Panel title={`Electing: ${election.roleName}`}>
-	<p>{election.description}</p>
+<Panel title={`Electing: ${election?.roleName}`}>
+	<p>{election?.description}</p>
 </Panel>
 
-{#if !$user.admin && !election.candidates?.some((c) => c.isMe)}
+{#if !$user.admin && !election?.candidates?.some((c) => c.isMe)}
 	<Banner title="Interested in running?" kind="emphasis">
 		<img slot="image" src={run} alt="" class="banner-image" />
 		<svelte:fragment slot="content">
@@ -67,14 +79,14 @@
 			<Button
 				text="Stand for election"
 				kind="primary"
-				on:click={() => standOrWithdraw(election.id, true)}
+				on:click={() => standOrWithdraw(election?.id ?? -1, true)}
 			/>
 		</svelte:fragment>
 	</Banner>
 {/if}
 
 <Panel title="Candidates" headerIcon="groups">
-	<List items={election.candidates ?? []} let:prop={candidate}>
+	<List items={election?.candidates ?? []} let:prop={candidate}>
 		<li class="candidate">
 			<Avatar name={candidate.name} />
 			<p>
@@ -83,11 +95,11 @@
 				{/if}
 			</p>
 			{#if candidate.isMe}
-				<Button text="Withdraw" on:click={() => standOrWithdraw(election.id, false)} />
+				<Button text="Withdraw" on:click={() => standOrWithdraw(election?.id ?? -1, false)} />
 			{/if}
 		</li>
 	</List>
-	{#if (election.candidates?.length ?? 0) === 0}
+	{#if (election?.candidates?.length ?? 0) === 0}
 		<p>There are no candidates currently running in this election</p>
 	{/if}
 </Panel>
@@ -103,9 +115,9 @@
 			<Button
 				kind="primary"
 				text="Save candidates and start election"
-				on:click={() => startElection(election.id)}
+				on:click={() => startElection(election?.id ?? -1)}
 			/>
-			<Button text="Delete election" />
+			<Button text="Delete election" on:click={() => deleteElection(election?.id ?? -1)} />
 		</div>
 	</Panel>
 {/if}
