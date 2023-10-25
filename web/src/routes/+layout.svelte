@@ -4,6 +4,7 @@
 	import Upcoming from "./upcoming.svelte";
 	import Current from "./current.svelte";
 	import Users from "./users.svelte";
+	import PresenterMode from "./presenterMode.svelte";
 	import { user, type User, elections, type Election } from "../store";
 	import FetchUnderway from "$lib/fetch-underway.svelte";
 
@@ -33,6 +34,7 @@
 			<Upcoming />
 			{#if data.user.admin}
 				<Users />
+				<PresenterMode />
 			{/if}
 		</div>
 		<div class="rail">
