@@ -7,11 +7,13 @@
 	import Button from "$lib/button.svelte";
 	import { API } from "$lib/endpoints";
 	import { goto } from "$app/navigation";
+	import Dialog from "$lib/dialog.svelte";
 
 	export let data: CurrentElection;
 	let ballot: Array<BallotEntryT | undefined> = Array.from(Array(data.ballot.length));
 	let errors = Array.from(Array(ballot.length));
 	let codeInput: HTMLInputElement;
+	let votedDialog: HTMLDialogElement;
 
 	const updateAndValidate = (index: number, changeEvent: Event) => {
 		const id: number = parseInt((changeEvent.target as HTMLSelectElement).value);
@@ -40,9 +42,9 @@
 			// show error code
 			return;
 		}
-		goto("/");
-		// show vote tex sticker
+
 		$fetching = false;
+		votedDialog.showModal();
 	};
 </script>
 
@@ -82,6 +84,16 @@
 	</Panel>
 {/if}
 
+<Dialog title="Congrats, you've voted!" bind:dialog={votedDialog} on:close={() => goto("/")}>
+	<div class="dialog-container">
+		<img src={`https://cssuob.github.io/resources/dinosaur/tex_ballot.svg`} width="200px" />
+		<p>
+			Don't forget to grab the special edition <strong>voting TeX sticker</strong> afterwards!
+		</p>
+	</div>
+	<Button slot="actions" text="Close" kind="emphasis" />
+</Dialog>
+
 <style>
 	.submit-container {
 		display: flex;
@@ -96,5 +108,18 @@
 		border-radius: 8px;
 		border: 2px solid #000;
 		text-transform: uppercase;
+	}
+
+	.dialog-container {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		align-items: center;
+		max-width: min(100vw, 400px);
+		text-align: center;
+	}
+
+	.dialog-container img {
+		padding-right: 50px;
 	}
 </style>

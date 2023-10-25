@@ -97,6 +97,7 @@
 		border: 2px solid #111;
 		border-radius: 999em;
 		padding: 0 24px;
+		max-width: calc(100vw - 24px - 52px - 52px - 16px - 24px - 16px);
 	}
 
 	p.ballot-error {
@@ -116,5 +117,15 @@
 
 	span.ballot--valid {
 		color: #00aa00;
+	}
+
+	@media only screen and (max-width: 850px) {
+		li.candidate {
+			grid-template-columns: 52px auto auto 1fr;
+		}
+
+		p.ballot-error {
+			grid-area: 2/1/3/4;
+		}
 	}
 </style>
