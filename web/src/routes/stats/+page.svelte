@@ -7,10 +7,18 @@
 
 	let electionRunning = true;
 	let results = "";
+	let numberOfVotes = 0;
 
 	$: if (!$currentElection) {
 		goto("/");
 	}
+
+	const eventSource = new EventSource(API.ADMIN_ELECTION_SSE, {
+		withCredentials: true,
+	});
+	eventSource.addEventListener("vote-received", (e) => {
+		numberOfVotes += parseInt(e.data, 10);
+	});
 
 	const endElection = async () => {
 		$fetching = true;
@@ -55,7 +63,11 @@
 {#if electionRunning}
 	<Panel title="Admin actions" headerIcon="admin_panel_settings">
 		<div class="container">
-			<h3>{"n"} users have voted so far</h3>
+			<h3>{numberOfVotes} of {$currentElection?.numEligibleVoters} users have voted so far</h3>
+			<p>
+				The turnout so far is {(numberOfVotes * 100) /
+					($currentElection?.numEligibleVoters ?? 100)}%
+			</p>
 			<Button text="End election and view results" kind="primary" on:click={endElection} />
 		</div>
 	</Panel>

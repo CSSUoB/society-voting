@@ -14,6 +14,8 @@
 		currentElection,
 	} from "../store";
 	import Alert from "$lib/alert.svelte";
+	import { API } from "$lib/endpoints";
+	import { _getCurrentElection, _getElections } from "./+layout";
 
 	/** @type {import('./$types').PageData} */
 	export let data: { user: User; elections: Election[]; currentElection: CurrentElection | null };
@@ -26,6 +28,18 @@
 	const toggleMenu = (e: CustomEvent<boolean>) => {
 		menuOpen = e.detail;
 	};
+
+	const eventSource = new EventSource(API.ELECTION_SSE, {
+		withCredentials: true,
+	});
+	const electionStatusChanged = async () => {
+		if (!$user.admin) {
+			$elections = await _getElections();
+			$currentElection = await _getCurrentElection();
+		}
+	};
+	eventSource.addEventListener("election-start", electionStatusChanged);
+	eventSource.addEventListener("election-end", electionStatusChanged);
 </script>
 
 <div class="container">
