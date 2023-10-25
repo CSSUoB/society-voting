@@ -6,10 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/CSSUoB/society-voting/internal/config"
+	"github.com/CSSUoB/society-voting/internal/httpcore/htmlutil"
 	"github.com/CSSUoB/society-voting/web"
 	"github.com/bwmarrin/go-alone"
 	validate "github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	g "github.com/maragudk/gomponents"
+	"github.com/maragudk/gomponents/html"
 	"log/slog"
 	"math/rand"
 	"os"
@@ -85,6 +88,20 @@ func ListenAndServe(addr string) error {
 
 		return ctx.Next()
 	}, web.GetHandler())
+
+	app.Use(func(ctx *fiber.Ctx) error {
+		ctx.Status(fiber.StatusNotFound)
+		return htmlutil.SendPage(
+			ctx,
+			htmlutil.SkeletonPage("404 Not Found",
+				html.H1(g.Text("404 Not Found")),
+				html.P(
+					g.Text("Oh, that's weird. We can't find what you're looking for, but chances are "),
+					html.A(g.Text("you're probably looking for this instead!"), g.Attr("href", "/")),
+				),
+			),
+		)
+	})
 
 	slog.Info("HTTP server alive", "address", addr, "voteCode", voteCode)
 	return app.Listen(addr)
