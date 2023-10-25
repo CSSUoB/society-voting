@@ -5,16 +5,22 @@
 	import Current from "./current.svelte";
 	import Users from "./users.svelte";
 	import PresenterMode from "./presenterMode.svelte";
-	import { user, type User, elections, type Election } from "../store";
+	import {
+		user,
+		type User,
+		elections,
+		type Election,
+		type CurrentElection,
+		currentElection,
+	} from "../store";
 	import FetchUnderway from "$lib/fetch-underway.svelte";
 
 	/** @type {import('./$types').PageData} */
-	export let data: { user: User; elections: Election[] };
+	export let data: { user: User; elections: Election[]; currentElection: CurrentElection | null };
 
 	$: user.set(data.user);
 	$: elections.set(data.elections);
-
-	$: currentElection = $elections?.find((e) => e.isActive);
+	$: currentElection.set(data.currentElection);
 
 	let menuOpen = false;
 	const toggleMenu = (e: CustomEvent<boolean>) => {
@@ -28,7 +34,7 @@
 	<main style:left={menuOpen ? "0" : ""}>
 		<div class="rail">
 			<Profile />
-			{#if !data.user.admin && currentElection}
+			{#if !data.user.admin && $currentElection && !$currentElection.hasVoted}
 				<Current />
 			{/if}
 			<Upcoming />

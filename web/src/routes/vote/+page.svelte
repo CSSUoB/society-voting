@@ -1,7 +1,7 @@
 <script lang="ts">
 	import List from "$lib/list.svelte";
 	import Panel from "$lib/panel.svelte";
-	import { user, type CurrentElection, fetching } from "../../store";
+	import { user, type CurrentElection, fetching, currentElection } from "../../store";
 	import BallotEntry from "./ballot-entry.svelte";
 	import type { BallotEntry as BallotEntryT } from "../../store";
 	import Button from "$lib/button.svelte";
@@ -9,15 +9,18 @@
 	import { goto } from "$app/navigation";
 	import Dialog from "$lib/dialog.svelte";
 
-	export let data: CurrentElection;
-	let ballot: Array<BallotEntryT | undefined> = Array.from(Array(data.ballot.length));
+	let ballot: Array<BallotEntryT | undefined> = Array.from(Array($currentElection?.ballot.length));
 	let errors = Array.from(Array(ballot.length));
 	let codeInput: HTMLInputElement;
 	let votedDialog: HTMLDialogElement;
 
+	$: if (!$currentElection) {
+		goto("/");
+	}
+
 	const updateAndValidate = (index: number, changeEvent: Event) => {
 		const id: number = parseInt((changeEvent.target as HTMLSelectElement).value);
-		const candidate = data.ballot.find((c) => c.id === id);
+		const candidate = $currentElection?.ballot.find((c) => c.id === id);
 		ballot = ballot.map((b, i) => (i === index ? candidate : b));
 
 		errors = ballot.map((b, i) => {
@@ -49,20 +52,20 @@
 </script>
 
 <svelte:head>
-	<title>Vote for: {data.election.roleName}</title>
+	<title>Vote for: {$currentElection?.election.roleName}</title>
 </svelte:head>
 
-<Panel title={`Electing: ${data.election.roleName}`}>
-	<p>{data.election.description}</p>
+<Panel title={`Electing: ${$currentElection?.election.roleName}`}>
+	<p>{$currentElection?.election.description}</p>
 </Panel>
 
 {#if !$user.admin}
 	<Panel title="Your ballot">
-		<p>There are {data.ballot.length - 1} candidates on the ballot.</p>
+		<p>There are {($currentElection?.ballot.length ?? 1) - 1} candidates on the ballot.</p>
 		<p>Rank candidates in order of your choice. You do not need to rank all candidates.</p>
 		<List items={ballot} let:prop={candidate}>
 			<BallotEntry
-				ballot={data.ballot}
+				ballot={$currentElection?.ballot ?? []}
 				{candidate}
 				error={errors[candidate.index]}
 				on:change={(e) => updateAndValidate(candidate.index, e)}

@@ -1,12 +1,16 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
 	import Button from "$lib/button.svelte";
 	import { API } from "$lib/endpoints";
 	import Panel from "$lib/panel.svelte";
-	import { fetching, type CurrentElection } from "../../store";
+	import { fetching, currentElection } from "../../store";
 
-	export let data: CurrentElection;
 	let electionRunning = true;
 	let results = "";
+
+	$: if (!$currentElection) {
+		goto("/");
+	}
 
 	const endElection = async () => {
 		$fetching = true;
@@ -26,7 +30,7 @@
 		element.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(results));
 		element.setAttribute(
 			"download",
-			`${data.election.roleName.toLowerCase().replaceAll(" ", "_")}_results.txt`,
+			`${$currentElection?.election.roleName.toLowerCase().replaceAll(" ", "_")}_results.txt`,
 		);
 
 		element.style.display = "none";
@@ -39,11 +43,11 @@
 </script>
 
 <svelte:head>
-	<title>Vote for: {data.election.roleName}</title>
+	<title>Vote for: {$currentElection?.election.roleName}</title>
 </svelte:head>
 
-<Panel title={`Electing: ${data.election.roleName}`}>
-	<p>{data.election.description}</p>
+<Panel title={`Electing: ${$currentElection?.election.roleName}`}>
+	<p>{$currentElection?.election.description}</p>
 </Panel>
 
 {#if electionRunning}

@@ -6,10 +6,10 @@
 	import Panel from "$lib/panel.svelte";
 
 	import run from "$lib/assets/run_for_election.svg";
-	import { elections, fetching, user } from "../../../store";
+	import { currentElection, elections, fetching, user } from "../../../store";
 	import { goto } from "$app/navigation";
 	import { API } from "$lib/endpoints";
-	import { _getElections } from "../../+layout";
+	import { _getCurrentElection, _getElections } from "../../+layout";
 
 	export let data: { id: number };
 	$: election = $elections?.find((e) => e.id === data.id);
@@ -47,6 +47,7 @@
 
 		if (response.ok) {
 			elections.set(await _getElections());
+			currentElection.set(await _getCurrentElection());
 			await new Promise((r) => setTimeout(r, 200));
 			goto("/stats");
 		}
