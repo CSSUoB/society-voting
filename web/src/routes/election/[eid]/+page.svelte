@@ -47,6 +47,7 @@
 
 		if (response.ok) {
 			elections.set(await _getElections());
+			await new Promise((r) => setTimeout(r, 200));
 			goto("/stats");
 		}
 		$fetching = false;
@@ -169,6 +170,17 @@
 		flex-direction: column;
 		align-items: flex-start;
 		gap: 8px;
+	}
+
+	textarea {
+		border: 2px solid;
+		border-radius: 4px;
+		padding: 2px 12px;
+		width: calc(100% - 24px);
+		min-height: 5rem;
+		font-family: "Inter", sans-serif;
+		resize: vertical;
+		margin-bottom: 12px;
 	}
 
 	@media only screen and (max-width: 600px) {
