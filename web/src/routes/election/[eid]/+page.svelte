@@ -170,4 +170,10 @@
 		align-items: flex-start;
 		gap: 8px;
 	}
+
+	@media only screen and (max-width: 600px) {
+		img.banner-image {
+			display: none;
+		}
+	}
 </style>

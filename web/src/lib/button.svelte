@@ -7,9 +7,17 @@
 	export let type: "button" | "submit" | "reset" | null | undefined = undefined;
 	export let name: Optional<string> = null;
 	export let disabled = false;
+	let clazz: Optional<string> = null;
+	export { clazz as class };
 </script>
 
-<button on:click class={`${kind} ${icon && !text ? "icon-only" : ""}`} {type} {name} {disabled}>
+<button
+	on:click
+	class={`${kind} ${icon && !text ? "icon-only" : ""} ${clazz}`}
+	{type}
+	{name}
+	{disabled}
+>
 	{#if text}
 		{text}
 	{/if}

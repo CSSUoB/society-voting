@@ -14,12 +14,17 @@
 	$: elections.set(data.elections);
 
 	$: currentElection = $elections?.find((e) => e.isActive);
+
+	let menuOpen = false;
+	const toggleMenu = (e: CustomEvent<boolean>) => {
+		menuOpen = e.detail;
+	};
 </script>
 
 <div class="container">
-	<Nav --location="nav" />
+	<Nav --location="nav" on:menuToggle={toggleMenu} />
 	<span />
-	<main>
+	<main style:left={menuOpen ? "0" : ""}>
 		<div class="rail">
 			<Profile />
 			{#if !data.user.admin && currentElection}
@@ -68,5 +73,14 @@
 		display: flex;
 		flex-direction: column;
 		gap: 8px;
+	}
+
+	@media only screen and (max-width: 850px) {
+		main {
+			grid-template-columns: min(100%, 0.3 * 850px) 100%;
+			left: calc(-1 * min(100%, 0.3 * 850px) - 12px);
+			position: relative;
+			transition: left 0.2s ease-out;
+		}
 	}
 </style>
