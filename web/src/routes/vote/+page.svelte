@@ -8,6 +8,7 @@
 	import { API } from "$lib/endpoints";
 	import { goto } from "$app/navigation";
 	import Dialog from "$lib/dialog.svelte";
+	import { _getCurrentElection } from "../+layout";
 
 	let ballot: Array<BallotEntryT | undefined> = Array.from(Array($currentElection?.ballot.length));
 	let errors = Array.from(Array(ballot.length));
@@ -45,6 +46,7 @@
 			// show error code
 			return;
 		}
+		currentElection.set(await _getCurrentElection());
 
 		$fetching = false;
 		votedDialog.showModal();
