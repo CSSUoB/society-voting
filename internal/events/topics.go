@@ -24,5 +24,5 @@ type UserElectionWithdrawData struct {
 
 type ElectionEndedData struct {
 	Election *database.Election `json:"election"`
-	Result   string             `json:"result"`
+	Result   string             `json:"result,omitempty"`
 }

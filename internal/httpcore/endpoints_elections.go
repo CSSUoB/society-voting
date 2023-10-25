@@ -1,6 +1,7 @@
 package httpcore
 
 import (
+	"bufio"
 	"crypto/subtle"
 	"errors"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"github.com/CSSUoB/society-voting/internal/events"
 	"github.com/gofiber/fiber/v2"
 	"github.com/mattn/go-sqlite3"
+	"log/slog"
 )
 
 func (endpoints) apiListElections(ctx *fiber.Ctx) error {
@@ -42,10 +44,29 @@ func (endpoints) apiElectionsSSE(ctx *fiber.Ctx) error {
 		return fiber.ErrUnauthorized
 	}
 
+	id, receiver := events.NewReceiver(events.TopicElectionStarted, events.TopicElectionEnded)
+
 	ctx.Set("Content-Type", "text/event-stream")
 	fr := ctx.Response()
 	fr.SetBodyStreamWriter(
-		events.AsStreamWriter(events.NewReceiver(events.TopicElectionStarted, events.TopicElectionEnded)),
+		func(w *bufio.Writer) {
+			for msg := range receiver {
+				if msg.Topic == events.TopicElectionEnded {
+					msg.Data.(*events.ElectionEndedData).Result = ""
+				}
+				sseData, err := msg.ToSSE()
+				if err != nil {
+					slog.Error("SSE error", "error", fmt.Errorf("failed to generate SSE event from message: %w", err))
+					break
+				}
+				_, _ = w.Write(sseData)
+				if err := w.Flush(); err != nil {
+					// Client disconnected
+					break
+				}
+			}
+			events.CloseReceiver(id)
+		},
 	)
 
 	return nil
