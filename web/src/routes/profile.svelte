@@ -4,7 +4,7 @@
 	import { API } from "$lib/endpoints";
 	import Input from "$lib/input.svelte";
 	import Panel from "$lib/panel.svelte";
-	import { user, type User } from "../store";
+	import { error, user, type User } from "../store";
 
 	let dialog: HTMLDialogElement;
 	const updateName = async (e: CustomEvent<any>) => {
@@ -15,6 +15,8 @@
 
 		if (response.ok) {
 			user.set({ ...$user, name: e.detail.name });
+		} else {
+			$error = new Error(await response.text());
 		}
 	};
 

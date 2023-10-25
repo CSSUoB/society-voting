@@ -3,7 +3,7 @@
 	import Button from "$lib/button.svelte";
 	import { API } from "$lib/endpoints";
 	import Panel from "$lib/panel.svelte";
-	import { fetching, currentElection } from "../../store";
+	import { error, fetching, currentElection } from "../../store";
 
 	let electionRunning = true;
 	let results = "";
@@ -18,6 +18,8 @@
 			method: "POST",
 		});
 		if (!response.ok) {
+			$fetching = false;
+			$error = new Error(await response.text());
 			return;
 		}
 		electionRunning = false;

@@ -1,9 +1,16 @@
 <script lang="ts">
-	import { fetching } from "../store";
+	import { error, fetching } from "../store";
 </script>
 
-<div class={$fetching ? "visible" : ""}>
-	<p>Working...</p>
+<div class={$fetching || $error ? "visible" : ""}>
+	{#if $error}
+		<p class="error" on:click={() => ($error = null)}>
+			{$error.message}
+			<span class="material-symbols-rounded">close</span>
+		</p>
+	{:else if $fetching}
+		<p>Working...</p>
+	{/if}
 </div>
 
 <style>
@@ -44,5 +51,12 @@
 		align-items: center;
 		font-family: "JetBrains Mono", monospace;
 		transition: transform 0.2s;
+		gap: 16px;
+	}
+
+	p.error {
+		background-color: #cc0000;
+		color: #fff;
+		cursor: pointer;
 	}
 </style>

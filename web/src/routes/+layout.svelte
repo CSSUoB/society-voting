@@ -13,7 +13,7 @@
 		type CurrentElection,
 		currentElection,
 	} from "../store";
-	import FetchUnderway from "$lib/fetch-underway.svelte";
+	import Alert from "$lib/alert.svelte";
 
 	/** @type {import('./$types').PageData} */
 	export let data: { user: User; elections: Election[]; currentElection: CurrentElection | null };
@@ -49,7 +49,7 @@
 	</main>
 	<span />
 </div>
-<FetchUnderway />
+<Alert />
 
 <style>
 	div.container {

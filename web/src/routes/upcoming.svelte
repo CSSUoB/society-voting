@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Panel from "$lib/panel.svelte";
-	import { user, elections } from "../store";
+	import { user, elections, error } from "../store";
 	import Button from "$lib/button.svelte";
 	import Dialog from "$lib/dialog.svelte";
 	import Input from "$lib/input.svelte";
@@ -19,6 +19,8 @@
 		if (response.ok) {
 			elections.set(await _getElections());
 			goto(`/election/${$elections?.slice(-1)[0].id}`);
+		} else {
+			$error = new Error(await response.text());
 		}
 	};
 </script>

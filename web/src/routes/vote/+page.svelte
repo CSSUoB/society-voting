@@ -1,7 +1,7 @@
 <script lang="ts">
 	import List from "$lib/list.svelte";
 	import Panel from "$lib/panel.svelte";
-	import { user, type CurrentElection, fetching, currentElection } from "../../store";
+	import { user, type CurrentElection, fetching, currentElection, error } from "../../store";
 	import BallotEntry from "./ballot-entry.svelte";
 	import type { BallotEntry as BallotEntryT } from "../../store";
 	import Button from "$lib/button.svelte";
@@ -43,7 +43,8 @@
 			body: JSON.stringify({ vote: votes, code: codeInput.value.trim().toUpperCase() }),
 		});
 		if (!response.ok) {
-			// show error code
+			$error = new Error(await response.text());
+			$fetching = false;
 			return;
 		}
 		currentElection.set(await _getCurrentElection());

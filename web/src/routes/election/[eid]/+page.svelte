@@ -6,7 +6,7 @@
 	import Panel from "$lib/panel.svelte";
 
 	import run from "$lib/assets/run_for_election.svg";
-	import { currentElection, elections, fetching, user } from "../../../store";
+	import { currentElection, elections, error, fetching, user } from "../../../store";
 	import { goto } from "$app/navigation";
 	import { API } from "$lib/endpoints";
 	import { _getCurrentElection, _getElections } from "../../+layout";
@@ -28,6 +28,8 @@
 
 		if (response.ok) {
 			elections.set(await _getElections());
+		} else {
+			$error = new Error(await response.text());
 		}
 		$fetching = false;
 	};
@@ -50,6 +52,8 @@
 			currentElection.set(await _getCurrentElection());
 			await new Promise((r) => setTimeout(r, 200));
 			goto("/stats");
+		} else {
+			$error = new Error(await response.text());
 		}
 		$fetching = false;
 	};
@@ -64,6 +68,8 @@
 		if (response.ok) {
 			elections.set(await _getElections());
 			goto("/");
+		} else {
+			$error = new Error(await response.text());
 		}
 		$fetching = false;
 	};

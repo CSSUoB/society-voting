@@ -3,7 +3,7 @@
 	import { API } from "$lib/endpoints";
 	import List from "$lib/list.svelte";
 	import Panel from "$lib/panel.svelte";
-	import { fetching, type User } from "../../store";
+	import { error, fetching, type User } from "../../store";
 
 	export let data: { users: Array<User> };
 
@@ -16,6 +16,8 @@
 
 		if (response.ok) {
 			data = { ...data, users: data.users.filter((u) => u.studentID !== userID) };
+		} else {
+			$error = new Error(await response.text());
 		}
 		$fetching = false;
 	};
