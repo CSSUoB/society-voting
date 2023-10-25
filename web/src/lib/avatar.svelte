@@ -12,13 +12,28 @@
 	];
 
 	$: colour = colours[name.charCodeAt(0) % colours.length ?? 0];
+
+	const hash = async (data: string) => {
+		const encoder = new TextEncoder();
+		const encoded = encoder.encode(data);
+		const hashBuffer = await crypto.subtle.digest("SHA-256", encoded);
+		const hashArray = Array.from(new Uint8Array(hashBuffer)); // convert buffer to byte array
+		const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join(""); // convert bytes to hex string
+		return hashHex;
+	};
+	$: hashedName = hash(name);
 </script>
 
-<!-- TODO: Hash names before sending to external API -->
-<img
-	src={`https://source.boringavatars.com/beam/${size}/${name}?colors=${colour}`}
-	alt={`Minimalistic avatar representing ${name}`}
-/>
+{#await hashedName}
+	<img src="" alt={`Minimalistic avatar representing ${name}`} height={size} width={size} />
+{:then n}
+	<img
+		src={`https://source.boringavatars.com/beam/${size}/${n}?colors=${colour}`}
+		alt={`Minimalistic avatar representing ${name}`}
+		height={size}
+		width={size}
+	/>
+{/await}
 
 <style>
 	img {
