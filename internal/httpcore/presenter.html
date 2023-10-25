@@ -40,15 +40,15 @@
         }
 
         h1 {
-            font-size: calc(1.375rem + 1.5vw);
+            font-size: calc(1.375rem + 2vw);
         }
 
         h2 {
-            font-size: calc(1.325rem + 0.9vw);
+            font-size: calc(1.325rem + 1.2vw);
         }
 
         h3 {
-            font-size: calc(1.3rem + 0.6vw);
+            font-size: calc(1.3rem + 0.9vw);
         }
 
         @keyframes rotating {
@@ -69,6 +69,15 @@
         .hidden {
             display: none;
         }
+
+        body:not(.pinkbackground) {
+            transition: background-color 0.75s;
+        }
+
+        body.pinkbackground {
+            background-color: #ccccff;
+            transition: background-color 0.75s;
+        }
     </style>
 </head>
 <body>
@@ -79,10 +88,11 @@
     </div>
     <div class="column">
         <div class="vertical-center">
-            <h2 id="now-electing" class="hidden">Now electing <span id="now-electing-role">some miscellanous role</span></h2>
+            <h1 id="now-electing" class="hidden">Now electing <span id="now-electing-role">some miscellanous role</span></h1>
+            <h1 id="vote-code" class="hidden">Vote code: {{votecode}}</h1>
             <h1>Scan the QR code to <span id="action">register</span></h1>
             <h3>or go to <a href="{{url}}">{{url}}</a></h3>
-            <h2 id="vote-code" class="hidden">Vote code: {{votecode}}</h2>
+
         </div>
     </div>
 
@@ -101,6 +111,7 @@
             currentAction.innerText = "vote"
             nowElectingDisplay.classList.remove("hidden")
             voteCodeDisplay.classList.remove("hidden")
+            document.body.classList.add("pinkbackground")
         }
 
         const electionEnd = () => {
@@ -108,6 +119,7 @@
             currentAction.innerText = "register"
             nowElectingDisplay.classList.add("hidden")
             voteCodeDisplay.classList.add("hidden")
+            document.body.classList.remove("pinkbackground")
         }
 
         let eventSrc = new EventSource("/api/election/sse", {
