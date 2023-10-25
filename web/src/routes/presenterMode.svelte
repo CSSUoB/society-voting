@@ -10,5 +10,5 @@
 <Panel title="Presenter Mode" headerIcon="open_in_new">
     <p>Display the vote code and a QR code to attendees</p>
     <br />
-	<Button kind="emphasis" text="Open" on:click={openInNewTab} />
+    <Button kind="emphasis" text="Open" on:click={openInNewTab} />
 </Panel>
