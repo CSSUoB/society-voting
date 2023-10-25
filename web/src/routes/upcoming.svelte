@@ -18,6 +18,7 @@
 
 		if (response.ok) {
 			elections.set(await _getElections());
+			goto(`/election/${$elections?.slice(-1)[0].id}`);
 		}
 	};
 </script>

@@ -24,6 +24,8 @@ export interface BallotEntry {
 export interface CurrentElection {
     election: Election;
     ballot: Array<BallotEntry>;
+    numEligibleVoters: number;
+    hasVoted: boolean;
 }
 
 export const user = writable<User>(null!);

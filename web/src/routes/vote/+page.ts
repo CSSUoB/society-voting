@@ -2,7 +2,11 @@ import { API } from "$lib/endpoints";
 import { redirect } from "@sveltejs/kit";
 
 export async function load({ fetch, params }) {
-    return await _getCurrentElection();
+    const election = await _getCurrentElection();
+    if (election.hasVoted) {
+        throw redirect(302, "/");
+    }
+    return election;
 }
 
 export const _getCurrentElection = async () => {

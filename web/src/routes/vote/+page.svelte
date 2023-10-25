@@ -6,6 +6,7 @@
 	import type { BallotEntry as BallotEntryT } from "../../store";
 	import Button from "$lib/button.svelte";
 	import { API } from "$lib/endpoints";
+	import { goto } from "$app/navigation";
 
 	export let data: CurrentElection;
 	let ballot: Array<BallotEntryT | undefined> = Array.from(Array(data.ballot.length));
@@ -39,7 +40,7 @@
 			// show error code
 			return;
 		}
-		// disallow voting again
+		goto("/");
 		// show vote tex sticker
 		$fetching = false;
 	};
