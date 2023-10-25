@@ -1,8 +1,21 @@
 <script lang="ts">
-	import { createEventDispatcher } from "svelte";
+	import { createEventDispatcher, onDestroy, onMount } from "svelte";
 
 	export let dialog: HTMLDialogElement;
 	export let title = "Title";
+	let ref: HTMLDivElement;
+	let portal: HTMLDivElement;
+
+	onMount(() => {
+		portal = document.createElement("div");
+		portal.className = "portal";
+		document.body.appendChild(portal);
+		portal.appendChild(ref);
+	});
+
+	onDestroy(() => {
+		document.body.removeChild(portal);
+	});
 
 	const dispatch = createEventDispatcher();
 	const submit = (e: SubmitEvent) => {
@@ -16,15 +29,17 @@
 	};
 </script>
 
-<dialog bind:this={dialog} on:close>
-	<h2>{title}</h2>
-	<form method="dialog" on:submit={submit}>
-		<slot />
-		<div class="actions">
-			<slot name="actions" />
-		</div>
-	</form>
-</dialog>
+<div bind:this={ref}>
+	<dialog bind:this={dialog} on:close>
+		<h2>{title}</h2>
+		<form method="dialog" on:submit={submit}>
+			<slot />
+			<div class="actions">
+				<slot name="actions" />
+			</div>
+		</form>
+	</dialog>
+</div>
 
 <style>
 	dialog {
