@@ -94,6 +94,6 @@
 		padding: 2px 12px;
 		border-radius: 8px;
 		border: 2px solid #000;
-		text-transform: u;
+		text-transform: uppercase;
 	}
 </style>
