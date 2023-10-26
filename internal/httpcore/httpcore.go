@@ -107,7 +107,7 @@ func ListenAndServe(addr string) error {
 	return app.Listen(addr)
 }
 
-var urlFileRegexp = regexp.MustCompile(`[\w\-/]+\.(css|js|svg|json)`)
+var urlFileRegexp = regexp.MustCompile(`[\w\-/]+\.[a-zA-Z]+`)
 
 var (
 	signer    *goalone.Sword
