@@ -19,6 +19,9 @@
 		goto("/vote");
 	}
 
+	let buttonText = "Stand for election"
+	$: buttonText = `Stand for ${election ? election.roleName : "election"}`
+
 	const standOrWithdraw = async (id: number, stand: boolean) => {
 		$fetching = true;
 		const response = await fetch(API.ELECTION_STAND, {
@@ -93,7 +96,7 @@
 			</p>
 			<br />
 			<Button
-				text="Stand for election"
+				text={buttonText}
 				kind="primary"
 				on:click={() => standOrWithdraw(election?.id ?? -1, true)}
 			/>
