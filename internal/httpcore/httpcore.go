@@ -104,7 +104,6 @@ func ListenAndServe(addr string) error {
 	app.Post("/api/admin/election/start", e.apiAdminStartElection)
 	app.Post("/api/admin/election/stop", e.apiAdminStopElection)
 	app.Get("/api/admin/user", e.apiAdminListUsers)
-
 	app.Delete("/api/admin/user/delete", e.apiAdminDeleteUser)
 
 	app.Get("/presenter", e.presenterPage)
@@ -154,8 +153,7 @@ var (
 
 func init() {
 	secret := make([]byte, 512)
-	if !config.Get().Debug {
-		// This is so that the access tokens doesn't change from run-to-run for ease of testing
+	if !config.Get().Debug { // This is so that the access tokens doesn't change from run-to-run for ease of testing
 		if _, err := cryptoRand.Read(secret); err != nil {
 			slog.Error("unable to generate random secret for token signing", "error", err)
 			os.Exit(1)
