@@ -10,6 +10,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/mattn/go-sqlite3"
 	"log/slog"
+	"math/rand"
+	"sort"
 )
 
 func (endpoints) apiListElections(ctx *fiber.Ctx) error {
@@ -117,6 +119,11 @@ func (endpoints) apiGetActiveElectionInformation(ctx *fiber.Ctx) error {
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("apiGetActiveElectionInformation commit tx: %w", err)
 	}
+
+	// randomise ballot order
+	sort.Slice(ballot, func(_, _ int) bool {
+		return rand.Intn(2) == 0
+	})
 
 	var response = struct {
 		Election *database.Election      `json:"election"`
