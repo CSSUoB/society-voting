@@ -62,7 +62,7 @@ func (endpoints) apiAdminListUsers(ctx *fiber.Ctx) error {
 		if users[i].IsRestricted != users[j].IsRestricted {
 			return users[i].IsRestricted
 		}
-		return false
+		return users[i].Name < users[j].Name
 	})
 
 	return ctx.JSON(users)
