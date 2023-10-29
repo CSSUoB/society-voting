@@ -104,6 +104,7 @@ func ListenAndServe(addr string) error {
 	app.Post("/api/admin/election/start", e.apiAdminStartElection)
 	app.Post("/api/admin/election/stop", e.apiAdminStopElection)
 	app.Get("/api/admin/user", e.apiAdminListUsers)
+	app.Post("/api/admin/user/restrict", e.apiAdminToggleRestrictUser)
 	app.Delete("/api/admin/user/delete", e.apiAdminDeleteUser)
 
 	app.Get("/presenter", e.presenterPage)

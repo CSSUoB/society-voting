@@ -270,6 +270,13 @@ func (endpoints) apiStandForElection(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiStandForElection get user: %w", err)
 	}
 
+	if user.IsRestricted {
+		return &fiber.Error{
+			Code:    fiber.StatusForbidden,
+			Message: "You can't do that because you're restricted - please speak to a member of committee.",
+		}
+	}
+
 	election, err := database.GetElection(request.ElectionID, tx)
 	if err != nil {
 		if errors.Is(err, database.ErrNotFound) {

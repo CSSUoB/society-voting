@@ -66,6 +66,13 @@ func (endpoints) apiSetOwnName(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiSetOwnName get user: %w", err)
 	}
 
+	if user.IsRestricted {
+		return &fiber.Error{
+			Code:    fiber.StatusForbidden,
+			Message: "You can't do that because you're restricted - please speak to a member of committee.",
+		}
+	}
+
 	user.Name = request.Name
 
 	if err := user.Update(tx); err != nil {
