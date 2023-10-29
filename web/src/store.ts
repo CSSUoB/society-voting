@@ -5,6 +5,7 @@ export interface User {
     name: string;
     studentID: string;
     admin: boolean;
+    isRestricted: boolean;
 }
 
 export interface Election {
