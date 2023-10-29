@@ -11,6 +11,7 @@ import (
 	"github.com/bwmarrin/go-alone"
 	validate "github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
 	g "github.com/maragudk/gomponents"
 	"github.com/maragudk/gomponents/html"
 	"log/slog"
@@ -46,6 +47,42 @@ func ListenAndServe(addr string) error {
 	})
 
 	e := endpoints{}
+
+	app.Use(func(ctx *fiber.Ctx) error {
+		authToken := ctx.Cookies(sessionTokenCookieName)
+		authSet := authToken != ""
+
+		if authSet {
+			decodedToken, isValid := validateData(authToken)
+			if !isValid {
+				authSet = false
+			} else {
+				ctx.Locals("token", decodedToken)
+			}
+		}
+		ctx.Locals("isauthset", authSet)
+
+		return ctx.Next()
+	})
+
+	app.Use(limiter.New(limiter.Config{
+		Next: func(ctx *fiber.Ctx) bool {
+			p := ctx.Path()
+			user, isAuthed := getSessionAuth(ctx, authAdminUser|authRegularUser)
+			return !isAuthed || user == "admin" || p == "/" || urlFileRegexp.MatchString(p)
+		},
+		Max: 15,
+		KeyGenerator: func(ctx *fiber.Ctx) string {
+			// only set if authed which we are if it's passed the Next check
+			return ctx.Locals("token").(string)
+		},
+		LimitReached: func(ctx *fiber.Ctx) error {
+			return &fiber.Error{
+				Code:    fiber.StatusTooManyRequests,
+				Message: "Slow down!",
+			}
+		},
+	}))
 
 	app.Get("/auth/login", e.authLogin)
 	app.Post("/auth/login", e.authLogin)
@@ -107,7 +144,7 @@ func ListenAndServe(addr string) error {
 	return app.Listen(addr)
 }
 
-var urlFileRegexp = regexp.MustCompile(`[\w\-/]+\.[a-zA-Z]+`)
+var urlFileRegexp = regexp.MustCompile(`[\w\-/]+\.[a-zA-Z]+$`)
 
 var (
 	signer    *goalone.Sword
@@ -156,7 +193,7 @@ func signData(datatype string, data string) string {
 	return hex.EncodeToString(signer.Sign([]byte(datatype + "." + data)))
 }
 
-func validateData(datatype string, token string) (string, bool) {
+func validateData(token string) (string, bool) {
 	dat, err := hex.DecodeString(token)
 	if err != nil {
 		return "", false
@@ -165,10 +202,11 @@ func validateData(datatype string, token string) (string, bool) {
 	if err != nil {
 		return "", false
 	}
-	if !strings.HasPrefix(string(originalData), datatype+".") {
-		return "", false
-	}
-	return string(originalData[len(datatype)+1:]), true
+	return string(originalData), true
+}
+
+func checkTokenDatatype(datatype string, token string) bool {
+	return strings.HasPrefix(token, datatype+".")
 }
 
 const (
@@ -177,26 +215,19 @@ const (
 )
 
 func getSessionAuth(ctx *fiber.Ctx, authType uint) (string, bool) {
-	cookieVal := ctx.Cookies(sessionTokenCookieName)
-
-	if cookieVal == "" {
+	authSet := ctx.Locals("isauthset").(bool)
+	if !authSet {
 		return "", false
 	}
 
-	if authType&authRegularUser != 0 {
-		decodedToken, tokenOkay := validateData("token", cookieVal)
+	decodedToken := ctx.Locals("token").(string)
 
-		if tokenOkay {
-			return decodedToken, true
-		}
+	if authType&authRegularUser != 0 && checkTokenDatatype("token", decodedToken) {
+		return strings.TrimPrefix(decodedToken, "token."), true
 	}
 
-	if authType&authAdminUser != 0 {
-		decodedAdmin, adminOkay := validateData("admin", cookieVal)
-
-		if adminOkay {
-			return decodedAdmin, true
-		}
+	if authType&authAdminUser != 0 && checkTokenDatatype("admin", decodedToken) {
+		return strings.TrimPrefix(decodedToken, "admin."), true
 	}
 
 	return "", false
