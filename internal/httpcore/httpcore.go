@@ -71,7 +71,7 @@ func ListenAndServe(addr string) error {
 			user, isAuthed := getSessionAuth(ctx, authAdminUser|authRegularUser)
 			return !isAuthed || user == "admin" || p == "/" || urlFileRegexp.MatchString(p)
 		},
-		Max: 15,
+		Max: 45,
 		KeyGenerator: func(ctx *fiber.Ctx) string {
 			// only set if authed which we are if it's passed the Next check
 			return ctx.Locals("token").(string)
