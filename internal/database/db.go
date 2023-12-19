@@ -34,7 +34,7 @@ func Get() *bun.DB {
 	loadOnce.Do(func() {
 		conf := config.Get().Database
 
-		dsn := conf.DSN
+		dsn := conf.DSN + "?_txlock=exclusive"
 		slog.Info("connecting to database")
 		db, err := sql.Open("sqlite3", dsn)
 		if err != nil {
