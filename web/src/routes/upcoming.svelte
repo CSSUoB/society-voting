@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from "$app/stores";
 	import Panel from "$lib/panel.svelte";
 	import { user, elections, error } from "../store";
 	import Button from "$lib/button.svelte";
@@ -27,7 +28,12 @@
 
 <Panel title="Upcoming elections" headerIcon="campaign">
 	<List items={$elections?.filter((e) => !e.isActive) ?? []} let:prop={election}>
-		<li class="election">
+		<li
+			class={`election ${
+				$page.url.pathname === `/election/${election.id}` ? "election--selected" : ""
+			}`}
+			on:click={() => goto(`/election/${election.id}`)}
+		>
 			<p>{election.roleName}</p>
 			<Button icon="arrow_forward" on:click={() => goto(`/election/${election.id}`)} />
 		</li>
@@ -60,6 +66,18 @@
 		gap: 8px;
 		align-items: center;
 		padding: 8px 0;
+		cursor: pointer;
+		position: relative;
+	}
+
+	li.election--selected::after {
+		content: "";
+		position: absolute;
+		top: 0;
+		left: -16px;
+		height: 100%;
+		width: calc(100% + 2 * 16px);
+		background-color: rgba(55, 93, 182, 0.1);
 	}
 
 	li.election:not(:last-child) {
