@@ -2,6 +2,7 @@
 	import Avatar from "$lib/avatar.svelte";
 	import Banner from "$lib/banner.svelte";
 	import Button from "$lib/button.svelte";
+	import Dialog from "$lib/dialog.svelte";
 	import List from "$lib/list.svelte";
 	import Panel from "$lib/panel.svelte";
 
@@ -19,8 +20,8 @@
 		goto("/vote");
 	}
 
-	let buttonText = "Stand for election"
-	$: buttonText = `Stand for ${election ? election.roleName : "election"}`
+	let buttonText = "Stand for election";
+	$: buttonText = `Stand for ${election ? election.roleName : "election"}`;
 
 	const standOrWithdraw = async (id: number, stand: boolean) => {
 		$fetching = true;
@@ -38,6 +39,7 @@
 	};
 
 	let floorCandidatesInput: HTMLTextAreaElement;
+	let startElectionDialog: HTMLDialogElement;
 	const startElection = async (id: number) => {
 		$fetching = true;
 		const extraNames = floorCandidatesInput.value
@@ -61,6 +63,7 @@
 		$fetching = false;
 	};
 
+	let deleteElectionDialog: HTMLDialogElement;
 	const deleteElection = async (id: number) => {
 		$fetching = true;
 		const response = await fetch(API.ADMIN_ELECTION, {
@@ -134,11 +137,32 @@
 			<Button
 				kind="primary"
 				text="Save candidates and start election"
-				on:click={() => startElection(election?.id ?? -1)}
+				on:click={() => startElectionDialog.showModal()}
 			/>
-			<Button text="Delete election" on:click={() => deleteElection(election?.id ?? -1)} />
+			<Button text="Delete election" on:click={() => deleteElectionDialog.showModal()} />
 		</div>
 	</Panel>
+	<Dialog
+		bind:dialog={startElectionDialog}
+		title="Confirm candidates and start election?"
+		on:submit={() => startElection(election?.id ?? -1)}
+	>
+		<svelte:fragment slot="actions">
+			<Button text="Cancel" />
+			<Button text="Start election" kind="emphasis" name="submit" />
+		</svelte:fragment>
+	</Dialog>
+	<Dialog
+		bind:dialog={deleteElectionDialog}
+		title="Delete election?"
+		on:submit={() => deleteElection(election?.id ?? -1)}
+	>
+		<p>This action cannot be undone.</p>
+		<svelte:fragment slot="actions">
+			<Button text="Cancel" />
+			<Button text="Delete election" kind="emphasis" name="submit" />
+		</svelte:fragment>
+	</Dialog>
 {/if}
 
 <style>

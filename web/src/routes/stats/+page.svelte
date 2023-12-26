@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import Button from "$lib/button.svelte";
+	import Dialog from "$lib/dialog.svelte";
 	import { API } from "$lib/endpoints";
 	import Panel from "$lib/panel.svelte";
 	import { error, fetching, currentElection } from "../../store";
@@ -8,6 +9,7 @@
 	let electionRunning = true;
 	let results = "";
 	let numberOfVotes = 0;
+	let dialog: HTMLDialogElement;
 
 	$: if (!$currentElection) {
 		goto("/");
@@ -68,9 +70,19 @@
 				The turnout so far is {(numberOfVotes * 100) /
 					($currentElection?.numEligibleVoters ?? 100)}%
 			</p>
-			<Button text="End election and view results" kind="primary" on:click={endElection} />
+			<Button
+				text="End election and view results"
+				kind="primary"
+				on:click={() => dialog.showModal()}
+			/>
 		</div>
 	</Panel>
+	<Dialog bind:dialog title="End election and view results?" on:submit={endElection}>
+		<svelte:fragment slot="actions">
+			<Button text="Cancel" />
+			<Button text="End election" kind="emphasis" name="submit" />
+		</svelte:fragment>
+	</Dialog>
 {:else}
 	<Panel title="Results" headerIcon="receipt_long">
 		<div class="container">
