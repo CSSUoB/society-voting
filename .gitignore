@@ -3,6 +3,7 @@ memberspage.html
 config.yml
 voting.sqlite3.db
 test/users.json
+test/result.*.txt
 
 ### Go ###
 # Binaries for programs and plugins
