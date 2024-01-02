@@ -14,7 +14,7 @@ def cast_vote(url, ballot, vote_code, user):
     r.raise_for_status()
 
 
-def mock_election(admin_password: str, vote_code: str, n: int=1, host: str="127.0.0.1:9090", proto: str="http"):
+def mock_election(admin_password: str, vote_code: str, n: int=1, host: str="127.0.0.1:9090", proto: str="http", start_manually: bool=False):
     with open("users.json") as f:
         users = json.load(f)
 
@@ -31,9 +31,12 @@ def mock_election(admin_password: str, vote_code: str, n: int=1, host: str="127.
         r.raise_for_status()
         election_info = r.json()
 
-        # start election
-        r = requests.post(f"{proto}://{host}/api/admin/election/start", cookies={"vot-tok": admin_token}, json={"id": election_info["id"], "extraNames": ["Volume Knob", "Power Switch", "Blue Shaver", "Fuzzy Hedgehog"]})
-        r.raise_for_status()
+        if start_manually:
+            input("Please start the election and press enter")
+        else:
+            # start election
+            r = requests.post(f"{proto}://{host}/api/admin/election/start", cookies={"vot-tok": admin_token}, json={"id": election_info["id"], "extraNames": ["Volume Knob", "Power Switch", "Blue Shaver", "Fuzzy Hedgehog"]})
+            r.raise_for_status()
 
         # get ballot
         r = requests.get(f"{proto}://{host}/api/election/current", cookies={"vot-tok": admin_token})
