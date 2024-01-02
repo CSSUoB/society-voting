@@ -19,7 +19,7 @@
 		withCredentials: true,
 	});
 	eventSource.addEventListener("vote-received", (e) => {
-		numberOfVotes += parseInt(e.data, 10);
+		numberOfVotes = parseInt(e.data, 10);
 	});
 
 	const endElection = async () => {
@@ -67,8 +67,8 @@
 		<div class="container">
 			<h3>{numberOfVotes} of {$currentElection?.numEligibleVoters} users have voted so far</h3>
 			<p>
-				The turnout so far is {(numberOfVotes * 100) /
-					($currentElection?.numEligibleVoters ?? 100)}%
+				The turnout so far is {((numberOfVotes * 100) /
+					($currentElection?.numEligibleVoters ?? 100)).toFixed(2)}%
 			</p>
 			<Button
 				text="End election and view results"
