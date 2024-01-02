@@ -1,18 +1,14 @@
 package discordWebhookNotify
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/CSSUoB/society-voting/internal/config"
 	"github.com/CSSUoB/society-voting/internal/database"
 	"github.com/CSSUoB/society-voting/internal/events"
 	"github.com/carlmjohnson/requests"
 	"log/slog"
-	"mime/multipart"
 	"net/http"
-	"net/textproto"
 	"time"
 )
 
@@ -57,12 +53,7 @@ func Run() {
 
 			me.Colour = ColourGood
 			me.Title = fmt.Sprintf("Voting for %s has ended!", data.Election.RoleName)
-			me.Description = fmt.Sprintf("Election ID: %d", data.Election.ID)
-
-			me.Files = append(me.Files, &EmbedFile{
-				Filename: data.Election.RoleName + " " + time.Now().UTC().Format("2006-01-02") + ".txt",
-				Content:  data.Result,
-			})
+			me.Description = fmt.Sprintf("Election ID: %d\n\n```%s```", data.Election.ID, data.Result)
 		}
 
 		if err := sendEmbed(me); err != nil {
@@ -78,15 +69,9 @@ const (
 )
 
 type MinimalEmbed struct {
-	Title       string       `json:"title"`
-	Description string       `json:"description"`
-	Colour      uint         `json:"color,omitempty"`
-	Files       []*EmbedFile `json:"-"`
-}
-
-type EmbedFile struct {
-	Filename string
-	Content  string
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Colour      uint   `json:"color,omitempty"`
 }
 
 func sendEmbed(embed *MinimalEmbed) error {
@@ -105,33 +90,7 @@ func sendEmbed(embed *MinimalEmbed) error {
 		},
 	}
 
-	r := requests.URL(conf.URL).Method(http.MethodPost)
-
-	if len(embed.Files) == 0 {
-		r.BodyJSON(&req)
-	} else {
-		buf := new(bytes.Buffer)
-		writer := multipart.NewWriter(buf)
-
-		{
-			part, _ := writer.CreatePart(textproto.MIMEHeader{"Content-Type": []string{"application/json"}, "Content-Disposition": []string{"form-data; name=\"payload_json\""}})
-			dat, err := json.Marshal(&req)
-			if err != nil {
-				return err
-			}
-			_, _ = part.Write(dat)
-		}
-
-		for i, file := range embed.Files {
-			part, _ := writer.CreateFormFile(fmt.Sprintf("files[%d]", i), file.Filename)
-			_, _ = part.Write([]byte(file.Content))
-		}
-
-		_ = writer.Close()
-
-		r.Header("Content-Type", "multipart/form-data; boundary="+writer.Boundary())
-		r.BodyBytes(buf.Bytes())
-	}
+	r := requests.URL(conf.URL).Method(http.MethodPost).BodyJSON(&req)
 
 	if conf.ThreadID != "" {
 		r.Param("thread_id", conf.ThreadID)
@@ -140,9 +99,14 @@ func sendEmbed(embed *MinimalEmbed) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
+	var resp string
+	r.ToString(&resp)
+
 	if err := r.Fetch(ctx); err != nil {
 		return err
 	}
+
+	fmt.Println(resp)
 
 	return nil
 }
