@@ -11,9 +11,11 @@ require (
 	github.com/gofiber/fiber/v2 v2.50.0
 	github.com/maragudk/gomponents v0.20.1
 	github.com/mattn/go-sqlite3 v1.14.17
+	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/uptrace/bun v1.1.16
 	github.com/uptrace/bun/dialect/sqlitedialect v1.1.16
 	github.com/uptrace/bun/extra/bundebug v1.1.16
+	github.com/valyala/fasthttp v1.50.0
 )
 
 require (
@@ -33,17 +35,15 @@ require (
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/philhofer/fwd v1.1.2 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
-	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e // indirect
 	github.com/tinylib/msgp v1.1.8 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.50.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
-	golang.org/x/crypto v0.13.0 // indirect
+	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/net v0.15.0 // indirect
-	golang.org/x/sys v0.13.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
