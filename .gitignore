@@ -2,6 +2,7 @@ run/
 memberspage.html
 config.yml
 voting.sqlite3.db
+test/users.json
 
 ### Go ###
 # Binaries for programs and plugins
