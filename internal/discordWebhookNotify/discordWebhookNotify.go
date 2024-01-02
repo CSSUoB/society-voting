@@ -99,14 +99,9 @@ func sendEmbed(embed *MinimalEmbed) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	var resp string
-	r.ToString(&resp)
-
 	if err := r.Fetch(ctx); err != nil {
 		return err
 	}
-
-	fmt.Println(resp)
 
 	return nil
 }
