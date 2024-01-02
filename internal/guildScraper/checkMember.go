@@ -1,3 +1,5 @@
+//go:build !noscrape
+
 package guildScraper
 
 import (
