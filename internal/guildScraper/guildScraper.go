@@ -12,8 +12,9 @@ import (
 )
 
 type GuildMember struct {
-	ID   string
-	Name string
+	ID                string
+	Name              string
+	IsCommitteeMember bool
 }
 
 func GetMembersList() ([]*GuildMember, error) {
@@ -70,7 +71,11 @@ func parseGuildMemberPage(pageData string) ([]*GuildMember, error) {
 		return nil, fmt.Errorf("create document reader: %w", err)
 	}
 
-	var res []*GuildMember
+	var (
+		// both maps are in the format <id>:<name>
+		members    map[string]string
+		cmtMembers map[string]string
+	)
 
 	doc.Find("div.member_list_group").EachWithBreak(func(i int, selection *goquery.Selection) bool {
 		header := selection.Find("h3")
@@ -81,32 +86,56 @@ func parseGuildMemberPage(pageData string) ([]*GuildMember, error) {
 
 		normalisedHeaderText := strings.ToLower(strings.TrimSpace(header.Text()))
 
-		if normalisedHeaderText == "all members" {
+		const (
+			allMembers    = "all members"
+			allCmtMembers = "all committee members"
+		)
+
+		if normalisedHeaderText == allMembers || normalisedHeaderText == allCmtMembers {
 			table := selection.Find("table.msl_table")
 			if table == nil {
 				err = fmt.Errorf("no table found in group %d", i)
 				return false
 			}
 
-			res, err = extractMembersFromTable(table)
+			var parsedMembers map[string]string
+			parsedMembers, err = extractMembersFromTable(table)
 			if err != nil {
 				return false
 			}
+
+			if normalisedHeaderText == allMembers {
+				members = parsedMembers
+			} else {
+				cmtMembers = parsedMembers
+			}
+
 		}
 
-		return res == nil
+		return members == nil || cmtMembers == nil
 	})
 	if err != nil {
 		return nil, fmt.Errorf("scrape data from guild HTML: %w", err)
 	}
 
+	var res []*GuildMember
+
+	for id, name := range members {
+		_, isCmt := cmtMembers[id]
+		res = append(res, &GuildMember{
+			ID:                id,
+			Name:              name,
+			IsCommitteeMember: isCmt,
+		})
+	}
+
 	return res, nil
 }
 
-func extractMembersFromTable(table *goquery.Selection) ([]*GuildMember, error) {
+func extractMembersFromTable(table *goquery.Selection) (map[string]string, error) {
 	var (
 		err error
-		res []*GuildMember
+		res = make(map[string]string)
 	)
 
 	table.Find("tr.msl_row,tr.msl_altrow").EachWithBreak(func(i int, selection *goquery.Selection) bool {
@@ -120,11 +149,9 @@ func extractMembersFromTable(table *goquery.Selection) ([]*GuildMember, error) {
 			return false
 		}
 
-		member := &GuildMember{
-			ID:   strings.TrimSpace(goquery.NewDocumentFromNode(cols[1]).Text()),
-			Name: strings.TrimSpace(goquery.NewDocumentFromNode(cols[0]).Text()),
-		}
-		res = append(res, member)
+		id := strings.TrimSpace(goquery.NewDocumentFromNode(cols[1]).Text())
+		name := strings.TrimSpace(goquery.NewDocumentFromNode(cols[0]).Text())
+		res[id] = name
 
 		return true
 	})
