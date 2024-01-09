@@ -98,6 +98,13 @@ func (endpoints) apiAdminToggleRestrictUser(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiAdminToggleRestrictUser get user: %w", err)
 	}
 
+	if user.IsAdmin {
+		return &fiber.Error{
+			Code:    fiber.StatusForbidden,
+			Message: "This user is an administrator - administrators cannot be restricted.",
+		}
+	}
+
 	user.IsRestricted = !user.IsRestricted
 
 	if err := user.Update(tx); err != nil {
