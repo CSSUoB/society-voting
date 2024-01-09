@@ -82,6 +82,7 @@ func (endpoints) authLogin(ctx *fiber.Ctx) error {
 				StudentID:    studentID,
 				Name:         guildMember.Name,
 				PasswordHash: passwordHash[:],
+				IsAdmin:      guildMember.IsCommitteeMember,
 			}
 
 			if err := user.Insert(tx); err != nil {
