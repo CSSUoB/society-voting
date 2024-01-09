@@ -13,24 +13,14 @@ func (endpoints) apiMe(ctx *fiber.Ctx) error {
 		return fiber.ErrUnauthorized
 	}
 
-	var user *database.User
-
-	if userID == "admin" {
-		user = &database.User{
-			StudentID: "admin",
-			Name:      "Administrator",
+	user, err := database.GetUser(userID)
+	if err != nil {
+		if errors.Is(err, database.ErrNotFound) {
+			// User has been deleted
+			ctx.Cookie(newSessionTokenDeletionCookie())
+			return fiber.ErrUnauthorized
 		}
-	} else {
-		u, err := database.GetUser(userID)
-		if err != nil {
-			if errors.Is(err, database.ErrNotFound) {
-				// User has been deleted
-				ctx.Cookie(newSessionTokenDeletionCookie())
-				return fiber.ErrUnauthorized
-			}
-			return fmt.Errorf("apiVote get user: %w", err)
-		}
-		user = u
+		return fmt.Errorf("apiVote get user: %w", err)
 	}
 
 	return ctx.JSON(user)

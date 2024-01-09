@@ -70,12 +70,12 @@ func ListenAndServe(addr string) error {
 	app.Use(limiter.New(limiter.Config{
 		Next: func(ctx *fiber.Ctx) bool {
 			p := ctx.Path()
-			user, authStatus := getSessionAuth(ctx)
-			return authStatus == authNotAuthed || user == "admin" || p == "/" || urlFileRegexp.MatchString(p)
+			_, authStatus := getSessionAuth(ctx)
+			return authStatus == authNotAuthed || p == "/" || urlFileRegexp.MatchString(p)
 		},
 		Max: 45,
 		KeyGenerator: func(ctx *fiber.Ctx) string {
-			// only set if authed which we are if it's passed the Next check
+			// only set if authed, which we are if it's passed the Next check
 			return ctx.Locals("token").(string)
 		},
 		LimitReached: func(ctx *fiber.Ctx) error {

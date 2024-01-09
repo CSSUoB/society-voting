@@ -37,7 +37,7 @@ func (endpoints) authLogin(ctx *fiber.Ctx) error {
 			goto staticPage
 		}
 
-		if _, err := strconv.Atoi(studentID); err != nil && studentID != "admin" {
+		if _, err := strconv.Atoi(studentID); err != nil {
 			requestProblem = "invalid student ID"
 			goto staticPage
 		}
@@ -46,15 +46,6 @@ func (endpoints) authLogin(ctx *fiber.Ctx) error {
 		if passwordPlaintext == "" {
 			requestProblem = "missing password"
 			goto staticPage
-		}
-
-		if studentID == "admin" {
-			if subtle.ConstantTimeCompare([]byte(config.Get().Platform.AdminToken), []byte(passwordPlaintext)) == 0 {
-				goto incorrectPassword
-			} else {
-				ctx.Cookie(newSessionTokenCookie(signData("admin")))
-				return ctx.Redirect("/")
-			}
 		}
 
 		// Provision user if needed

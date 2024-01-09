@@ -107,13 +107,9 @@ func (endpoints) apiGetActiveElectionInformation(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiGetActiveElectionInformation count users: %w", err)
 	}
 
-	var hasVoted bool
-	if userID != "admin" {
-		hv, err := database.HasUserVotedInElection(userID, election.ID, tx)
-		if err != nil {
-			return fmt.Errorf("apiGetActiveElectionInformation check if user has voted: %w", err)
-		}
-		hasVoted = hv
+	hasVoted, err := database.HasUserVotedInElection(userID, election.ID, tx)
+	if err != nil {
+		return fmt.Errorf("apiGetActiveElectionInformation check if user has voted: %w", err)
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -370,7 +366,7 @@ func (endpoints) apiWithdrawFromElection(ctx *fiber.Ctx) error {
 	user, err := database.GetUser(userID, tx)
 	if err != nil {
 		if errors.Is(err, database.ErrNotFound) {
-			if actingUserID == "admin" {
+			if authStatus&authAdminUser != 0 {
 				fmt.Println(userID)
 				return &fiber.Error{
 					Code:    fiber.StatusNotFound,
@@ -409,7 +405,7 @@ func (endpoints) apiWithdrawFromElection(ctx *fiber.Ctx) error {
 	}
 
 	events.SendEvent(events.TopicUserElectionWithdraw, &events.UserElectionWithdrawData{
-		ByForce:  actingUserID == "admin",
+		ByForce:  authStatus&authAdminUser != 0 && userID != actingUserID,
 		User:     user,
 		Election: election,
 	})
