@@ -70,9 +70,44 @@ func parseGuildMemberPage(pageData string) ([]*GuildMember, error) {
 		return nil, fmt.Errorf("create document reader: %w", err)
 	}
 
-	table := doc.Find("table#ctl00_Main_rptGroups_ctl03_gvMemberships")
-
 	var res []*GuildMember
+
+	doc.Find("div.member_list_group").EachWithBreak(func(i int, selection *goquery.Selection) bool {
+		header := selection.Find("h3")
+		if header == nil {
+			err = fmt.Errorf("cannot find member list group title for item %d", i)
+			return false
+		}
+
+		normalisedHeaderText := strings.ToLower(strings.TrimSpace(header.Text()))
+
+		if normalisedHeaderText == "all members" {
+			table := selection.Find("table.msl_table")
+			if table == nil {
+				err = fmt.Errorf("no table found in group %d", i)
+				return false
+			}
+
+			res, err = extractMembersFromTable(table)
+			if err != nil {
+				return false
+			}
+		}
+
+		return res == nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("scrape data from guild HTML: %w", err)
+	}
+
+	return res, nil
+}
+
+func extractMembersFromTable(table *goquery.Selection) ([]*GuildMember, error) {
+	var (
+		err error
+		res []*GuildMember
+	)
 
 	table.Find("tr.msl_row,tr.msl_altrow").EachWithBreak(func(i int, selection *goquery.Selection) bool {
 		err = nil
@@ -94,8 +129,7 @@ func parseGuildMemberPage(pageData string) ([]*GuildMember, error) {
 		return true
 	})
 	if err != nil {
-		return nil, fmt.Errorf("scrape data from guild HTML: %w", err)
+		return nil, fmt.Errorf("scrape guild HTML table: %w", err)
 	}
-
 	return res, nil
 }
