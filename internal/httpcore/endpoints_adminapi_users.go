@@ -9,7 +9,7 @@ import (
 )
 
 func (endpoints) apiAdminDeleteUser(ctx *fiber.Ctx) error {
-	if _, isAuthed := getSessionAuth(ctx, authAdminUser); !isAuthed {
+	if _, status := getSessionAuth(ctx); status&authAdminUser == 0 {
 		return fiber.ErrUnauthorized
 	}
 
@@ -48,7 +48,7 @@ func (endpoints) apiAdminDeleteUser(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiAdminListUsers(ctx *fiber.Ctx) error {
-	if _, isAuthed := getSessionAuth(ctx, authAdminUser); !isAuthed {
+	if _, status := getSessionAuth(ctx); status&authAdminUser == 0 {
 		return fiber.ErrUnauthorized
 	}
 
@@ -69,7 +69,7 @@ func (endpoints) apiAdminListUsers(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiAdminToggleRestrictUser(ctx *fiber.Ctx) error {
-	if _, isAuthed := getSessionAuth(ctx, authAdminUser); !isAuthed {
+	if _, status := getSessionAuth(ctx); status&authAdminUser == 0 {
 		return fiber.ErrUnauthorized
 	}
 

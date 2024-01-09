@@ -15,8 +15,8 @@ import (
 )
 
 func (endpoints) apiListElections(ctx *fiber.Ctx) error {
-	userID, isAuthed := getSessionAuth(ctx, authAdminUser|authRegularUser)
-	if !isAuthed {
+	userID, authStatus := getSessionAuth(ctx)
+	if authStatus == authNotAuthed {
 		return fiber.ErrUnauthorized
 	}
 
@@ -42,7 +42,7 @@ func (endpoints) apiListElections(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiElectionsSSE(ctx *fiber.Ctx) error {
-	if _, ok := getSessionAuth(ctx, authAdminUser|authRegularUser); !ok {
+	if _, status := getSessionAuth(ctx); status == authNotAuthed {
 		return fiber.ErrUnauthorized
 	}
 
@@ -75,8 +75,8 @@ func (endpoints) apiElectionsSSE(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiGetActiveElectionInformation(ctx *fiber.Ctx) error {
-	userID, isAuthed := getSessionAuth(ctx, authAdminUser|authRegularUser)
-	if !isAuthed {
+	userID, authStatus := getSessionAuth(ctx)
+	if authStatus == authNotAuthed {
 		return fiber.ErrUnauthorized
 	}
 
@@ -141,8 +141,8 @@ func (endpoints) apiGetActiveElectionInformation(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiVote(ctx *fiber.Ctx) error {
-	userID, isAuthed := getSessionAuth(ctx, authRegularUser)
-	if !isAuthed {
+	userID, authStatus := getSessionAuth(ctx)
+	if authStatus == authNotAuthed {
 		return fiber.ErrUnauthorized
 	}
 
@@ -241,8 +241,8 @@ func (endpoints) apiVote(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiStandForElection(ctx *fiber.Ctx) error {
-	userID, isAuthed := getSessionAuth(ctx, authRegularUser)
-	if !isAuthed {
+	userID, authStatus := getSessionAuth(ctx)
+	if authStatus == authNotAuthed {
 		return fiber.ErrUnauthorized
 	}
 
@@ -327,19 +327,23 @@ func (endpoints) apiWithdrawFromElection(ctx *fiber.Ctx) error {
 		userID     string
 	)
 
-	actingUserID, isAuthed := getSessionAuth(ctx, authRegularUser|authAdminUser)
-	if !isAuthed {
+	actingUserID, authStatus := getSessionAuth(ctx)
+	if authStatus == authNotAuthed {
 		return fiber.ErrUnauthorized
 	}
 
-	if actingUserID == "admin" {
+	if authStatus&authAdminUser != 0 {
 		var request = struct {
 			ElectionID int    `json:"id" validate:"ne=0"`
-			UserID     string `json:"userID" validate:"ne=0"`
+			UserID     string `json:"userID"`
 		}{}
 
 		if err := parseAndValidateRequestBody(ctx, &request); err != nil {
 			return err
+		}
+
+		if request.UserID == "" {
+			request.UserID = actingUserID
 		}
 
 		userID = request.UserID

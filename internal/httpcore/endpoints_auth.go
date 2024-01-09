@@ -52,7 +52,7 @@ func (endpoints) authLogin(ctx *fiber.Ctx) error {
 			if subtle.ConstantTimeCompare([]byte(config.Get().Platform.AdminToken), []byte(passwordPlaintext)) == 0 {
 				goto incorrectPassword
 			} else {
-				ctx.Cookie(newSessionTokenCookie(signData("admin", "admin")))
+				ctx.Cookie(newSessionTokenCookie(signData("admin")))
 				return ctx.Redirect("/")
 			}
 		}
@@ -107,7 +107,7 @@ func (endpoints) authLogin(ctx *fiber.Ctx) error {
 		}
 
 		// Issue token
-		ctx.Cookie(newSessionTokenCookie(signData("token", studentID)))
+		ctx.Cookie(newSessionTokenCookie(signData(studentID)))
 
 		// Redirect to app
 		return ctx.Redirect("/")
