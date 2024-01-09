@@ -1,11 +1,14 @@
 package httpcore
 
 import (
+	"context"
 	cryptoRand "crypto/rand"
+	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"github.com/CSSUoB/society-voting/internal/config"
+	"github.com/CSSUoB/society-voting/internal/database"
 	"github.com/CSSUoB/society-voting/internal/httpcore/htmlutil"
 	"github.com/CSSUoB/society-voting/web"
 	"github.com/bwmarrin/go-alone"
@@ -18,7 +21,6 @@ import (
 	"math/rand"
 	"os"
 	"regexp"
-	"strings"
 	"time"
 )
 
@@ -68,8 +70,8 @@ func ListenAndServe(addr string) error {
 	app.Use(limiter.New(limiter.Config{
 		Next: func(ctx *fiber.Ctx) bool {
 			p := ctx.Path()
-			user, isAuthed := getSessionAuth(ctx, authAdminUser|authRegularUser)
-			return !isAuthed || user == "admin" || p == "/" || urlFileRegexp.MatchString(p)
+			user, authStatus := getSessionAuth(ctx)
+			return authStatus == authNotAuthed || user == "admin" || p == "/" || urlFileRegexp.MatchString(p)
 		},
 		Max: 45,
 		KeyGenerator: func(ctx *fiber.Ctx) string {
@@ -117,9 +119,9 @@ func ListenAndServe(addr string) error {
 			return ctx.RestartRouting()
 		}
 
-		_, isAuthed := getSessionAuth(ctx, authAdminUser|authRegularUser)
+		_, authStatus := getSessionAuth(ctx)
 
-		if !isAuthed {
+		if authStatus == authNotAuthed {
 			return ctx.Redirect("/auth/login")
 		}
 
@@ -188,8 +190,8 @@ func newSessionTokenDeletionCookie() *fiber.Cookie {
 	}
 }
 
-func signData(datatype string, data string) string {
-	return hex.EncodeToString(signer.Sign([]byte(datatype + "." + data)))
+func signData(data string) string {
+	return hex.EncodeToString(signer.Sign([]byte(data)))
 }
 
 func validateData(token string) (string, bool) {
@@ -204,32 +206,35 @@ func validateData(token string) (string, bool) {
 	return string(originalData), true
 }
 
-func checkTokenDatatype(datatype string, token string) bool {
-	return strings.HasPrefix(token, datatype+".")
-}
+type authType uint
 
 const (
-	authRegularUser uint = 1 << iota
+	authNotAuthed   authType = 0
+	authRegularUser authType = 1 << iota
 	authAdminUser
 )
 
-func getSessionAuth(ctx *fiber.Ctx, authType uint) (string, bool) {
+func getSessionAuth(ctx *fiber.Ctx) (string, authType) {
 	authSet := ctx.Locals("isauthset").(bool)
 	if !authSet {
-		return "", false
+		return "", authNotAuthed
 	}
 
 	decodedToken := ctx.Locals("token").(string)
 
-	if authType&authRegularUser != 0 && checkTokenDatatype("token", decodedToken) {
-		return strings.TrimPrefix(decodedToken, "token."), true
+	var isAdmin bool
+	if err := database.Get().NewSelect().Table("users").Column("is_admin").Where("id = ?", decodedToken).Scan(context.Background(), &isAdmin); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", authNotAuthed
+		}
+		// if we can't handle sessions properly we may as well not run
+		panic(err)
 	}
 
-	if authType&authAdminUser != 0 && checkTokenDatatype("admin", decodedToken) {
-		return strings.TrimPrefix(decodedToken, "admin."), true
+	if isAdmin {
+		return decodedToken, authRegularUser | authAdminUser
 	}
-
-	return "", false
+	return decodedToken, authRegularUser
 }
 
 func parseAndValidateRequestBody(ctx *fiber.Ctx, x any) error {

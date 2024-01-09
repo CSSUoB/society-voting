@@ -8,8 +8,8 @@ import (
 )
 
 func (endpoints) apiMe(ctx *fiber.Ctx) error {
-	userID, isAuthed := getSessionAuth(ctx, authRegularUser|authAdminUser)
-	if !isAuthed {
+	userID, authStatus := getSessionAuth(ctx)
+	if authStatus == authNotAuthed {
 		return fiber.ErrUnauthorized
 	}
 
@@ -37,8 +37,8 @@ func (endpoints) apiMe(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiSetOwnName(ctx *fiber.Ctx) error {
-	userID, isAuthed := getSessionAuth(ctx, authRegularUser)
-	if !isAuthed {
+	userID, authStatus := getSessionAuth(ctx)
+	if authStatus == authNotAuthed {
 		return fiber.ErrUnauthorized
 	}
 

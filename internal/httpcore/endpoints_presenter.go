@@ -8,7 +8,7 @@ import (
 )
 
 func (endpoints) presenterQRCode(ctx *fiber.Ctx) error {
-	if _, isAuthed := getSessionAuth(ctx, authAdminUser); !isAuthed {
+	if _, status := getSessionAuth(ctx); status&authAdminUser == 0 {
 		return fiber.ErrUnauthorized
 	}
 
@@ -26,7 +26,7 @@ func (endpoints) presenterQRCode(ctx *fiber.Ctx) error {
 var presenterPageHTML string
 
 func (endpoints) presenterPage(ctx *fiber.Ctx) error {
-	if _, isAuthed := getSessionAuth(ctx, authAdminUser); !isAuthed {
+	if _, status := getSessionAuth(ctx); status&authAdminUser == 0 {
 		return fiber.ErrUnauthorized
 	}
 
