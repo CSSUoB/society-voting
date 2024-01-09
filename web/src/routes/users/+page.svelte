@@ -43,9 +43,8 @@
 			body: JSON.stringify({ userID }),
 		});
 
-		const j = await response.json();
-
 		if (response.ok) {
+			const j = await response.json();
 			data = {
 				...data,
 				users: data.users.map((u) => {
