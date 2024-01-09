@@ -15,6 +15,7 @@ type User struct {
 	Name         string `json:"name"`
 	PasswordHash []byte `json:"-"`
 	IsRestricted bool   `json:"isRestricted"`
+	IsAdmin      bool   `json:"isAdmin"`
 }
 
 func (u *User) Insert(x ...bun.IDB) error {
