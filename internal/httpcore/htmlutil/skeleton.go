@@ -10,6 +10,7 @@ import (
 func SkeletonPage(title string, content ...g.Node) g.Node {
 	return HTML(
 		Head(
+			Meta(g.Attr("charset", "utf-8")),
 			Meta(g.Attr("name", "viewport"), g.Attr("content", "width=device-width, initial-scale=1.0")),
 			TitleEl(g.Text(title)),
 			StyleEl(g.Text(`
