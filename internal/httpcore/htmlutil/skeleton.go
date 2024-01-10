@@ -27,6 +27,7 @@ body {
 
 func SendPage(ctx *fiber.Ctx, page g.Node) error {
 	buf := new(bytes.Buffer)
+	buf.WriteString("<!DOCTYPE html>")
 	_ = page.Render(buf)
 	ctx.Type("html")
 	return ctx.SendStream(buf)
