@@ -13,7 +13,8 @@ import (
 
 type GuildMember struct {
 	ID                string
-	Name              string
+	FirstName         string
+	LastName          string
 	IsCommitteeMember bool
 }
 
@@ -26,12 +27,6 @@ func GetMembersList() ([]*GuildMember, error) {
 	res, err := parseGuildMemberPage(pageData)
 	if err != nil {
 		return nil, fmt.Errorf("parse guild membership list: %w", err)
-	}
-
-	// Rewrite names from `Bloggs, Joe` to `Joe Bloggs`
-	for _, x := range res {
-		ns := strings.Split(x.Name, ", ")
-		x.Name = ns[1] + " " + ns[0]
 	}
 
 	return res, nil
@@ -121,10 +116,14 @@ func parseGuildMemberPage(pageData string) ([]*GuildMember, error) {
 	var res []*GuildMember
 
 	for id, name := range members {
+		// Last name comes first
+		ns := strings.Split(name, ", ")
+
 		_, isCmt := cmtMembers[id]
 		res = append(res, &GuildMember{
 			ID:                id,
-			Name:              name,
+			FirstName:         ns[1],
+			LastName:          ns[0],
 			IsCommitteeMember: isCmt,
 		})
 	}

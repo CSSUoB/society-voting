@@ -5,6 +5,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	g "github.com/maragudk/gomponents"
 	. "github.com/maragudk/gomponents/html"
+	"math/rand"
+	"strconv"
 )
 
 func SkeletonPage(title string, content ...g.Node) g.Node {
@@ -31,4 +33,28 @@ func SendPage(ctx *fiber.Ctx, page g.Node) error {
 	_ = page.Render(buf)
 	ctx.Type("html")
 	return ctx.SendStream(buf)
+}
+
+func SendFragment(ctx *fiber.Ctx, frag g.Node) error {
+	buf := new(bytes.Buffer)
+	_ = frag.Render(buf)
+	ctx.Type("html")
+	return ctx.SendStream(buf)
+}
+
+func FormInput(inputType, name, placeholder, labelText string) g.Node {
+	r := strconv.Itoa(rand.Intn(1000000))
+	return g.Group([]g.Node{
+		Label(
+			g.Text(labelText),
+			g.Attr("for", r),
+			g.Attr("style", "margin-right: 6px"),
+		),
+		Input(
+			g.Attr("type", inputType),
+			g.Attr("placeholder", placeholder),
+			g.Attr("name", name),
+			g.Attr("id", r),
+		),
+	})
 }
