@@ -33,7 +33,7 @@
 		withCredentials: true,
 	});
 	const electionStatusChanged = async () => {
-		if (!$user.admin) {
+		if (!$user.isAdmin) {
 			$elections = await _getElections();
 			$currentElection = await _getCurrentElection();
 		}
@@ -48,11 +48,11 @@
 	<main style:left={menuOpen ? "0" : ""}>
 		<div class="rail">
 			<Profile />
-			{#if !data.user.admin && $currentElection && !$currentElection.hasVoted}
+			{#if $currentElection && (!$currentElection.hasVoted || $user.isAdmin)}
 				<Current />
 			{/if}
 			<Upcoming />
-			{#if data.user.admin}
+			{#if data.user.isAdmin}
 				<Users />
 				<PresenterMode />
 			{/if}

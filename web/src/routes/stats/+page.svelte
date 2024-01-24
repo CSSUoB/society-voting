@@ -11,7 +11,7 @@
 	let numberOfVotes = 0;
 	let dialog: HTMLDialogElement;
 
-	$: if (!$currentElection) {
+	if (!$currentElection) {
 		goto("/");
 	}
 
@@ -34,6 +34,7 @@
 		}
 		electionRunning = false;
 		results = (await response.json()).result;
+		$currentElection = null;
 		$fetching = false;
 	};
 
@@ -67,8 +68,10 @@
 		<div class="container">
 			<h3>{numberOfVotes} of {$currentElection?.numEligibleVoters} users have voted so far</h3>
 			<p>
-				The turnout so far is {((numberOfVotes * 100) /
-					($currentElection?.numEligibleVoters ?? 100)).toFixed(2)}%
+				The turnout so far is {(
+					(numberOfVotes * 100) /
+					($currentElection?.numEligibleVoters ?? 100)
+				).toFixed(2)}%
 			</p>
 			<Button
 				text="End election and view results"

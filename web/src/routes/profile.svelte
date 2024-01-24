@@ -27,9 +27,7 @@
 
 <Panel title="Hi {$user.name.split(' ')[0]}!" headerIcon="waving_hand">
 	<svelte:fragment slot="header-action">
-		{#if !$user.admin}
-			<Button text="Use a different name" kind="emphasis" on:click={() => dialog.showModal()} />
-		{/if}
+		<Button text="Use a different name" kind="emphasis" on:click={() => dialog.showModal()} />
 	</svelte:fragment>
 	<p>Welcome to CSS' voting system! View, stand for, and vote in currently running elections.</p>
 	<br />

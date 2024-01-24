@@ -71,13 +71,21 @@
 		<li class="user" class:restricted={user.isRestricted}>
 			<p>{user.studentID}</p>
 			<p>
-				{user.name}{#if user.isRestricted} <span class="pill"><small>Restricted</small></span>{/if}
+				{user.name}
+				{#if user.isRestricted}
+					<span class="pill pill--red"><small>Restricted</small></span>
+				{/if}
+				{#if user.isAdmin}
+					<span class="pill pill--black"><small>Admin</small></span>
+				{/if}
 			</p>
-			<Button
-				icon={user.isRestricted ? "check" : "block"}
-				text={user.isRestricted ? "Unrestrict user" : "Restrict user"}
-				on:click={confirmRestrictUser.bind(null, user)}
-			/>
+			{#if !user.isAdmin}
+				<Button
+					icon={user.isRestricted ? "check" : "block"}
+					text={user.isRestricted ? "Unrestrict user" : "Restrict user"}
+					on:click={confirmRestrictUser.bind(null, user)}
+				/>
+			{/if}
 			<Button
 				icon="person_remove"
 				text="Delete user"
@@ -144,12 +152,19 @@
 
 	li.user p > span.pill {
 		margin-left: 8px;
-		background: rgba(255, 0, 0, 0.5);
 		color: #fff;
 		padding: 0 8px;
 		border-radius: 4px;
 		text-transform: uppercase;
 		font-family: "JetBrains Mono";
 		font-weight: bold;
+	}
+
+	li.user p > span.pill--red {
+		background: rgba(255, 0, 0, 0.5);
+	}
+
+	li.user p > span.pill--black {
+		background: black;
 	}
 </style>

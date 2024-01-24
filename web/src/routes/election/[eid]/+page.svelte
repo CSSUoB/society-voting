@@ -88,7 +88,7 @@
 	<p>{election?.description}</p>
 </Panel>
 
-{#if !$user.admin && !election?.candidates?.some((c) => c.isMe)}
+{#if !election?.candidates?.some((c) => c.isMe)}
 	<Banner title="Interested in running?" kind="emphasis">
 		<img slot="image" src={run} alt="" class="banner-image" />
 		<svelte:fragment slot="content">
@@ -126,7 +126,7 @@
 	{/if}
 </Panel>
 
-{#if $user.admin}
+{#if $user.isAdmin}
 	<Panel title="Admin stuff" headerIcon="admin_panel_settings">
 		<div class="admin-controls">
 			<h3>Candidates standing from the floor</h3>
