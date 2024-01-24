@@ -7,7 +7,7 @@ export async function load({ fetch, params }) {
     const [user, elections, currentElection] = await Promise.all([_getUser(), _getElections(), _getCurrentElection()]);
 
     return {
-        user: { ...user, admin: user.studentID === "admin" },
+        user,
         elections,
         currentElection
     };
