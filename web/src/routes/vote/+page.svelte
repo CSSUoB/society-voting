@@ -62,35 +62,37 @@
 	<p>{$currentElection?.election.description}</p>
 </Panel>
 
-{#if !$user.admin}
-	<Panel title="Your ballot">
-		<p>There are {($currentElection?.ballot.length ?? 1) - 1} candidates on the ballot.</p>
-		<p>Rank candidates in order of your choice. You do not need to rank all candidates.</p>
-		<List items={ballot} let:prop={candidate}>
-			<BallotEntry
-				ballot={$currentElection?.ballot ?? []}
-				{candidate}
-				error={errors[candidate.index]}
-				on:change={(e) => updateAndValidate(candidate.index, e)}
-			/>
-		</List>
-	</Panel>
+<Panel title="Your ballot">
+	<p>There are {($currentElection?.ballot.length ?? 1) - 1} candidates on the ballot.</p>
+	<p>Rank candidates in order of your choice. You do not need to rank all candidates.</p>
+	<List items={ballot} let:prop={candidate}>
+		<BallotEntry
+			ballot={$currentElection?.ballot ?? []}
+			{candidate}
+			error={errors[candidate.index]}
+			on:change={(e) => updateAndValidate(candidate.index, e)}
+		/>
+	</List>
+</Panel>
 
-	<Panel title="Submit" kind="emphasis">
-		<div class="submit-container">
-			<input bind:this={codeInput} placeholder="Enter election code" type="text" />
-			<Button
-				kind="primary"
-				text="Submit vote"
-				icon="check"
-				on:click={() => submit()}
-				disabled={errors.filter((x) => x).length > 0}
-			/>
-		</div>
-	</Panel>
-{/if}
+<Panel title="Submit" kind="emphasis">
+	<div class="submit-container">
+		<input bind:this={codeInput} placeholder="Enter election code" type="text" />
+		<Button
+			kind="primary"
+			text="Submit vote"
+			icon="check"
+			on:click={() => submit()}
+			disabled={errors.filter((x) => x).length > 0}
+		/>
+	</div>
+</Panel>
 
-<Dialog title="Congrats, you've voted!" bind:dialog={votedDialog} on:close={() => goto("/")}>
+<Dialog
+	title="Congrats, you've voted!"
+	bind:dialog={votedDialog}
+	on:close={() => goto($user.isAdmin ? "/stats" : "/")}
+>
 	<div class="dialog-container">
 		<img src={`https://cssuob.github.io/resources/dinosaur/tex_ballot.svg`} width="200px" />
 		<p>

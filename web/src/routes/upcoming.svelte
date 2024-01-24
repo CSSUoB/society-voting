@@ -38,7 +38,7 @@
 			<Button icon="arrow_forward" on:click={() => goto(`/election/${election.id}`)} />
 		</li>
 	</List>
-	{#if $user.admin}
+	{#if $user.isAdmin}
 		<Button
 			kind="emphasis"
 			text="Create a new election"
