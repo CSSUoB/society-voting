@@ -34,7 +34,6 @@
 		}
 		electionRunning = false;
 		results = (await response.json()).result;
-		$currentElection = null;
 		$fetching = false;
 	};
 
@@ -52,6 +51,7 @@
 		element.click();
 
 		document.body.removeChild(element);
+		$currentElection = null;
 	};
 </script>
 
