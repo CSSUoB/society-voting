@@ -90,8 +90,8 @@ func ListenAndServe(addr string) error {
 
 	app.Get("/auth/login", e.authLoginPage)
 	app.Post("/auth/login", e.authLoginPage)
-	app.Get("/auth/login", e.authLogin)
-	app.Post("/auth/login", e.authLogin)
+	app.Get(loginActionEndpoint, e.authLogin)
+	app.Post(loginActionEndpoint, e.authLogin)
 
 	app.Get("/auth/logout", e.authLogout)
 
