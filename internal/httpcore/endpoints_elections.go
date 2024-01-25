@@ -54,6 +54,14 @@ func (endpoints) apiElectionsSSE(ctx *fiber.Ctx) error {
 		func(w *bufio.Writer) {
 			for msg := range receiver {
 				if msg.Topic == events.TopicElectionEnded {
+					// we're going to be modifying this msg so let's create a copy and work with that
+					{
+						// TODO: Refactor away this copying mess
+						x := *msg
+						y := *(msg.Data.(*events.ElectionEndedData))
+						x.Data = &y
+						msg = &x
+					}
 					msg.Data.(*events.ElectionEndedData).Result = ""
 				}
 				sseData, err := msg.ToSSE()
