@@ -20,8 +20,8 @@ type Election struct {
 
 type ElectionCandidate struct {
 	Name string `json:"name"`
-	ID string `json:"-"`
-	IsMe bool `json:"isMe"`
+	ID   string `json:"-"`
+	IsMe bool   `json:"isMe"`
 }
 
 type ElectionWithCandidates struct {

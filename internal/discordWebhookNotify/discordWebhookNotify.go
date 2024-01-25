@@ -37,8 +37,8 @@ func Run() {
 			me.Title = fmt.Sprintf("%s is no longer standing for election as %s", data.User.Name, data.Election.RoleName)
 			me.Description = fmt.Sprintf("User ID: %s\nElection ID: %d", data.User.StudentID, data.Election.ID)
 
-			if data.ByForce {
-				me.Description += "\n\n**User was removed by an admin**"
+			if data.ActingUserID != data.User.StudentID {
+				me.Description += fmt.Sprintf("\n\n**User was removed by admin with ID %s**", data.ActingUserID)
 			}
 
 		case msg := <-electionStart:

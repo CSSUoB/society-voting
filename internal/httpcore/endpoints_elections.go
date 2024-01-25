@@ -413,9 +413,9 @@ func (endpoints) apiWithdrawFromElection(ctx *fiber.Ctx) error {
 	}
 
 	events.SendEvent(events.TopicUserElectionWithdraw, &events.UserElectionWithdrawData{
-		ByForce:  authStatus&authAdminUser != 0 && userID != actingUserID,
-		User:     user,
-		Election: election,
+		ActingUserID: actingUserID,
+		User:         user,
+		Election:     election,
 	})
 
 	ctx.Status(fiber.StatusNoContent)

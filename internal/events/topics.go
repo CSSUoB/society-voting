@@ -17,9 +17,9 @@ type UserElectionStandData struct {
 }
 
 type UserElectionWithdrawData struct {
-	User     *database.User     `json:"user"`
-	Election *database.Election `json:"election"`
-	ByForce  bool               `json:"byForce"`
+	User         *database.User     `json:"user"`
+	Election     *database.Election `json:"election"`
+	ActingUserID string             `json:"actingUserID,omitempty"`
 }
 
 type ElectionEndedData struct {
