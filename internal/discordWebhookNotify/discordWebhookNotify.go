@@ -15,22 +15,24 @@ import (
 func Run() {
 	slog.Info("starting Discord webhook event notifier")
 
-	_, standReceiver := events.NewReceiver(events.TopicUserElectionStand)
-	_, withdrawReceiver := events.NewReceiver(events.TopicUserElectionWithdraw)
-	_, electionStart := events.NewReceiver(events.TopicElectionStarted)
-	_, electionEnd := events.NewReceiver(events.TopicElectionEnded)
+	_, receiver := events.NewReceiver(
+		events.TopicUserElectionStand,
+		events.TopicUserElectionWithdraw,
+		events.TopicElectionStarted,
+		events.TopicElectionEnded,
+	)
 
-	for {
+	for msg := range receiver {
 		me := &MinimalEmbed{}
-		select {
-		case msg := <-standReceiver:
+		switch msg.Topic {
+		case events.TopicUserElectionStand:
 			data := msg.Data.(*events.UserElectionStandData)
 
 			me.Colour = ColourGood
 			me.Title = fmt.Sprintf("%s is now standing for election as %s", data.User.Name, data.Election.RoleName)
 			me.Description = fmt.Sprintf("User ID: %s\nElection ID: %d", data.User.StudentID, data.Election.ID)
 
-		case msg := <-withdrawReceiver:
+		case events.TopicUserElectionWithdraw:
 			data := msg.Data.(*events.UserElectionWithdrawData)
 
 			me.Colour = ColourBad
@@ -41,14 +43,14 @@ func Run() {
 				me.Description += fmt.Sprintf("\n\n**User was removed by admin with ID %s**", data.ActingUserID)
 			}
 
-		case msg := <-electionStart:
+		case events.TopicElectionStarted:
 			data := msg.Data.(*database.Election)
 
 			me.Colour = ColourMid
 			me.Title = fmt.Sprintf("Voting for %s has started!", data.RoleName)
 			me.Description = fmt.Sprintf("Election ID: %d", data.ID)
 
-		case msg := <-electionEnd:
+		case events.TopicElectionEnded:
 			data := msg.Data.(*events.ElectionEndedData)
 
 			me.Colour = ColourGood
