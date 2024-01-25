@@ -4,12 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"github.com/CSSUoB/society-voting/internal/database"
+	"github.com/CSSUoB/society-voting/internal/events"
 	"github.com/gofiber/fiber/v2"
 	"sort"
 )
 
 func (endpoints) apiAdminDeleteUser(ctx *fiber.Ctx) error {
-	if _, status := getSessionAuth(ctx); status&authAdminUser == 0 {
+	actingUserID, authStatus := getSessionAuth(ctx)
+	if authStatus&authAdminUser == 0 {
 		return fiber.ErrUnauthorized
 	}
 
@@ -43,6 +45,11 @@ func (endpoints) apiAdminDeleteUser(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiAdminDeleteUser commit tx: %w", err)
 	}
 
+	events.SendEvent(events.TopicUserDeleted, &events.UserDeletedData{
+		ActingUserID: actingUserID,
+		UserID:       request.UserID,
+	})
+
 	ctx.Status(fiber.StatusNoContent)
 	return nil
 }
@@ -69,7 +76,8 @@ func (endpoints) apiAdminListUsers(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiAdminToggleRestrictUser(ctx *fiber.Ctx) error {
-	if _, status := getSessionAuth(ctx); status&authAdminUser == 0 {
+	actingUserID, authStatus := getSessionAuth(ctx)
+	if authStatus&authAdminUser == 0 {
 		return fiber.ErrUnauthorized
 	}
 
@@ -120,6 +128,11 @@ func (endpoints) apiAdminToggleRestrictUser(ctx *fiber.Ctx) error {
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("apiAdminToggleRestrictUser commit tx: %w", err)
 	}
+
+	events.SendEvent(events.TopicUserRestricted, &events.UserRestrictedData{
+		ActingUserID: actingUserID,
+		User:         user,
+	})
 
 	return ctx.JSON(map[string]bool{"isRestricted": user.IsRestricted})
 }

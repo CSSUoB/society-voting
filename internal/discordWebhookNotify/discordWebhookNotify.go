@@ -20,6 +20,8 @@ func Run() {
 		events.TopicUserElectionWithdraw,
 		events.TopicElectionStarted,
 		events.TopicElectionEnded,
+		events.TopicUserRestricted,
+		events.TopicUserDeleted,
 	)
 
 	for msg := range receiver {
@@ -56,6 +58,20 @@ func Run() {
 			me.Colour = ColourGood
 			me.Title = fmt.Sprintf("Voting for %s has ended!", data.Election.RoleName)
 			me.Description = fmt.Sprintf("Election ID: %d\n\n```%s```", data.Election.ID, data.Result)
+
+		case events.TopicUserRestricted:
+			data := msg.Data.(*events.UserRestrictedData)
+
+			me.Colour = ColourMid
+			me.Title = fmt.Sprintf("%s has been restricted", data.User.Name)
+			me.Description = fmt.Sprintf("User ID: %s\n\nRestricted by admin with ID %s", data.User.StudentID, data.ActingUserID)
+
+		case events.TopicUserDeleted:
+			data := msg.Data.(*events.UserDeletedData)
+
+			me.Colour = ColourMid
+			me.Title = fmt.Sprintf("Account with ID %s has been deleted", data.UserID)
+			me.Description = fmt.Sprintf("Deleted by admin with ID %s", data.UserID, data.ActingUserID)
 		}
 
 		if err := sendEmbed(me); err != nil {
