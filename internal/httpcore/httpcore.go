@@ -72,8 +72,13 @@ func ListenAndServe(addr string) error {
 	app.Use(limiter.New(limiter.Config{
 		Next: func(ctx *fiber.Ctx) bool {
 			p := ctx.Path()
+			// Perform path checks here to avoid doing database calls (in getSessionAuth) if not completely neccessary.
+			if p == "/" || urlFileRegexp.MatchString(p) {
+				return true
+			}
+
 			_, authStatus := getSessionAuth(ctx)
-			return authStatus == authNotAuthed || p == "/" || urlFileRegexp.MatchString(p)
+			return authStatus == authNotAuthed
 		},
 		Max: 45,
 		KeyGenerator: func(ctx *fiber.Ctx) string {
@@ -122,12 +127,6 @@ func ListenAndServe(addr string) error {
 			// override path to serve everything as if it were requested to /
 			ctx.Path("/")
 			return ctx.RestartRouting()
-		}
-
-		_, authStatus := getSessionAuth(ctx)
-
-		if authStatus == authNotAuthed {
-			return ctx.Redirect("/auth/login")
 		}
 
 		return ctx.Next()
