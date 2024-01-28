@@ -147,6 +147,18 @@ func (endpoints) authLogin(ctx *fiber.Ctx) error {
 
 		if requestData.PasswordConfirmation != requestData.Password {
 			requestProblem = "Passwords do not match."
+
+			// Since unregisteredAskPassword still includes previous request data, we need to remove the old passwords to prevent them from overriding the new passwords the user will input.
+			// If this were not done, a user that entered an non-matching password pair would never be able to set their password.
+
+			requestData.Password = ""
+			requestData.PasswordConfirmation = ""
+
+			requestDataJSON, err = json.Marshal(&requestData)
+			if err != nil {
+				return fmt.Errorf("authLogin marshal request data to JSON after removing passwords: %w", err)
+			}
+
 			goto unregisteredAskPassword
 		}
 
