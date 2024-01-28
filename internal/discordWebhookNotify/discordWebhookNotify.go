@@ -71,7 +71,7 @@ func Run() {
 
 			me.Colour = ColourMid
 			me.Title = fmt.Sprintf("Account with ID %s has been deleted", data.UserID)
-			me.Description = fmt.Sprintf("Deleted by admin with ID %s", data.UserID, data.ActingUserID)
+			me.Description = fmt.Sprintf("Deleted by admin with ID %s", data.ActingUserID)
 		}
 
 		if err := sendEmbed(me); err != nil {
