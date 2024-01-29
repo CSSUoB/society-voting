@@ -10,6 +10,12 @@ import (
 )
 
 func SkeletonPage(title string, content ...g.Node) g.Node {
+	content = append(content, P(g.Attr("style", "color: grey; font-style: italic;"),
+		g.Text("Society Voting is open source software licensed under the BSD 2-Clause License. You can contribute "),
+		A(g.Attr("href", "https://github.com/CSSUoB/society-voting"), g.Text("here")),
+		g.Text("."),
+	))
+
 	return HTML(
 		Head(
 			Meta(g.Attr("charset", "utf-8")),
