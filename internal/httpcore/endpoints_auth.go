@@ -16,14 +16,12 @@ import (
 )
 
 func (endpoints) authLoginPage(ctx *fiber.Ctx) error {
-	titleLine := config.Get().Platform.SocietyName + " voting"
-	page := htmlutil.SkeletonPage(titleLine,
-		html.H1(g.Text(titleLine)),
-		html.P(g.Text("Please enter your details. Please note you must be a member to proceed.")),
+	page := htmlutil.SkeletonPage(config.Get().Platform.SocietyName + " voting",
 		//g.If(requestProblem != "",
 		//	html.P(g.Textf("Error: %s", requestProblem), g.Attr("style", "color: red")),
 		//),
 		html.Script(g.Attr("src", "https://unpkg.com/htmx.org@1.9.10"), g.Attr("defer")),
+			html.H1(g.Attr("class", "h3 mb-3 fw-normal"), g.Text("Welcome!")),
 		html.Div(
 			g.Attr("hx-get", loginActionEndpoint),
 			g.Attr("hx-trigger", "load"),
@@ -114,9 +112,6 @@ func (endpoints) authLogin(ctx *fiber.Ctx) error {
 			goto askNames
 		}
 
-		fmt.Println(requestData.FirstName, guildMember.FirstName)
-		fmt.Println(requestData.LastName, guildMember.LastName)
-
 		if subtle.ConstantTimeCompare([]byte(requestData.FirstName), []byte(guildMember.FirstName)) == 0 ||
 			subtle.ConstantTimeCompare([]byte(requestData.LastName), []byte(guildMember.LastName)) == 0 {
 			requestProblem = "Invalid name - please ensure that you are using the name the Guild of Students knows you as."
@@ -190,13 +185,9 @@ askStudentID:
 			g.Attr("style", "color: red;"),
 			html.Em(g.Text(requestProblem+" If you're having trouble logging in, please speak to a member of committee.")),
 		)),
-		html.H2(g.Text("What's your student ID?")),
+		htmlutil.SmallTitle("What's your student ID?"),
 		htmlutil.FormInput("text", "studentid", "Your student ID", "Student ID"),
-		html.Br(),
-		html.Input(
-			g.Attr("type", "submit"),
-			g.Attr("value", "Next"),
-		),
+		htmlutil.FormSubmitButton(),
 	))
 
 registeredAskPassword:
@@ -205,14 +196,9 @@ registeredAskPassword:
 		g.Attr("hx-post", loginActionEndpoint),
 		g.Attr("hx-swap", "outerHTML"),
 		g.Attr("hx-vals", string(requestDataJSON)),
-		html.H2(g.Text("Welcome back!")),
 		html.P(g.Text("Please enter your password. If you've forgotten it, please speak to a member of committee.")),
 		htmlutil.FormInput("password", "password", "", "Password"),
-		html.Br(),
-		html.Input(
-			g.Attr("type", "submit"),
-			g.Attr("value", "Next"),
-		),
+		htmlutil.FormSubmitButton(),
 	))
 
 askNames:
@@ -221,16 +207,10 @@ askNames:
 		g.Attr("hx-post", loginActionEndpoint),
 		g.Attr("hx-swap", "outerHTML"),
 		g.Attr("hx-vals", string(requestDataJSON)),
-		html.H2(g.Text("Welcome!")),
 		html.P(g.Text("In order to check that the student ID you entered is yours, please enter your name as the Guild of Students knows it.")),
 		htmlutil.FormInput("text", "fname", "Your first name", "First name"),
-		html.Br(),
 		htmlutil.FormInput("text", "lname", "Your last name", "Last name"),
-		html.Br(),
-		html.Input(
-			g.Attr("type", "submit"),
-			g.Attr("value", "Next"),
-		),
+		htmlutil.FormSubmitButton(),
 	))
 
 askAuthCode:
@@ -239,14 +219,9 @@ askAuthCode:
 		g.Attr("hx-post", loginActionEndpoint),
 		g.Attr("hx-swap", "outerHTML"),
 		g.Attr("hx-vals", string(requestDataJSON)),
-		html.H2(g.Text("Welcome!")),
 		html.P(g.Text("Please enter the authorisation code.")),
-		htmlutil.FormInput("text", "auth", "", "Authorisation code"),
-		html.Br(),
-		html.Input(
-			g.Attr("type", "submit"),
-			g.Attr("value", "Next"),
-		),
+		htmlutil.FormInput("password", "auth", "", "Authorisation code"),
+		htmlutil.FormSubmitButton(),
 	))
 
 unregisteredAskPassword:
@@ -259,16 +234,10 @@ unregisteredAskPassword:
 			g.Attr("style", "color: red;"),
 			html.Em(g.Text(requestProblem)),
 		)),
-		html.H2(g.Text("Welcome!")),
 		html.P(g.Text("Please choose a password.")),
 		htmlutil.FormInput("password", "password", "", "Password"),
-		html.Br(),
 		htmlutil.FormInput("password", "passwordconf", "", "Confirm password"),
-		html.Br(),
-		html.Input(
-			g.Attr("type", "submit"),
-			g.Attr("value", "Next"),
-		),
+		htmlutil.FormSubmitButton(),
 	))
 
 }
