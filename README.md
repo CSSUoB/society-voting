@@ -53,6 +53,6 @@ docker build -t socvot .
 
 ## Licensing and credits
 
-Society Voting was initially created by Vishwas Adiga and Abigail Pain in Autumn 2023.
+Society Voting was initially created by Vishwas Adiga (@Vishwas-Adiga) and Abigail Pain (@codemicro) in Autumn 2023.
 
 It is licensed under the BSD 2-Clause license, which you can read in full [here](https://github.com/CSSUoB/society-voting/blob/main/LICENSE).
