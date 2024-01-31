@@ -82,11 +82,11 @@ func parseGuildMemberPage(pageData string) ([]*GuildMember, error) {
 		normalisedHeaderText := strings.ToLower(strings.TrimSpace(header.Text()))
 
 		const (
-			allMembers    = "all members"
-			allCmtMembers = "all committee members"
+			standardMembers = "standard membership"
+			allCmtMembers   = "all committee members"
 		)
 
-		if normalisedHeaderText == allMembers || normalisedHeaderText == allCmtMembers {
+		if normalisedHeaderText == standardMembers || normalisedHeaderText == allCmtMembers {
 			table := selection.Find("table.msl_table")
 			if table == nil {
 				err = fmt.Errorf("no table found in group %d", i)
@@ -99,7 +99,7 @@ func parseGuildMemberPage(pageData string) ([]*GuildMember, error) {
 				return false
 			}
 
-			if normalisedHeaderText == allMembers {
+			if normalisedHeaderText == standardMembers {
 				members = parsedMembers
 			} else {
 				cmtMembers = parsedMembers
