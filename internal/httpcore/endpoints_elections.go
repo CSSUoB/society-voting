@@ -12,6 +12,7 @@ import (
 	"log/slog"
 	"math/rand"
 	"sort"
+	"strings"
 )
 
 func (endpoints) apiListElections(ctx *fiber.Ctx) error {
@@ -159,7 +160,7 @@ func (endpoints) apiVote(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	if subtle.ConstantTimeCompare([]byte(request.Code), []byte(voteCode)) == 0 {
+	if subtle.ConstantTimeCompare([]byte(strings.ToUpper(request.Code)), []byte(voteCode)) == 0 {
 		return &fiber.Error{
 			Code:    fiber.StatusForbidden,
 			Message: "Incorrect vote code!",

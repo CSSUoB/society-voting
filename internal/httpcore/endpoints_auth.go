@@ -13,15 +13,16 @@ import (
 	"github.com/gofiber/fiber/v2"
 	g "github.com/maragudk/gomponents"
 	"github.com/maragudk/gomponents/html"
+	"strings"
 )
 
 func (endpoints) authLoginPage(ctx *fiber.Ctx) error {
-	page := htmlutil.SkeletonPage(config.Get().Platform.SocietyName + " voting",
+	page := htmlutil.SkeletonPage(config.Get().Platform.SocietyName+" voting",
 		//g.If(requestProblem != "",
 		//	html.P(g.Textf("Error: %s", requestProblem), g.Attr("style", "color: red")),
 		//),
 		html.Script(g.Attr("src", "https://unpkg.com/htmx.org@1.9.10"), g.Attr("defer")),
-			html.H1(g.Attr("class", "h3 mb-3 fw-normal"), g.Text("Welcome!")),
+		html.H1(g.Attr("class", "h3 mb-3 fw-normal"), g.Text("Welcome!")),
 		html.Div(
 			g.Attr("hx-get", loginActionEndpoint),
 			g.Attr("hx-trigger", "load"),
@@ -45,11 +46,11 @@ func (endpoints) authLogin(ctx *fiber.Ctx) error {
 		LastName             string `json:"lname,omitempty"`
 		AuthCode             string `json:"auth,omitempty"`
 	}{
-		StudentID:            ctx.FormValue("studentid"),
+		StudentID:            strings.TrimSpace(ctx.FormValue("studentid")),
 		Password:             ctx.FormValue("password"),
 		PasswordConfirmation: ctx.FormValue("passwordconf"),
-		FirstName:            ctx.FormValue("fname"),
-		LastName:             ctx.FormValue("lname"),
+		FirstName:            strings.TrimSpace(ctx.FormValue("fname")),
+		LastName:             strings.TrimSpace(ctx.FormValue("lname")),
 		AuthCode:             ctx.FormValue("auth"),
 	}
 
@@ -112,8 +113,8 @@ func (endpoints) authLogin(ctx *fiber.Ctx) error {
 			goto askNames
 		}
 
-		if subtle.ConstantTimeCompare([]byte(requestData.FirstName), []byte(guildMember.FirstName)) == 0 ||
-			subtle.ConstantTimeCompare([]byte(requestData.LastName), []byte(guildMember.LastName)) == 0 {
+		if subtle.ConstantTimeCompare([]byte(strings.ToLower(requestData.FirstName)), []byte(strings.ToLower(guildMember.FirstName))) == 0 ||
+			subtle.ConstantTimeCompare([]byte(strings.ToLower(requestData.LastName)), []byte(strings.ToLower(guildMember.LastName))) == 0 {
 			requestProblem = "Invalid name - please ensure that you are using the name the Guild of Students knows you as."
 			goto reset
 		}

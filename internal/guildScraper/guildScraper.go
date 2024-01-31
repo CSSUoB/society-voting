@@ -121,9 +121,9 @@ func parseGuildMemberPage(pageData string) ([]*GuildMember, error) {
 
 		_, isCmt := cmtMembers[id]
 		res = append(res, &GuildMember{
-			ID:                id,
-			FirstName:         ns[1],
-			LastName:          ns[0],
+			ID:                strings.TrimSpace(id),
+			FirstName:         strings.TrimSpace(ns[1]),
+			LastName:          strings.TrimSpace(ns[0]),
 			IsCommitteeMember: isCmt,
 		})
 	}
