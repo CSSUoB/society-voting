@@ -6,20 +6,24 @@ import random
 import multiprocessing
 
 
-def cast_vote(url, ballot, vote_code, user):
+def cast_vote(proto, host, ballot, vote_code, user):
+    try:
+        requests.get(f"{proto}://{host}/api/election/sse", timeout=0.2)
+    except:
+        pass
     vote = ballot.copy()
     random.shuffle(vote)
     vote = vote[:-random.randrange(0, len(vote))]
-    r = requests.post(url, cookies={"vot-tok": user[2]}, json={"code": vote_code, "vote": vote})
+    r = requests.post(f"{proto}://{host}/api/election/current/vote", cookies={"vot-tok": user[2]}, json={"code": vote_code, "vote": vote})
     r.raise_for_status()
 
 
-def mock_election(admin_password: str, vote_code: str, n: int=1, host: str="127.0.0.1:9090", proto: str="http", start_manually: bool=False):
+def mock_election(admin_user: str, admin_password: str, vote_code: str, n: int=1, host: str="127.0.0.1:9090", proto: str="http", start_manually: bool=False):
     with open("users.json") as f:
         users = json.load(f)
 
     # login admin
-    r = requests.post(f"{proto}://{host}/auth/login", data={"studentid": "admin", "password": admin_password}, allow_redirects=False)
+    r = requests.post(f"{proto}://{host}/auth/login/do", data={"studentid": admin_user, "password": admin_password}, allow_redirects=False)
     r.raise_for_status()
     admin_token = r.cookies["vot-tok"]
 
@@ -43,11 +47,10 @@ def mock_election(admin_password: str, vote_code: str, n: int=1, host: str="127.
         r.raise_for_status()
         ballot_info = r.json()["ballot"]
         ballot_ids = list(map(lambda x: x["id"], ballot_info))
-        vote_url = f"{proto}://{host}/api/election/current/vote"
 
         # dispatch votes
         with multiprocessing.Pool(processes=8) as pool:
-            res = [pool.apply_async(cast_vote, (vote_url, ballot_ids, vote_code, user)) for user in users]
+            res = [pool.apply_async(cast_vote, (proto, host, ballot_ids, vote_code, user)) for user in users]
             for x in tqdm(res):
                 x.get()
 

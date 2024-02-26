@@ -8,7 +8,7 @@ import random
 def create_users(n: int=100, host: str="127.0.0.1:9090"):
     res = []
 
-    url = f"http://{host}/auth/login"
+    url = f"http://{host}/auth/login/do"
 
     for i in tqdm(range(n)):
         sid = str(random.randint(1000000, 3000000))
@@ -16,6 +16,9 @@ def create_users(n: int=100, host: str="127.0.0.1:9090"):
         r = requests.post(url, data={
             "studentid": sid,
             "password": pwd,
+            "passwordconf": pwd,
+            "fname": "Martin",
+            "lname": "Martinson",
         }, allow_redirects=False)
         r.raise_for_status()
 
