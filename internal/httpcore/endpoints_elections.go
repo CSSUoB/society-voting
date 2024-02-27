@@ -13,6 +13,7 @@ import (
 	"math/rand"
 	"sort"
 	"strings"
+	"time"
 )
 
 func (endpoints) apiListElections(ctx *fiber.Ctx) error {
@@ -53,24 +54,30 @@ func (endpoints) apiElectionsSSE(ctx *fiber.Ctx) error {
 	fr := ctx.Response()
 	fr.SetBodyStreamWriter(
 		func(w *bufio.Writer) {
-			for msg := range receiver {
-				if msg.Topic == events.TopicElectionEnded {
-					// we're going to be modifying this msg so let's create a copy and work with that
-					{
-						// TODO: Refactor away this copying mess
-						x := *msg
-						y := *(msg.Data.(*events.ElectionEndedData))
-						x.Data = &y
-						msg = &x
+			ticker := time.NewTicker(time.Second * 10)
+			for {
+				select {
+				case msg := <-receiver:
+					if msg.Topic == events.TopicElectionEnded {
+						// we're going to be modifying this msg so let's create a copy and work with that
+						{
+							// TODO: Refactor away this copying mess
+							x := *msg
+							y := *(msg.Data.(*events.ElectionEndedData))
+							x.Data = &y
+							msg = &x
+						}
+						msg.Data.(*events.ElectionEndedData).Result = ""
 					}
-					msg.Data.(*events.ElectionEndedData).Result = ""
+					sseData, err := msg.ToSSE()
+					if err != nil {
+						slog.Error("SSE error", "error", fmt.Errorf("failed to generate SSE event from message: %w", err))
+						break
+					}
+					_, _ = w.Write(sseData)
+				case <-ticker.C:
 				}
-				sseData, err := msg.ToSSE()
-				if err != nil {
-					slog.Error("SSE error", "error", fmt.Errorf("failed to generate SSE event from message: %w", err))
-					break
-				}
-				_, _ = w.Write(sseData)
+
 				if err := w.Flush(); err != nil {
 					// Client disconnected
 					break
