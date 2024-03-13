@@ -27,9 +27,10 @@ type Database struct {
 }
 
 type Platform struct {
-	SocietyName    string
-	AdminToken     string
-	DiscordWebhook *DiscordWebhook
+	SocietyName         string
+	AdminToken          string
+	SessionSigningToken string
+	DiscordWebhook      *DiscordWebhook
 }
 
 type DiscordWebhook struct {
@@ -73,8 +74,9 @@ func Get() *Config {
 				DSN: cl.WithDefault("database.dsn", "voting.sqlite3.db").AsString(),
 			},
 			Platform: &Platform{
-				SocietyName: cl.WithDefault("platform.societyName", "Society").AsString(),
-				AdminToken:  cl.Required("platform.adminToken").AsString(),
+				SocietyName:         cl.WithDefault("platform.societyName", "Society").AsString(),
+				AdminToken:          cl.Required("platform.adminToken").AsString(),
+				SessionSigningToken: cl.Get("platform.sessionSigningToken").AsString(),
 				DiscordWebhook: &DiscordWebhook{
 					URL:      cl.Get("platform.discordWebhook.url").AsString(),
 					ThreadID: cl.Get("platform.discordWebhook.threadID").AsString(),

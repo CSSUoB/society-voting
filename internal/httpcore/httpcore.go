@@ -29,6 +29,10 @@ type endpoints struct{}
 const loginActionEndpoint = "/auth/login/do"
 
 func ListenAndServe(ctx context.Context, addr string) error {
+	if signer == nil {
+		return errors.New("signer not initialised")
+	}
+
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
 			var (
@@ -176,19 +180,37 @@ var (
 )
 
 func init() {
-	secret := make([]byte, 512)
+	for i := 0; i < 4; i += 1 {
+		voteCode += string(rune('A' + rand.Intn(26)))
+	}
+}
+
+func InitialiseSigner(signingKey string) {
+	rawKeyBytes := []byte(signingKey)
+	keyBytes := make([]byte, 512)
+
+	if len(rawKeyBytes) == 0 {
+		goto generate
+	}
+
+	if _, err := hex.Decode(keyBytes, rawKeyBytes); err != nil {
+		goto generate
+	}
+
+	goto commit
+
+generate:
+	slog.Info("using randomly generated session signing key")
+	keyBytes = make([]byte, 512)
 	if !config.Get().Debug { // This is so that the access tokens doesn't change from run-to-run for ease of testing
-		if _, err := cryptoRand.Read(secret); err != nil {
+		if _, err := cryptoRand.Read(keyBytes); err != nil {
 			slog.Error("unable to generate random secret for token signing", "error", err)
 			os.Exit(1)
 		}
 	}
 
-	signer = goalone.New(secret)
-
-	for i := 0; i < 4; i += 1 {
-		voteCode += string(rune('A' + rand.Intn(26)))
-	}
+commit:
+	signer = goalone.New(keyBytes)
 }
 
 var sessionTokenCookieName = "vot-tok"

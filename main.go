@@ -38,6 +38,8 @@ func run() error {
 		slog.Warn("discord webhook event notifier disabled")
 	}
 
+	httpcore.InitialiseSigner(conf.Platform.SessionSigningToken)
+
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 	return httpcore.ListenAndServe(ctx, conf.HTTP.Address())
