@@ -28,7 +28,7 @@ type endpoints struct{}
 
 const loginActionEndpoint = "/auth/login/do"
 
-func ListenAndServe(addr string) error {
+func ListenAndServe(ctx context.Context, addr string) error {
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
 			var (
@@ -147,7 +147,24 @@ func ListenAndServe(addr string) error {
 	})
 
 	slog.Info("HTTP server alive", "address", addr, "voteCode", voteCode)
-	return app.Listen(addr)
+
+	serverExitValChan := make(chan error)
+	go func() {
+		serverExitValChan <- app.Listen(addr)
+	}()
+
+	select {
+	case <-ctx.Done():
+		slog.Info("Shutting down HTTP server...")
+		err := app.ShutdownWithTimeout(time.Second * 5)
+		if errors.Is(err, context.DeadlineExceeded) {
+			slog.Warn("5 second deadline exceeded, forcibly shutting down")
+			return nil
+		}
+		return err
+	case v := <-serverExitValChan:
+		return v
+	}
 }
 
 var urlFileRegexp = regexp.MustCompile(`[\w\-/]+\.[a-zA-Z]+$`)

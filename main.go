@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/CSSUoB/society-voting/internal/config"
 	"github.com/CSSUoB/society-voting/internal/database"
@@ -8,6 +9,8 @@ import (
 	"github.com/CSSUoB/society-voting/internal/httpcore"
 	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
@@ -35,5 +38,7 @@ func run() error {
 		slog.Warn("discord webhook event notifier disabled")
 	}
 
-	return httpcore.ListenAndServe(conf.HTTP.Address())
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+	return httpcore.ListenAndServe(ctx, conf.HTTP.Address())
 }
