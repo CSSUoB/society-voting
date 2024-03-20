@@ -14,7 +14,6 @@ import (
 	"github.com/bwmarrin/go-alone"
 	validate "github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/limiter"
 	g "github.com/maragudk/gomponents"
 	"github.com/maragudk/gomponents/html"
 	"log/slog"
@@ -72,30 +71,6 @@ func ListenAndServe(ctx context.Context, addr string) error {
 
 		return ctx.Next()
 	})
-
-	app.Use(limiter.New(limiter.Config{
-		Next: func(ctx *fiber.Ctx) bool {
-			p := ctx.Path()
-			// Perform path checks here to avoid doing database calls (in getSessionAuth) if not completely neccessary.
-			if p == "/" || urlFileRegexp.MatchString(p) {
-				return true
-			}
-
-			_, authStatus := getSessionAuth(ctx)
-			return authStatus == authNotAuthed
-		},
-		Max: 45,
-		KeyGenerator: func(ctx *fiber.Ctx) string {
-			// only set if authed, which we are if it's passed the Next check
-			return ctx.Locals("token").(string)
-		},
-		LimitReached: func(ctx *fiber.Ctx) error {
-			return &fiber.Error{
-				Code:    fiber.StatusTooManyRequests,
-				Message: "Slow down!",
-			}
-		},
-	}))
 
 	app.Get("/auth/login", e.authLoginPage)
 	app.Post("/auth/login", e.authLoginPage)
