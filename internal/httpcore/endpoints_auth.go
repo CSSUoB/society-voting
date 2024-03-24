@@ -133,8 +133,6 @@ func (endpoints) authLogin(ctx *fiber.Ctx) error {
 			}
 		}
 
-		fmt.Printf("%#v\n", requestData)
-
 		// Has password and password confirmation?
 		if requestData.PasswordConfirmation == "" || requestData.Password == "" {
 			// No: show form
