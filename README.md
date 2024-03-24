@@ -14,6 +14,8 @@ Pull the image from `ghcr.io/cssuob/society-voting:latest` and then run it with:
 
 ## Sample configuration
 
+<!-- TODO: Reference fixed session signing keys -->
+
 Ensure that the following keys are changed:
  - `guild.sessionToken` should be set to the value of the `.ASPXAUTH` cookie from the Guild of Students website
  - `platform.discordWebhook.url` should be set to a Discord webhook URL. This is optional.
