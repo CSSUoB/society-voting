@@ -17,10 +17,6 @@ var (
 func GetMember(studentID string) (*GuildMember, error) {
 	cachedMembershipListLock.RLock()
 
-	fmt.Println(time.Now())
-	fmt.Println(cachedMembershipListLastRefreshed)
-	fmt.Println(time.Now().Sub(cachedMembershipListLastRefreshed) > time.Minute*5)
-
 	if time.Now().Sub(cachedMembershipListLastRefreshed) > time.Minute*5 {
 		cachedMembershipListLock.RUnlock()
 
