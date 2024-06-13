@@ -6,6 +6,7 @@ import (
 	"github.com/CSSUoB/society-voting/internal/config"
 	"github.com/CSSUoB/society-voting/internal/database"
 	"github.com/CSSUoB/society-voting/internal/discordWebhookNotify"
+	"github.com/CSSUoB/society-voting/internal/events"
 	"github.com/CSSUoB/society-voting/internal/httpcore"
 	"log/slog"
 	"os"
@@ -13,14 +14,22 @@ import (
 	"syscall"
 )
 
+var exitingForRestart = false
+
 func main() {
 	if err := run(); err != nil {
 		slog.Error("Unhandled error", "error", err)
 		os.Exit(1)
 	}
+
+	if exitingForRestart {
+		os.Exit(153)
+	}
 }
 
 func run() error {
+	slog.Info("starting society-voting")
+
 	conf := config.Get()
 	if conf.Debug {
 		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
@@ -42,5 +51,17 @@ func run() error {
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
+
+	if os.Getenv("SOCIETY_VOTING_RESTART_ENABLED") != "" {
+		slog.Info("restart shim enabled")
+		_, electionEndReceiver := events.NewReceiver(events.TopicElectionEnded)
+		go func() {
+			<-electionEndReceiver
+			slog.Info("election ended - restarting")
+			exitingForRestart = true
+			cancel()
+		}()
+	}
+
 	return httpcore.ListenAndServe(ctx, conf.HTTP.Address())
 }

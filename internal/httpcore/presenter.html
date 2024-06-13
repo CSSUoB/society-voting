@@ -92,7 +92,6 @@
             <h1 id="vote-code" class="hidden">Vote code: {{votecode}}</h1>
             <h1>Scan the QR code to <span id="action">register</span></h1>
             <h3>or go to <a href="{{url}}">{{url}}</a></h3>
-
         </div>
     </div>
 
@@ -127,6 +126,7 @@
         })
         eventSrc.onerror = console.log
         eventSrc.addEventListener("open", console.log)
+        eventSrc.addEventListener("error", () => { setTimeout(() => {location.reload()}, 1000) }) // sorry
         eventSrc.addEventListener("election-start", async (event) => {electionStart(JSON.parse(event.data))})
         eventSrc.addEventListener("election-end", electionEnd)
 
