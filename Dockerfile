@@ -23,7 +23,12 @@ WORKDIR /build
 RUN CGO_ENABLED=1 GOOS=linux go build -a -buildvcs=false -installsuffix cgo -ldflags "-extldflags '-static'" -o main github.com/CSSUoB/society-voting
 
 FROM alpine
+
+# the below is needed for the shim script
+RUN apk add --no-cache bash
+
 COPY --from=builder /build/main /
+COPY --from=builder /build/deploy/prod-shim.sh /
 WORKDIR /run
 
-CMD ["../main"]
+CMD ["../prod-shim.sh", "../main"]
