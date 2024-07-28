@@ -61,7 +61,7 @@
 		});
 
 		if (response.ok) {
-			if (electionOutcome) electionOutcome.isPublished = published;
+			electionOutcome.isPublished = published;
 		} else {
 			$error = new Error(await response.text());
 		}
