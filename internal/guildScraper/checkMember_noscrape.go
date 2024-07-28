@@ -6,7 +6,6 @@ import (
 	"github.com/gofiber/fiber/v2/utils"
 	"log/slog"
 )
-import "fmt"
 
 func init() {
 	slog.Warn("Built with noscrape tag (fictional user information will be used)")
