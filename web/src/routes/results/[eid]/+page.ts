@@ -7,10 +7,7 @@ export async function load({ fetch, params }) {
 		throw redirect(302, "/");
 	}
 
-	const response = await fetch(API.ELECTION_RESULTS, {
-		method: "POST",
-		body: JSON.stringify({ id }),
-	});
+	const response = await fetch(`${API.ELECTION_RESULTS}?election_id=${id}`);
 	if (!response.ok) {
 		throw error(response.status, { message: await response.text() });
 	}
