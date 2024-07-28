@@ -4,10 +4,10 @@
 	import Dialog from "$lib/dialog.svelte";
 	import { API } from "$lib/endpoints";
 	import Panel from "$lib/panel.svelte";
-	import { error, fetching, currentElection } from "../../store";
+	import { _getCurrentElection, _getElections } from "../+layout";
+	import { error, fetching, currentElection, elections } from "../../store";
 
 	let electionRunning = true;
-	let results = "";
 	let numberOfVotes = 0;
 	let dialog: HTMLDialogElement;
 
@@ -33,25 +33,11 @@
 			return;
 		}
 		electionRunning = false;
-		results = (await response.json()).result;
+		let electionId = (await response.json()).election.id;
+		$elections = await _getElections();
+		$currentElection = await _getCurrentElection();
 		$fetching = false;
-	};
-
-	const downloadResults = (results: string) => {
-		const element = document.createElement("a");
-		element.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(results));
-		element.setAttribute(
-			"download",
-			`${$currentElection?.election.roleName.toLowerCase().replaceAll(" ", "_")}_results.txt`,
-		);
-
-		element.style.display = "none";
-		document.body.appendChild(element);
-
-		element.click();
-
-		document.body.removeChild(element);
-		$currentElection = null;
+		goto(`/results/${electionId}`);
 	};
 </script>
 
@@ -86,13 +72,6 @@
 			<Button text="End election" kind="emphasis" name="submit" />
 		</svelte:fragment>
 	</Dialog>
-{:else}
-	<Panel title="Results" headerIcon="receipt_long">
-		<div class="container">
-			<p>{results}</p>
-			<Button text="Download results" kind="primary" on:click={() => downloadResults(results)} />
-		</div>
-	</Panel>
 {/if}
 
 <style>

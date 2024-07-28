@@ -3,6 +3,7 @@ package httpcore
 import (
 	"errors"
 	"fmt"
+
 	"github.com/CSSUoB/society-voting/internal/database"
 	"github.com/gofiber/fiber/v2"
 )
@@ -70,7 +71,7 @@ func (endpoints) apiSetOwnName(ctx *fiber.Ctx) error {
 	}
 
 	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("apiSetOwnName commit tx: %w")
+		return fmt.Errorf("apiSetOwnName commit tx: %w", err)
 	}
 
 	ctx.Status(fiber.StatusNoContent)

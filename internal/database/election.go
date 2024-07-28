@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
 	"github.com/uptrace/bun"
 )
 
@@ -15,7 +16,8 @@ type Election struct {
 	RoleName    string `json:"roleName"`
 	Description string `json:"description"`
 
-	IsActive bool `json:"isActive"`
+	IsActive    bool `json:"isActive"`
+	IsConcluded bool `json:"isConcluded"`
 }
 
 type ElectionCandidate struct {

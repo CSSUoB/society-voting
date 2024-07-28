@@ -7,20 +7,21 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"github.com/CSSUoB/society-voting/internal/config"
-	"github.com/CSSUoB/society-voting/internal/database"
-	"github.com/CSSUoB/society-voting/internal/httpcore/htmlutil"
-	"github.com/CSSUoB/society-voting/web"
-	"github.com/bwmarrin/go-alone"
-	validate "github.com/go-playground/validator/v10"
-	"github.com/gofiber/fiber/v2"
-	g "github.com/maragudk/gomponents"
-	"github.com/maragudk/gomponents/html"
 	"log/slog"
 	"math/rand"
 	"os"
 	"regexp"
 	"time"
+
+	"github.com/CSSUoB/society-voting/internal/config"
+	"github.com/CSSUoB/society-voting/internal/database"
+	"github.com/CSSUoB/society-voting/internal/httpcore/htmlutil"
+	"github.com/CSSUoB/society-voting/web"
+	goalone "github.com/bwmarrin/go-alone"
+	validate "github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2"
+	g "github.com/maragudk/gomponents"
+	"github.com/maragudk/gomponents/html"
 )
 
 type endpoints struct{}
@@ -86,6 +87,7 @@ func ListenAndServe(ctx context.Context, addr string) error {
 	app.Get("/api/election/sse", e.apiElectionsSSE)
 	app.Post("/api/election/stand", e.apiStandForElection)
 	app.Delete("/api/election/stand", e.apiWithdrawFromElection)
+	app.Get("/api/election/results", e.apiGetElectionOutcome)
 	app.Get("/api/election/current", e.apiGetActiveElectionInformation)
 	app.Post("/api/election/current/vote", e.apiVote)
 
@@ -94,6 +96,7 @@ func ListenAndServe(ctx context.Context, addr string) error {
 	app.Get("/api/admin/election/sse", e.apiAdminRunningElectionSSE)
 	app.Post("/api/admin/election/start", e.apiAdminStartElection)
 	app.Post("/api/admin/election/stop", e.apiAdminStopElection)
+	app.Post("/api/admin/election/publish", e.apiAdminPublishElectionOutcome)
 	app.Get("/api/admin/user", e.apiAdminListUsers)
 	app.Post("/api/admin/user/restrict", e.apiAdminToggleRestrictUser)
 	app.Delete("/api/admin/user/delete", e.apiAdminDeleteUser)

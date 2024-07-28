@@ -5,15 +5,16 @@ import (
 	"crypto/subtle"
 	"errors"
 	"fmt"
-	"github.com/CSSUoB/society-voting/internal/database"
-	"github.com/CSSUoB/society-voting/internal/events"
-	"github.com/gofiber/fiber/v2"
-	"github.com/mattn/go-sqlite3"
 	"log/slog"
 	"math/rand"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/CSSUoB/society-voting/internal/database"
+	"github.com/CSSUoB/society-voting/internal/events"
+	"github.com/gofiber/fiber/v2"
+	"github.com/mattn/go-sqlite3"
 )
 
 func (endpoints) apiListElections(ctx *fiber.Ctx) error {
@@ -300,6 +301,13 @@ func (endpoints) apiStandForElection(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiStandForElection get election with id %d: %w", request.ElectionID, err)
 	}
 
+	if election.IsConcluded {
+		return &fiber.Error{
+			Code:    fiber.StatusConflict,
+			Message: "This election has already concluded",
+		}
+	}
+
 	candidate := &database.Candidate{
 		UserID:     user.StudentID,
 		ElectionID: election.ID,
@@ -428,4 +436,49 @@ func (endpoints) apiWithdrawFromElection(ctx *fiber.Ctx) error {
 
 	ctx.Status(fiber.StatusNoContent)
 	return nil
+}
+
+func (endpoints) apiGetElectionOutcome(ctx *fiber.Ctx) error {
+	userID, authStatus := getSessionAuth(ctx)
+	if authStatus == authNotAuthed {
+		return fiber.ErrUnauthorized
+	}
+
+	electionID := ctx.QueryInt("election_id")
+
+	tx, err := database.GetTx()
+	if err != nil {
+		return fmt.Errorf("apiGetElectionOutcome start tx: %w", err)
+	}
+	defer tx.Rollback()
+
+	user, err := database.GetUser(userID, tx)
+	if err != nil {
+		if errors.Is(err, database.ErrNotFound) {
+			// User has been deleted
+			ctx.Cookie(newSessionTokenDeletionCookie())
+			return fiber.ErrUnauthorized
+		}
+		return fmt.Errorf("apiGetElectionOutcome get user: %w", err)
+	}
+
+	electionOutcome, err := database.GetOutcomeForElection(electionID, tx)
+	if err != nil {
+		if errors.Is(err, database.ErrNotFound) {
+			return &fiber.Error{
+				Code:    fiber.StatusNotFound,
+				Message: "Outcome for election with that ID not found",
+			}
+		}
+		return fmt.Errorf("apiGetElectionOutcome get election outcome for id %d: %w", electionID, err)
+	}
+
+	if !electionOutcome.IsPublished && !user.IsAdmin {
+		return &fiber.Error{
+			Code:    fiber.StatusForbidden,
+			Message: "The outcome for this election has not been published yet",
+		}
+	}
+
+	return ctx.JSON(electionOutcome)
 }

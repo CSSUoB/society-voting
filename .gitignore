@@ -4,6 +4,7 @@ config.yml
 voting.sqlite3.db
 test/users.json
 test/result.*.txt
+society-voting
 
 ### Go ###
 # Binaries for programs and plugins
