@@ -78,33 +78,13 @@ func Run(votes []*Vote, nameMap map[int]string) (*InstantRunoff, error) {
 		ids = append(ids, k)
 	}
 
-	logFrequencies := func(freqs map[int]int) []*Tally {
-		var pairs [][2]int
-		for k, v := range freqs {
-			pairs = append(pairs, [2]int{k, v})
-		}
-
-		sort.Slice(pairs, func(i, j int) bool {
-			return pairs[i][0] < pairs[j][0]
-		})
-
-		var tallies []*Tally
-		for _, pair := range pairs {
-			name := nameMap[pair[0]]
-			count := pair[1]
-			tallies = append(tallies, &Tally{ID: pair[0], Name: name, Count: count})
-		}
-
-		return tallies
-	}
-
 	round := 1
 	var allTallies []*Tally
 	var winner string
 	for {
 		freqs := getFrequencies(ids, votes, 1)
 
-		tallies := logFrequencies(freqs)
+		tallies := getTallies(freqs, nameMap)
 
 		for _, tally := range tallies {
 			tally.Round = round
@@ -130,18 +110,39 @@ func Run(votes []*Vote, nameMap map[int]string) (*InstantRunoff, error) {
 					n += 1
 				}
 			}
-			for _, tally := range tallies {
-				if tally.ID == eliminatedID {
-					tally.Eliminated = true
-				}
-			}
 			ids = ids[:n]
+		}
+
+		for _, tally := range tallies {
+			if tally.ID == eliminatedID {
+				tally.Eliminated = true
+			}
 		}
 
 		round += 1
 	}
 
 	return &InstantRunoff{Rounds: round, Tallies: allTallies, Winner: winner}, nil
+}
+
+func getTallies(freqs map[int]int, nameMap map[int]string) []*Tally {
+	var pairs [][2]int
+	for k, v := range freqs {
+		pairs = append(pairs, [2]int{k, v})
+	}
+
+	sort.Slice(pairs, func(i, j int) bool {
+		return pairs[i][0] < pairs[j][0]
+	})
+
+	var tallies []*Tally
+	for _, pair := range pairs {
+		name := nameMap[pair[0]]
+		count := pair[1]
+		tallies = append(tallies, &Tally{ID: pair[0], Name: name, Count: count})
+	}
+
+	return tallies
 }
 
 func getFrequencies(ids []int, votes []*Vote, choiceNumber int) map[int]int {
