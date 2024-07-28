@@ -3,7 +3,7 @@
 
 	export let text: Optional<string> = null;
 	export let icon: Optional<string> = null;
-	export let kind: "flat" | "inline" | "emphasis" | "primary" = "flat";
+	export let kind: "flat" | "inline" | "emphasis" | "danger" | "primary" = "flat";
 	export let type: "button" | "submit" | "reset" | null | undefined = undefined;
 	export let name: Optional<string> = null;
 	export let disabled = false;
@@ -47,6 +47,7 @@
 		gap: 4px;
 		position: relative;
 		z-index: 0;
+		cursor: pointer;
 	}
 
 	button::after {
@@ -100,6 +101,14 @@
 		--background-colour--shadow: #03c41d;
 		--background-colour--focus: #03c91d;
 		--background-colour--shadow--focus: #04a71a;
+	}
+
+	button.danger {
+		--border-colour: #000;
+		--background-colour: #fc5d55;
+		--background-colour--shadow: #da372e;
+		--background-colour--focus: #e83a31;
+		--background-colour--shadow--focus: #cf342c;
 	}
 
 	button.inline {

@@ -2,6 +2,7 @@
 	import Nav from "$lib/nav.svelte";
 	import Profile from "./profile.svelte";
 	import Upcoming from "./upcoming.svelte";
+	import Past from "./past.svelte";
 	import Current from "./current.svelte";
 	import Users from "./users.svelte";
 	import PresenterMode from "./presenterMode.svelte";
@@ -51,7 +52,12 @@
 			{#if $currentElection && (!$currentElection.hasVoted || $user.isAdmin)}
 				<Current />
 			{/if}
-			<Upcoming />
+			{#if $user.isAdmin || $elections?.some((e) => !e.isConcluded)}
+				<Upcoming />
+			{/if}
+			{#if $elections?.some((e) => e.isConcluded)}
+				<Past />
+			{/if}
 			{#if data.user.isAdmin}
 				<Users />
 				<PresenterMode />

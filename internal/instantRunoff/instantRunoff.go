@@ -13,56 +13,93 @@ type Vote struct {
 	RankedChoices []int
 }
 
-func Run(votes []*Vote, nameMap map[int]string) string {
+type Tally struct {
+	ID         int
+	Name       string
+	Round      int
+	Count      int
+	Eliminated bool
+	Winner     bool
+}
+
+type InstantRunoff struct {
+	Rounds  int
+	Tallies []*Tally
+	Winner  string
+}
+
+func (ir *InstantRunoff) ResultsAsString() string {
+	talliesByRound := make(map[int][]*Tally)
+
+	for _, tally := range ir.Tallies {
+		if v, ok := talliesByRound[tally.Round]; ok {
+			talliesByRound[tally.Round] = append(v, tally)
+			continue
+		}
+		talliesByRound[tally.Round] = []*Tally{tally}
+	}
+
+	var str strings.Builder
+
+	keys := make([]int, 0, len(talliesByRound))
+	for k := range talliesByRound {
+		keys = append(keys, k)
+	}
+	sort.Ints(keys)
+
+	for _, round := range keys {
+		tallies := talliesByRound[round]
+
+		str.WriteString("Round ")
+		str.WriteString(strconv.Itoa(round))
+		str.WriteString("\n\nCurrent first-choice votes:\n")
+
+		var eliminated []string
+		for _, tally := range tallies {
+			str.WriteString(fmt.Sprintf(" - %s: %d votes\n", tally.Name, tally.Count))
+
+			if tally.Eliminated {
+				eliminated = append(eliminated, tally.Name)
+			}
+		}
+		if len(eliminated) > 0 {
+			str.WriteString(fmt.Sprintf("\nEliminated %s\n\n---\n\n", strings.Join(eliminated, ", ")))
+		}
+	}
+
+	str.WriteString(fmt.Sprintf("\nThe winner of this election is %s", ir.Winner))
+
+	return str.String()
+}
+
+func Run(votes []*Vote, nameMap map[int]string) (*InstantRunoff, error) {
 	var ids []int
 	for k := range nameMap {
 		ids = append(ids, k)
 	}
 
-	var log strings.Builder
-
-	logFrequencies := func(freqs map[int]int) {
-		var pairs [][2]int
-		for k, v := range freqs {
-			pairs = append(pairs, [2]int{k, v})
-		}
-
-		sort.Slice(pairs, func(i, j int) bool {
-			return pairs[i][0] < pairs[j][0]
-		})
-
-		var strs []string
-		for _, pair := range pairs {
-			strs = append(strs, fmt.Sprintf(" - %s: %d votes", nameMap[pair[0]], pair[1]))
-		}
-
-		log.WriteString(strings.Join(strs, "\n"))
-	}
-
 	round := 1
+	var allTallies []*Tally
+	var winner string
 	for {
-		log.WriteString("Round ")
-		log.WriteString(strconv.Itoa(round))
-		log.WriteRune('\n')
-
 		freqs := getFrequencies(ids, votes, 1)
 
-		log.WriteString("\nCurrent first-choice votes:\n")
-		logFrequencies(freqs)
-		log.WriteString("\n\n")
+		tallies := getTallies(freqs, nameMap)
+
+		for _, tally := range tallies {
+			tally.Round = round
+		}
+		allTallies = append(allTallies, tallies...)
 
 		if len(ids) == 1 {
-			log.WriteString(nameMap[ids[0]])
-			log.WriteString(" has won\n")
+			tallies[0].Winner = true
+			winner = tallies[0].Name
 			break
 		}
 
 		eliminatedID, err := eliminate(ids, votes)
 		if err != nil {
-			log.WriteString("Error: ")
-			log.WriteString(err.Error())
-			log.WriteString("\n")
-			break
+			return nil, err
 		}
 
 		{
@@ -76,14 +113,36 @@ func Run(votes []*Vote, nameMap map[int]string) string {
 			ids = ids[:n]
 		}
 
-		log.WriteString("Eliminated ")
-		log.WriteString(nameMap[eliminatedID])
-		log.WriteString("\n\n---\n\n")
+		for _, tally := range tallies {
+			if tally.ID == eliminatedID {
+				tally.Eliminated = true
+			}
+		}
 
 		round += 1
 	}
 
-	return log.String()
+	return &InstantRunoff{Rounds: round, Tallies: allTallies, Winner: winner}, nil
+}
+
+func getTallies(freqs map[int]int, nameMap map[int]string) []*Tally {
+	var pairs [][2]int
+	for k, v := range freqs {
+		pairs = append(pairs, [2]int{k, v})
+	}
+
+	sort.Slice(pairs, func(i, j int) bool {
+		return pairs[i][0] < pairs[j][0]
+	})
+
+	var tallies []*Tally
+	for _, pair := range pairs {
+		name := nameMap[pair[0]]
+		count := pair[1]
+		tallies = append(tallies, &Tally{ID: pair[0], Name: name, Count: count})
+	}
+
+	return tallies
 }
 
 func getFrequencies(ids []int, votes []*Vote, choiceNumber int) map[int]int {
