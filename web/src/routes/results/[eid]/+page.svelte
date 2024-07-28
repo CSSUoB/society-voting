@@ -242,7 +242,6 @@
 
 	table {
 		background: white;
-		border: 1px solid grey;
 		font-size: 12pt;
 		border-collapse: collapse;
 		text-align: left;
@@ -250,11 +249,11 @@
 	}
 	table thead th,
 	table tfoot th {
-		background: rgba(0, 0, 0, 0.1);
+		background: #eee;
 	}
 	table th,
 	table td {
 		padding: 0.5em;
-		border: 1px solid lightgrey;
+		border: 1px solid #ddd;
 	}
 </style>
