@@ -105,10 +105,10 @@
 
 	button.danger {
 		--border-colour: #000;
-		--background-colour: #ff4136;
-		--background-colour--shadow: #ff4136;
-		--background-colour--focus: #ff4136;
-		--background-colour--shadow--focus: #ff4136;
+		--background-colour: #fc5d55;
+		--background-colour--shadow: #da372e;
+		--background-colour--focus: #e83a31;
+		--background-colour--shadow--focus: #cf342c;
 	}
 
 	button.inline {
