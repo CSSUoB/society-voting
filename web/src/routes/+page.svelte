@@ -14,7 +14,7 @@
 	];
 	const image = images[Math.floor(Math.random() * images.length)];
 
-	$: upcomingElections = $elections?.filter((e) => !e.isActive) ?? [];
+	$: upcomingElections = $elections?.filter((e) => !e.isActive && !e.isConcluded) ?? [];
 
 	$: if ($currentElection && !$currentElection.hasVoted) {
 		goto(`/vote`);

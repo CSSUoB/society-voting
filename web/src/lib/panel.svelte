@@ -2,16 +2,18 @@
 	import type { Optional } from "$lib/optional";
 
 	export let kind: "regular" | "emphasis" = "regular";
-	export let title: string = "Title";
+	export let title: string | undefined = undefined;
 	export let headerIcon: Optional<string> = null;
 </script>
 
 <section class={kind}>
-	<span class="header">
-		{#if headerIcon}<span class="material-symbols-rounded">{headerIcon}</span>{/if}
-		<h1>{title}</h1>
-		<slot name="header-action" />
-	</span>
+	{#if title}
+		<span class="header">
+			{#if headerIcon}<span class="material-symbols-rounded">{headerIcon}</span>{/if}
+			<h1>{title}</h1>
+			<slot name="header-action" />
+		</span>
+	{/if}
 	<slot />
 </section>
 

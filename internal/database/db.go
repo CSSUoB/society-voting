@@ -4,16 +4,17 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log/slog"
+	"os"
+	"sync"
+	"time"
+
 	"github.com/CSSUoB/society-voting/internal/config"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/extra/bundebug"
 	"github.com/uptrace/bun/migrate"
-	"log/slog"
-	"os"
-	"sync"
-	"time"
 )
 
 var Migrations = migrate.NewMigrations()
@@ -34,7 +35,7 @@ func Get() *bun.DB {
 	loadOnce.Do(func() {
 		conf := config.Get().Database
 
-		dsn := conf.DSN + "?_txlock=exclusive"
+		dsn := conf.DSN + "?_txlock=exclusive&_foreign_keys=on"
 		slog.Info("connecting to database")
 		db, err := sql.Open("sqlite3", dsn)
 		if err != nil {

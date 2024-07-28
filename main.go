@@ -3,15 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/CSSUoB/society-voting/internal/config"
 	"github.com/CSSUoB/society-voting/internal/database"
 	"github.com/CSSUoB/society-voting/internal/discordWebhookNotify"
 	"github.com/CSSUoB/society-voting/internal/events"
 	"github.com/CSSUoB/society-voting/internal/httpcore"
-	"log/slog"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 var exitingForRestart = false

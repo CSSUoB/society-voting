@@ -27,7 +27,7 @@
 </script>
 
 <Panel title="Upcoming elections" headerIcon="campaign">
-	<List items={$elections?.filter((e) => !e.isActive) ?? []} let:prop={election}>
+	<List items={$elections?.filter((e) => !e.isActive && !e.isConcluded) ?? []} let:prop={election}>
 		<li
 			class={`election ${
 				$page.url.pathname === `/election/${election.id}` ? "election--selected" : ""
