@@ -444,7 +444,7 @@ func (endpoints) apiGetElectionOutcome(ctx *fiber.Ctx) error {
 		return fiber.ErrUnauthorized
 	}
 
-	electionID := ctx.QueryInt("election_id")
+	electionID := ctx.QueryInt("id")
 
 	tx, err := database.GetTx()
 	if err != nil {
