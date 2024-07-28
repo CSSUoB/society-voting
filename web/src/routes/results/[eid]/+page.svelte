@@ -34,7 +34,10 @@
 		.filter((e) => e.isElected)
 		.map((e) => e.name)
 		.join(", ");
-	$: date = new Date(electionOutcome.date).toUTCString();
+	$: date = new Intl.DateTimeFormat("en-GB", {
+		dateStyle: "full",
+		timeStyle: "long",
+	}).format(new Date(electionOutcome.date));
 
 	let deleteElectionDialog: HTMLDialogElement;
 	const deleteElection = async (id: number) => {
@@ -84,13 +87,11 @@
 				The results for <b>{election.roleName}</b> have not been published. While they remain unpublished,
 				only administrators may view the results.
 			</p>
-			<div class="button">
-				<Button
-					kind="primary"
-					text="Publish results"
-					on:click={() => publishElectionResults(election.id, true)}
-				/>
-			</div>
+			<Button
+				kind="primary"
+				text="Publish results"
+				on:click={() => publishElectionResults(election.id, true)}
+			/>
 		</div>
 	</Panel>
 {/if}
@@ -98,7 +99,7 @@
 <Panel title="Results" headerIcon="receipt_long">
 	<div class="results">
 		<p>
-			This election was held at <b>{date}</b>. There were {electionOutcome.ballots}
+			This election was held on <b>{date}</b>. There were {electionOutcome.ballots}
 			ballots cast and {electionOutcome.rounds} rounds in total.
 		</p>
 		{#each Object.entries(resultsByRound) as [round, results]}
@@ -108,7 +109,7 @@
 					<tr>
 						<th>Candidate</th>
 						<th>Votes</th>
-						<th>Status</th>
+						<th>Outcome</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -210,15 +211,10 @@
 
 <style>
 	div.unpublished-callout {
-		display: flex;
-		flex-direction: row;
-		justify-content: space-between;
+		display: grid;
+		grid-template-columns: 1fr auto;
 		align-items: center;
 		gap: 16px;
-	}
-
-	div.unpublished-callout > .button {
-		flex-shrink: 0;
 	}
 
 	div.control-group {
@@ -233,11 +229,7 @@
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
-		gap: 8px;
-	}
-
-	p {
-		margin: 8px 0;
+		gap: 16px;
 	}
 
 	table {
