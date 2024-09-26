@@ -19,6 +19,7 @@
 
 	$: electionOutcome = data.data;
 
+	$: isVotesShown = $user.isAdmin;
 	$: election = electionOutcome.election;
 	$: resultsByRound = electionOutcome.results.reduce((res, cur) => {
 		return {
@@ -70,6 +71,8 @@
 		}
 		$fetching = false;
 	};
+
+	const toggleVoteVisibility = () => (isVotesShown = !isVotesShown);
 </script>
 
 <svelte:head>
@@ -97,6 +100,23 @@
 {/if}
 
 <Panel title="Results" headerIcon="receipt_long">
+	<div slot="header-action">
+		{#if isVotesShown}
+			<Button
+				icon="visibility_off"
+				kind="emphasis"
+				text="Hide votes"
+				on:click={toggleVoteVisibility}
+			/>
+		{:else}
+			<Button
+				icon="visibility"
+				kind="emphasis"
+				text="Reveal votes"
+				on:click={toggleVoteVisibility}
+			/>
+		{/if}
+	</div>
 	<div class="results">
 		<p>
 			This election was held on <b>{date}</b>. There were {electionOutcome.ballots}
@@ -116,7 +136,19 @@
 					{#each results as result}
 						<tr>
 							<td>{result.name}</td>
-							<td>{result.voteCount}</td>
+							{#if isVotesShown}
+								<td>
+									{result.voteCount}
+								</td>
+							{:else}
+								<td
+									class="hidden-icon"
+									on:click={toggleVoteVisibility}
+									title="Click to reveal votes"
+								>
+									<span class="material-symbols-rounded">visibility_off</span>
+								</td>
+							{/if}
 							<td>
 								{#if result.isRejected}
 									Rejected
@@ -222,6 +254,15 @@
 		flex-direction: row;
 		align-items: flex-start;
 		gap: 8px;
+	}
+
+	td.hidden-icon {
+		color: #555;
+		cursor: pointer;
+	}
+
+	td.hidden-icon > span {
+		font-size: 0.9em;
 	}
 
 	div.results,
