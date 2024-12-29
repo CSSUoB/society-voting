@@ -9,10 +9,7 @@ import (
 )
 
 func (endpoints) apiMe(ctx *fiber.Ctx) error {
-	userID, authStatus := getSessionAuth(ctx)
-	if authStatus == authNotAuthed {
-		return fiber.ErrUnauthorized
-	}
+	userID, _ := getSessionAuth(ctx)
 
 	user, err := database.GetUser(userID)
 	if err != nil {
@@ -28,10 +25,7 @@ func (endpoints) apiMe(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiSetOwnName(ctx *fiber.Ctx) error {
-	userID, authStatus := getSessionAuth(ctx)
-	if authStatus == authNotAuthed {
-		return fiber.ErrUnauthorized
-	}
+	userID, _ := getSessionAuth(ctx)
 
 	var request = struct {
 		Name string `json:"name" validate:"required,max=64"`

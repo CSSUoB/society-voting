@@ -1,10 +1,8 @@
 package httpcore
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
-	"log/slog"
 	"time"
 
 	"github.com/CSSUoB/society-voting/internal/database"
@@ -13,11 +11,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// TODO deduplicate common code
 func (endpoints) apiAdminCreateElection(ctx *fiber.Ctx) error {
-	if _, status := getSessionAuth(ctx); status&authAdminUser == 0 {
-		return fiber.ErrUnauthorized
-	}
-
 	var request = struct {
 		RoleName    string `validate:"required,max=64"`
 		Description string `validate:"max=1024"`
@@ -27,25 +22,42 @@ func (endpoints) apiAdminCreateElection(ctx *fiber.Ctx) error {
 		return err
 	}
 
+	tx, err := database.GetTx()
+	if err != nil {
+		return fmt.Errorf("apiAdminCreateElection start tx: %w", err)
+	}
+	defer tx.Rollback()
+
+	poll := &database.Poll{
+		PollTypeID: database.ElectionPollTypeId,
+	}
+
+	if err := poll.Insert(tx); err != nil {
+		return fmt.Errorf("apiAdminCreateElection create poll: %w", err)
+	}
+
 	election := &database.Election{
+		ID:          poll.ID,
 		RoleName:    request.RoleName,
 		Description: request.Description,
 	}
 
-	if err := election.Insert(); err != nil {
+	if err := election.Insert(tx); err != nil {
 		return fmt.Errorf("apiAdminCreateElection create election: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("apiAdminCreateElection commit tx: %w", err)
 	}
 
 	return ctx.JSON(election)
 }
 
-func (endpoints) apiAdminDeleteElection(ctx *fiber.Ctx) error {
-	if _, status := getSessionAuth(ctx); status&authAdminUser == 0 {
-		return fiber.ErrUnauthorized
-	}
-
+func (endpoints) apiAdminCreateReferendum(ctx *fiber.Ctx) error {
 	var request = struct {
-		ElectionID int `json:"id" validate:"required"`
+		Title       string `validate:"required,max=64"`
+		Question    string `validate:"required,max=256"`
+		Description string `validate:"max=1024"`
 	}{}
 
 	if err := parseAndValidateRequestBody(ctx, &request); err != nil {
@@ -54,20 +66,57 @@ func (endpoints) apiAdminDeleteElection(ctx *fiber.Ctx) error {
 
 	tx, err := database.GetTx()
 	if err != nil {
-		return fmt.Errorf("apiAdminDeleteElection start tx: %w", err)
+		return fmt.Errorf("apiAdminCreateReferendum start tx: %w", err)
 	}
 	defer tx.Rollback()
 
-	if err := database.DeleteCandidatesForElection(request.ElectionID, tx); err != nil {
-		return fmt.Errorf("apiAdminDeleteElection delete all candidates: %w", err)
+	poll := &database.Poll{
+		PollTypeID: database.ReferendumPollTypeId,
 	}
 
-	if err := database.DeleteElectionByID(request.ElectionID, tx); err != nil {
-		return fmt.Errorf("apiAdminDeleteElection delete election: %w", err)
+	if err := poll.Insert(tx); err != nil {
+		return fmt.Errorf("apiAdminCreateReferendum create poll: %w", err)
+	}
+
+	referendum := &database.Referendum{
+		ID:          poll.ID,
+		Title:       request.Title,
+		Question:    request.Question,
+		Description: request.Description,
+	}
+
+	if err := referendum.Insert(tx); err != nil {
+		return fmt.Errorf("apiAdminCreateReferendum create referendum: %w", err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("apiAdminDeleteElection commit tx: %w", err)
+		return fmt.Errorf("apiAdminCreateReferendum commit tx: %w", err)
+	}
+
+	return ctx.JSON(referendum)
+}
+
+func (endpoints) apiAdminDeletePoll(ctx *fiber.Ctx) error {
+	var request = struct {
+		PollID int `json:"id" validate:"required"`
+	}{}
+
+	if err := parseAndValidateRequestBody(ctx, &request); err != nil {
+		return err
+	}
+
+	tx, err := database.GetTx()
+	if err != nil {
+		return fmt.Errorf("apiAdminDeletePoll start tx: %w", err)
+	}
+	defer tx.Rollback()
+
+	if err := database.DeletePollByID(request.PollID, tx); err != nil {
+		return fmt.Errorf("apiAdminDeletePoll delete poll: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("apiAdminDeletePoll commit tx: %w", err)
 	}
 
 	ctx.Status(fiber.StatusNoContent)
@@ -75,10 +124,6 @@ func (endpoints) apiAdminDeleteElection(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiAdminStartElection(ctx *fiber.Ctx) error {
-	if _, status := getSessionAuth(ctx); status&authAdminUser == 0 {
-		return fiber.ErrUnauthorized
-	}
-
 	var request = struct {
 		ElectionID int      `json:"id" validate:"required"`
 		ExtraNames []string `json:"extraNames" validate:"dive,required"`
@@ -94,10 +139,10 @@ func (endpoints) apiAdminStartElection(ctx *fiber.Ctx) error {
 	}
 	defer tx.Rollback()
 
-	if _, err := database.GetActiveElection(tx); err == nil {
+	if _, err := database.GetActivePoll(tx); err == nil {
 		return &fiber.Error{
 			Code:    fiber.StatusConflict,
-			Message: "There is already an election in progress.",
+			Message: "There is already a poll in progress.",
 		}
 	}
 
@@ -112,17 +157,17 @@ func (endpoints) apiAdminStartElection(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiAdminStartElection get election by ID: %w", err)
 	}
 
-	if election.IsConcluded {
+	if election.Poll.IsConcluded {
 		return &fiber.Error{
 			Code:    fiber.StatusConflict,
 			Message: "This election has already concluded",
 		}
 	}
 
-	election.IsActive = true
+	election.Poll.IsActive = true
 
-	if err := election.Update(tx); err != nil {
-		return fmt.Errorf("apiAdminStartElection update election: %w", err)
+	if err := election.Poll.Update(tx); err != nil {
+		return fmt.Errorf("apiAdminStartElection update poll: %w", err)
 	}
 
 	var ballot []*database.BallotEntry
@@ -162,31 +207,100 @@ func (endpoints) apiAdminStartElection(ctx *fiber.Ctx) error {
 	return ctx.JSON(response)
 }
 
-func (endpoints) apiAdminStopElection(ctx *fiber.Ctx) error {
-	if _, status := getSessionAuth(ctx); status&authAdminUser == 0 {
-		return fiber.ErrUnauthorized
+func (endpoints) apiAdminStartReferendum(ctx *fiber.Ctx) error {
+	var request = struct {
+		ReferendumID int `json:"id" validate:"required"`
+	}{}
+
+	if err := parseAndValidateRequestBody(ctx, &request); err != nil {
+		return err
 	}
 
+	tx, err := database.GetTx()
+	if err != nil {
+		return fmt.Errorf("apiAdminStartReferendum start tx: %w", err)
+	}
+	defer tx.Rollback()
+
+	if _, err := database.GetActivePoll(tx); err == nil {
+		return &fiber.Error{
+			Code:    fiber.StatusConflict,
+			Message: "There is already a poll in progress.",
+		}
+	}
+
+	referendum, err := database.GetReferendum(request.ReferendumID, tx)
+	if err != nil {
+		if errors.Is(err, database.ErrNotFound) {
+			return &fiber.Error{
+				Code:    fiber.StatusNotFound,
+				Message: "Referendum with that ID not found",
+			}
+		}
+		return fmt.Errorf("apiAdminStartElection get election by ID: %w", err)
+	}
+
+	if referendum.Poll == nil || referendum.Poll.IsConcluded {
+		return &fiber.Error{
+			Code:    fiber.StatusConflict,
+			Message: "This referendum has already concluded",
+		}
+	}
+
+	referendum.Poll.IsActive = true
+
+	if err := referendum.Poll.Update(tx); err != nil {
+		return fmt.Errorf("apiAdminStartElection update election: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("apiAdminStartElection commit tx: %w", err)
+	}
+
+	events.SendEvent(events.TopicReferendumStarted, referendum)
+
+	var response = struct {
+		Referendum *database.Referendum `json:"referendum"`
+	}{
+		Referendum: referendum,
+	}
+
+	return ctx.JSON(response)
+}
+
+// TODO deduplicate
+func (endpoints) apiAdminStopElection(ctx *fiber.Ctx) error {
 	tx, err := database.GetTx()
 	if err != nil {
 		return fmt.Errorf("apiAdminStopElection start tx: %w", err)
 	}
 	defer tx.Rollback()
 
-	election, err := database.GetActiveElection(tx)
+	poll, err := database.GetActivePoll(tx)
 	if err != nil {
 		if errors.Is(err, database.ErrNotFound) {
 			return &fiber.Error{
 				Code:    fiber.StatusConflict,
-				Message: "There is no active election to stop.",
+				Message: "There is no active poll to stop.",
 			}
 		}
-		return fmt.Errorf("apiVote get active election: %wz", err)
+		return fmt.Errorf("apiAdminStopElection get active poll: %wz", err)
+	}
+
+	election, err := database.GetElection(poll.ID, tx)
+	if err != nil {
+		if errors.Is(err, database.ErrNotFound) {
+			return &fiber.Error{
+				Code:    fiber.StatusBadRequest,
+				Message: "Poll with that ID is not an election",
+			}
+		}
+		return fmt.Errorf("apiAdminStopElection get election: %wz", err)
 	}
 
 	// Count votes
 
-	votes, err := database.GetAllVotesForElection(election.ID, tx)
+	votes, err := database.GetAllVotesForPoll(election.ID, tx)
 	if err != nil {
 		return fmt.Errorf("apiAdminStopElection get all votes: %w", err)
 	}
@@ -215,14 +329,19 @@ func (endpoints) apiAdminStopElection(ctx *fiber.Ctx) error {
 
 	resultText := fmt.Sprintf("ELECTION OF %s BY %d MEMBERS ON %s UTC\n=================================================================\n\n", election.RoleName, len(votes), time.Now().UTC().Format(time.DateTime)) + instantRunoff.ResultsAsString()
 
-	election.IsActive = false
-	election.IsConcluded = true
+	pollOutcome := &database.PollOutcome{
+		PollID:      poll.ID,
+		IsPublished: false,
+		Ballots:     len(irVotes),
+	}
+
+	if err := pollOutcome.Insert(tx); err != nil {
+		return fmt.Errorf("apiAdminStopElection create poll outcome: %w", err)
+	}
 
 	electionOutcome := &database.ElectionOutcome{
-		ElectionID:  election.ID,
-		Ballots:     len(irVotes),
-		Rounds:      instantRunoff.Rounds,
-		IsPublished: false,
+		ID:     pollOutcome.ID,
+		Rounds: instantRunoff.Rounds,
 	}
 
 	if err := electionOutcome.Insert(tx); err != nil {
@@ -246,7 +365,7 @@ func (endpoints) apiAdminStopElection(ctx *fiber.Ctx) error {
 	}
 
 	// Delete votes, ballot and update election
-	if err := database.DeleteAllVotesForElection(election.ID, tx); err != nil {
+	if err := database.DeleteAllVotesForPoll(election.ID, tx); err != nil {
 		return fmt.Errorf("apiAdminStopElection delete all votes: %w", err)
 	}
 
@@ -258,7 +377,10 @@ func (endpoints) apiAdminStopElection(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiAdminStopElection delete candidates: %w", err)
 	}
 
-	if err := election.Update(tx); err != nil {
+	poll.IsActive = false
+	poll.IsConcluded = true
+
+	if err := poll.Update(tx); err != nil {
 		return fmt.Errorf("apiAdminStopElection update election: %w", err)
 	}
 
@@ -282,14 +404,115 @@ func (endpoints) apiAdminStopElection(ctx *fiber.Ctx) error {
 	return ctx.JSON(response)
 }
 
-func (endpoints) apiAdminPublishElectionOutcome(ctx *fiber.Ctx) error {
-	if _, status := getSessionAuth(ctx); status&authAdminUser == 0 {
-		return fiber.ErrUnauthorized
+func (endpoints) apiAdminStopReferendum(ctx *fiber.Ctx) error {
+	tx, err := database.GetTx()
+	if err != nil {
+		return fmt.Errorf("apiAdminStopReferendum start tx: %w", err)
+	}
+	defer tx.Rollback()
+
+	poll, err := database.GetActivePoll(tx)
+	if err != nil {
+		if errors.Is(err, database.ErrNotFound) {
+			return &fiber.Error{
+				Code:    fiber.StatusConflict,
+				Message: "There is no active poll to stop.",
+			}
+		}
+		return fmt.Errorf("apiAdminStopReferendum get active poll: %wz", err)
 	}
 
+	referendum, err := database.GetReferendum(poll.ID, tx)
+	if err != nil {
+		if errors.Is(err, database.ErrNotFound) {
+			return &fiber.Error{
+				Code:    fiber.StatusBadRequest,
+				Message: "Poll with that ID is not a referendum",
+			}
+		}
+		return fmt.Errorf("apiAdminStopReferendum get referendum: %wz", err)
+	}
+
+	// count votes and shit
+	votes, err := database.GetAllVotesForPoll(referendum.ID, tx)
+	if err != nil {
+		return fmt.Errorf("apiAdminStopReferendum get all votes: %w", err)
+	}
+
+	var votesAbstain, votesFor, votesAgainst int
+	for _, vote := range votes {
+		if len(vote.Choices) != 1 {
+			// invalid ballot
+			continue
+		}
+		for _, value := range vote.Choices {
+			switch value {
+			case 0:
+				votesAbstain++
+			case 1:
+				votesFor++
+			case 2:
+				votesAgainst++
+			}
+		}
+	}
+
+	pollOutcome := &database.PollOutcome{
+		PollID:      poll.ID,
+		IsPublished: false,
+		Ballots:     votesAbstain + votesFor + votesAgainst,
+	}
+
+	if err := pollOutcome.Insert(tx); err != nil {
+		return fmt.Errorf("apiAdminStopElection create poll outcome: %w", err)
+	}
+
+	referendumOutcome := &database.ReferendumOutcome{
+		ID:           pollOutcome.ID,
+		VotesAbstain: votesAbstain,
+		VotesFor:     votesFor,
+		VotesAgainst: votesAgainst,
+	}
+
+	if err := referendumOutcome.Insert(tx); err != nil {
+		return fmt.Errorf("apiAdminStopElection create election outcome: %w", err)
+	}
+
+	poll.IsActive = false
+	poll.IsConcluded = true
+
+	if err := database.DeleteAllVotesForPoll(poll.ID, tx); err != nil {
+		return fmt.Errorf("apiAdminStopElection delete all votes: %w", err)
+	}
+
+	if err := poll.Update(tx); err != nil {
+		return fmt.Errorf("apiAdminStopElection update election: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("apiAdminStopElection commit tx: %w", err)
+	}
+
+	events.SendEvent(events.TopicElectionEnded, &events.ReferendumEndedData{
+		Referendum: referendum,
+		Result:     "lmao",
+	})
+
+	// Return stopped election
+
+	var response = struct {
+		Referendum *database.Referendum `json:"referendum"`
+	}{
+		Referendum: referendum,
+	}
+
+	return ctx.JSON(response)
+}
+
+func (endpoints) apiAdminPublishPollOutcome(ctx *fiber.Ctx) error {
 	var request = struct {
-		ElectionID int   `json:"id" validate:"required"`
-		Published  *bool `json:"published" validate:"required"`
+		PollID    int   `json:"id" validate:"required"`
+		Published *bool `json:"published" validate:"required"`
 	}{}
 
 	if err := parseAndValidateRequestBody(ctx, &request); err != nil {
@@ -302,7 +525,7 @@ func (endpoints) apiAdminPublishElectionOutcome(ctx *fiber.Ctx) error {
 	}
 	defer tx.Rollback()
 
-	electionOutcome, err := database.GetOutcomeForElection(request.ElectionID, tx)
+	pollOutcome, err := database.GetOutcomeForPoll(request.PollID, tx)
 	if err != nil {
 		if errors.Is(err, database.ErrNotFound) {
 			return &fiber.Error{
@@ -313,9 +536,9 @@ func (endpoints) apiAdminPublishElectionOutcome(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiAdminPublishElectionOutcome get election outcome: %w", err)
 	}
 
-	electionOutcome.IsPublished = *request.Published
+	pollOutcome.IsPublished = *request.Published
 
-	if err := electionOutcome.Update(tx); err != nil {
+	if err := pollOutcome.Update(tx); err != nil {
 		return fmt.Errorf("apiAdminPublishElectonOutcome update election outcome: %w", err)
 	}
 
@@ -327,68 +550,64 @@ func (endpoints) apiAdminPublishElectionOutcome(ctx *fiber.Ctx) error {
 	return nil
 }
 
-func (endpoints) apiAdminRunningElectionSSE(ctx *fiber.Ctx) error {
-	if _, status := getSessionAuth(ctx); status&authAdminUser == 0 {
-		return fiber.ErrUnauthorized
-	}
-
-	activeElection, err := database.GetActiveElection()
-	if err != nil {
-		if errors.Is(err, database.ErrNotFound) {
-			return &fiber.Error{
-				Code:    fiber.StatusConflict,
-				Message: "There is no election in progress.",
-			}
-		}
-		return fmt.Errorf("apiAdminRunningElectionSSE get active election: %w", err)
-	}
-
-	receiverID, receiver := events.NewReceiver(events.TopicVoteReceived)
-	electionEndReceiverID, electionEndReceiver := events.NewReceiver(events.TopicElectionEnded)
-
-	ctx.Set("Content-Type", "text/event-stream")
-	fr := ctx.Response()
-	fr.SetBodyStreamWriter(
-		func(w *bufio.Writer) {
-			count, err := database.CountVotesForElection(activeElection.ID)
-			if err != nil {
-				slog.Error("SSE error", "error", fmt.Errorf("apiAdminRunningElectionSSE count votes: %w", err))
-				goto cleanup
-			}
-
-		loop:
-			for {
-				select {
-				case msg := <-receiver:
-					count += 1
-					msg.Data = count
-					sseData, err := msg.ToSSE()
-					if err != nil {
-						slog.Error("SSE error", "error", fmt.Errorf("failed to generate SSE event from message: %w", err))
-						continue loop
-					}
-					_, _ = w.Write(sseData)
-					if err := w.Flush(); err != nil {
-						// Client disconnected
-						break loop
-					}
-				case <-electionEndReceiver:
-					var err error
-					for err == nil {
-						// if we force the client to disconnect, it'll just try to reconnect.
-						// wait for it to disconnect, which will cause an error on Flush
-						err = w.Flush()
-						time.Sleep(time.Second * 5)
-					}
-					break loop
-				}
-			}
-
-		cleanup:
-			events.CloseReceiver(receiverID)
-			events.CloseReceiver(electionEndReceiverID)
-		},
-	)
-
-	return nil
-}
+//func (endpoints) apiAdminRunningElectionSSE(ctx *fiber.Ctx) error {
+//	activeElection, err := database.GetActiveElection()
+//	if err != nil {
+//		if errors.Is(err, database.ErrNotFound) {
+//			return &fiber.Error{
+//				Code:    fiber.StatusConflict,
+//				Message: "There is no election in progress.",
+//			}
+//		}
+//		return fmt.Errorf("apiAdminRunningElectionSSE get active election: %w", err)
+//	}
+//
+//	receiverID, receiver := events.NewReceiver(events.TopicVoteReceived)
+//	electionEndReceiverID, electionEndReceiver := events.NewReceiver(events.TopicElectionEnded)
+//
+//	ctx.Set("Content-Type", "text/event-stream")
+//	fr := ctx.Response()
+//	fr.SetBodyStreamWriter(
+//		func(w *bufio.Writer) {
+//			count, err := database.CountVotesForElection(activeElection.ID)
+//			if err != nil {
+//				slog.Error("SSE error", "error", fmt.Errorf("apiAdminRunningElectionSSE count votes: %w", err))
+//				goto cleanup
+//			}
+//
+//		loop:
+//			for {
+//				select {
+//				case msg := <-receiver:
+//					count += 1
+//					msg.Data = count
+//					sseData, err := msg.ToSSE()
+//					if err != nil {
+//						slog.Error("SSE error", "error", fmt.Errorf("failed to generate SSE event from message: %w", err))
+//						continue loop
+//					}
+//					_, _ = w.Write(sseData)
+//					if err := w.Flush(); err != nil {
+//						// Client disconnected
+//						break loop
+//					}
+//				case <-electionEndReceiver:
+//					var err error
+//					for err == nil {
+//						// if we force the client to disconnect, it'll just try to reconnect.
+//						// wait for it to disconnect, which will cause an error on Flush
+//						err = w.Flush()
+//						time.Sleep(time.Second * 5)
+//					}
+//					break loop
+//				}
+//			}
+//
+//		cleanup:
+//			events.CloseReceiver(receiverID)
+//			events.CloseReceiver(electionEndReceiverID)
+//		},
+//	)
+//
+//	return nil
+//}

@@ -1,165 +1,171 @@
 package httpcore
 
 import (
-	"bufio"
 	"crypto/subtle"
 	"errors"
 	"fmt"
-	"log/slog"
 	"math/rand"
+	"slices"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/CSSUoB/society-voting/internal/database"
 	"github.com/CSSUoB/society-voting/internal/events"
 	"github.com/gofiber/fiber/v2"
 	"github.com/mattn/go-sqlite3"
+	"github.com/uptrace/bun"
 )
 
-func (endpoints) apiListElections(ctx *fiber.Ctx) error {
-	userID, authStatus := getSessionAuth(ctx)
-	if authStatus == authNotAuthed {
-		return fiber.ErrUnauthorized
-	}
+func (endpoints) apiListPolls(ctx *fiber.Ctx) error {
+	userID, _ := getSessionAuth(ctx)
 
-	elections, err := database.GetAllElections()
+	polls, err := database.GetAllPolls()
 	if err != nil {
-		return fmt.Errorf("apiListElections get all elections: %w", err)
+		return fmt.Errorf("apiListPolls get all polls: %w", err)
 	}
 
-	var res []*database.ElectionWithCandidates
+	type PollWithData struct {
+		database.Poll
+		Candidates *[]*database.ElectionCandidate `json:"candidates,omitempty"`
+	}
 
-	for _, election := range elections {
-		if ec, err := election.WithCandidates(); err != nil {
-			return fmt.Errorf("apiListElections: %w", err)
-		} else {
-			for _, cand := range ec.Candidates {
-				cand.IsMe = cand.ID == userID
+	var res []*PollWithData
+
+	for _, poll := range polls {
+		if poll.Election != nil {
+			if ec, err := poll.Election.WithCandidates(); err != nil {
+				return fmt.Errorf("apiListPolls: %w", err)
+			} else {
+				for _, cand := range ec.Candidates {
+					cand.IsMe = cand.ID == userID
+				}
+				res = append(res, &PollWithData{
+					Poll:       *poll,
+					Candidates: &ec.Candidates,
+				})
 			}
-			res = append(res, ec)
+		} else {
+			res = append(res, &PollWithData{
+				Poll: *poll,
+			})
 		}
 	}
 
 	return ctx.JSON(res)
 }
 
-func (endpoints) apiElectionsSSE(ctx *fiber.Ctx) error {
-	if _, status := getSessionAuth(ctx); status == authNotAuthed {
-		return fiber.ErrUnauthorized
-	}
+// TODO fix
+//func (endpoints) apiElectionsSSE(ctx *fiber.Ctx) error {
+//	if _, status := getSessionAuth(ctx); status == authNotAuthed {
+//		return fiber.ErrUnauthorized
+//	}
+//
+//	id, receiver := events.NewReceiver(events.TopicElectionStarted, events.TopicElectionEnded)
+//
+//	ctx.Set("Content-Type", "text/event-stream")
+//	fr := ctx.Response()
+//	fr.SetBodyStreamWriter(
+//		func(w *bufio.Writer) {
+//			ticker := time.NewTicker(time.Second * 10)
+//			for {
+//				select {
+//				case msg := <-receiver:
+//					if msg.Topic == events.TopicElectionEnded {
+//						// we're going to be modifying this msg so let's create a copy and work with that
+//						{
+//							// TODO: Refactor away this copying mess
+//							x := *msg
+//							y := *(msg.Data.(*events.ElectionEndedData))
+//							x.Data = &y
+//							msg = &x
+//						}
+//						msg.Data.(*events.ElectionEndedData).Result = ""
+//					}
+//					sseData, err := msg.ToSSE()
+//					if err != nil {
+//						slog.Error("SSE error", "error", fmt.Errorf("failed to generate SSE event from message: %w", err))
+//						break
+//					}
+//					_, _ = w.Write(sseData)
+//				case <-ticker.C:
+//				}
+//
+//				if err := w.Flush(); err != nil {
+//					// Client disconnected
+//					break
+//				}
+//			}
+//			events.CloseReceiver(id)
+//		},
+//	)
+//
+//	return nil
+//}
 
-	id, receiver := events.NewReceiver(events.TopicElectionStarted, events.TopicElectionEnded)
+func (endpoints) apiGetActivePollInformation(ctx *fiber.Ctx) error {
+	userID, _ := getSessionAuth(ctx)
 
-	ctx.Set("Content-Type", "text/event-stream")
-	fr := ctx.Response()
-	fr.SetBodyStreamWriter(
-		func(w *bufio.Writer) {
-			ticker := time.NewTicker(time.Second * 10)
-			for {
-				select {
-				case msg := <-receiver:
-					if msg.Topic == events.TopicElectionEnded {
-						// we're going to be modifying this msg so let's create a copy and work with that
-						{
-							// TODO: Refactor away this copying mess
-							x := *msg
-							y := *(msg.Data.(*events.ElectionEndedData))
-							x.Data = &y
-							msg = &x
-						}
-						msg.Data.(*events.ElectionEndedData).Result = ""
-					}
-					sseData, err := msg.ToSSE()
-					if err != nil {
-						slog.Error("SSE error", "error", fmt.Errorf("failed to generate SSE event from message: %w", err))
-						break
-					}
-					_, _ = w.Write(sseData)
-				case <-ticker.C:
-				}
-
-				if err := w.Flush(); err != nil {
-					// Client disconnected
-					break
-				}
-			}
-			events.CloseReceiver(id)
-		},
-	)
-
-	return nil
-}
-
-func (endpoints) apiGetActiveElectionInformation(ctx *fiber.Ctx) error {
-	userID, authStatus := getSessionAuth(ctx)
-	if authStatus == authNotAuthed {
-		return fiber.ErrUnauthorized
-	}
-
-	tx, err := database.GetTx()
-	if err != nil {
-		return fmt.Errorf("apiGetActiveElectionInformation start tx: %w", err)
-	}
-	defer tx.Rollback()
-
-	election, err := database.GetActiveElection(tx)
+	poll, err := database.GetActivePoll()
 	if err != nil {
 		if errors.Is(err, database.ErrNotFound) {
 			return &fiber.Error{
 				Code:    fiber.StatusConflict,
-				Message: "There is no active election.",
+				Message: "There is no active poll.",
 			}
 		}
-		return fmt.Errorf("apiVote get active election: %wz", err)
+		return fmt.Errorf("apiVote get active poll: %wz", err)
 	}
 
-	ballot, err := database.GetAllBallotEntriesForElection(election.ID, tx)
+	numUsers, err := database.CountUsers()
 	if err != nil {
-		return fmt.Errorf("apiGetActiveElectionInformation get ballot: %w", err)
+		return fmt.Errorf("apiGetActivePollInformation count users: %w", err)
 	}
 
-	numUsers, err := database.CountUsers(tx)
+	hasVoted, err := database.HasUserVotedInPoll(userID, poll.ID)
 	if err != nil {
-		return fmt.Errorf("apiGetActiveElectionInformation count users: %w", err)
+		return fmt.Errorf("apiGetActivePollInformation check if user has voted: %w", err)
 	}
 
-	hasVoted, err := database.HasUserVotedInElection(userID, election.ID, tx)
-	if err != nil {
-		return fmt.Errorf("apiGetActiveElectionInformation check if user has voted: %w", err)
+	type BaseResponse struct {
+		NumUsers int            `json:"numEligibleVoters"`
+		HasVoted bool           `json:"hasVoted"`
+		Poll     *database.Poll `json:"poll"`
 	}
 
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("apiGetActiveElectionInformation commit tx: %w", err)
-	}
-
-	// randomise ballot order
-	sort.Slice(ballot, func(_, _ int) bool {
-		return rand.Intn(2) == 0
-	})
-
-	var response = struct {
-		Election *database.Election      `json:"election"`
-		Ballot   []*database.BallotEntry `json:"ballot"`
-		NumUsers int                     `json:"numEligibleVoters"`
-		HasVoted bool                    `json:"hasVoted"`
-	}{
-		Election: election,
-		Ballot:   ballot,
+	baseResponse := BaseResponse{
 		NumUsers: numUsers,
 		HasVoted: hasVoted,
+		Poll:     poll,
 	}
 
-	return ctx.JSON(response)
+	if poll.Election != nil {
+		ballot, err := database.GetAllBallotEntriesForElection(poll.ID)
+		if err != nil {
+			return fmt.Errorf("apiGetActivePollInformation get ballot: %w", err)
+		}
+
+		// randomise ballot order
+		sort.Slice(ballot, func(_, _ int) bool {
+			return rand.Intn(2) == 0
+		})
+
+		return ctx.JSON(struct {
+			BaseResponse
+			Ballot []*database.BallotEntry `json:"ballot"`
+		}{
+			BaseResponse: baseResponse,
+			Ballot:       ballot,
+		})
+	}
+
+	return ctx.JSON(baseResponse)
 }
 
-func (endpoints) apiVote(ctx *fiber.Ctx) error {
-	userID, authStatus := getSessionAuth(ctx)
-	if authStatus == authNotAuthed {
-		return fiber.ErrUnauthorized
-	}
+func apiVote(ctx *fiber.Ctx, fetchPoll func(int, bun.Tx) (*database.Poll, error), validateVote func(int, []int, bun.Tx) error) error {
+	userID, _ := getSessionAuth(ctx)
 
 	var request = struct {
+		ID   int    `json:"id" validate:"required"`
 		Vote []int  `json:"vote" validate:"unique"`
 		Code string `json:"code" validate:"required"`
 	}{}
@@ -184,29 +190,34 @@ func (endpoints) apiVote(ctx *fiber.Ctx) error {
 	user, err := database.GetUser(userID, tx)
 	if err != nil {
 		if errors.Is(err, database.ErrNotFound) {
-			// User has been deleted
 			ctx.Cookie(newSessionTokenDeletionCookie())
 			return fiber.ErrUnauthorized
 		}
 		return fmt.Errorf("apiVote get user: %w", err)
 	}
 
-	election, err := database.GetActiveElection(tx)
+	poll, err := fetchPoll(request.ID, tx)
 	if err != nil {
 		if errors.Is(err, database.ErrNotFound) {
 			return &fiber.Error{
-				Code:    fiber.StatusConflict,
-				Message: "There is no active election that you can vote in.",
+				Code:    fiber.StatusBadRequest,
+				Message: "Poll with that ID not found or is wrong type",
 			}
 		}
-		return fmt.Errorf("apiVote get active election: %wz", err)
+		return fmt.Errorf("apiVote get poll: %w", err)
 	}
 
-	hasVotedAlready, err := database.HasUserVotedInElection(user.StudentID, election.ID, tx)
+	if !poll.IsActive {
+		return &fiber.Error{
+			Code:    fiber.StatusBadRequest,
+			Message: "Poll with that ID is not active",
+		}
+	}
+
+	hasVotedAlready, err := database.HasUserVotedInPoll(user.StudentID, poll.ID, tx)
 	if err != nil {
 		return fmt.Errorf("apiVote check if user %s has already voted: %w", user.StudentID, err)
 	}
-
 	if hasVotedAlready {
 		return &fiber.Error{
 			Code:    fiber.StatusConflict,
@@ -214,31 +225,14 @@ func (endpoints) apiVote(ctx *fiber.Ctx) error {
 		}
 	}
 
-	ballotOptions, err := database.GetAllBallotEntriesForElection(election.ID, tx)
-	if err != nil {
-		return fmt.Errorf("apiVote get all ballot entries: %w", err)
-	}
-
-	for _, id := range request.Vote {
-		var found bool
-		for _, b := range ballotOptions {
-			if b.ID == id {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return &fiber.Error{
-				Code:    fiber.StatusBadRequest,
-				Message: fmt.Sprintf("%d is not a valid ballot option.", id),
-			}
-		}
+	if err := validateVote(request.ID, request.Vote, tx); err != nil {
+		return err
 	}
 
 	if err := (&database.Vote{
-		ElectionID: election.ID,
-		UserID:     user.StudentID,
-		Choices:    request.Vote,
+		PollID:  poll.ID,
+		UserID:  userID,
+		Choices: request.Vote,
 	}).Insert(tx); err != nil {
 		return fmt.Errorf("apiVote insert user vote: %w", err)
 	}
@@ -253,11 +247,65 @@ func (endpoints) apiVote(ctx *fiber.Ctx) error {
 	return nil
 }
 
-func (endpoints) apiStandForElection(ctx *fiber.Ctx) error {
-	userID, authStatus := getSessionAuth(ctx)
-	if authStatus == authNotAuthed {
-		return fiber.ErrUnauthorized
+func (endpoints) apiVoteInElection(ctx *fiber.Ctx) error {
+	fetchElection := func(id int, tx bun.Tx) (*database.Poll, error) {
+		election, err := database.GetElection(id, tx)
+		if err != nil {
+			return nil, err
+		}
+		return election.Poll, nil
 	}
+
+	validateElectionVote := func(pollId int, vote []int, tx bun.Tx) error {
+		ballotOptions, err := database.GetAllBallotEntriesForElection(pollId, tx)
+		if err != nil {
+			return fmt.Errorf("get all ballot entries: %w", err)
+		}
+		for _, id := range vote {
+			var found bool
+			for _, b := range ballotOptions {
+				if b.ID == id {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return &fiber.Error{
+					Code:    fiber.StatusBadRequest,
+					Message: fmt.Sprintf("%d is not a valid ballot option.", id),
+				}
+			}
+		}
+		return nil
+	}
+
+	return apiVote(ctx, fetchElection, validateElectionVote)
+}
+
+func (endpoints) apiVoteInReferendum(ctx *fiber.Ctx) error {
+	fetchReferendum := func(id int, tx bun.Tx) (*database.Poll, error) {
+		referendum, err := database.GetReferendum(id, tx)
+		if err != nil {
+			return nil, err
+		}
+		return referendum.Poll, nil
+	}
+
+	validateReferendumVote := func(pollId int, vote []int, tx bun.Tx) error {
+		if len(vote) != 1 || !slices.Contains([]int{0, 1, 2}, vote[0]) {
+			return &fiber.Error{
+				Code:    fiber.StatusBadRequest,
+				Message: "Invalid vote",
+			}
+		}
+		return nil
+	}
+
+	return apiVote(ctx, fetchReferendum, validateReferendumVote)
+}
+
+func (endpoints) apiStandForElection(ctx *fiber.Ctx) error {
+	userID, _ := getSessionAuth(ctx)
 
 	var request = struct {
 		ElectionID int `json:"id" validate:"ne=0"`
@@ -301,7 +349,9 @@ func (endpoints) apiStandForElection(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiStandForElection get election with id %d: %w", request.ElectionID, err)
 	}
 
-	if election.IsConcluded {
+	println(election.Poll)
+
+	if election.Poll == nil || election.Poll.IsConcluded {
 		return &fiber.Error{
 			Code:    fiber.StatusConflict,
 			Message: "This election has already concluded",
@@ -438,11 +488,8 @@ func (endpoints) apiWithdrawFromElection(ctx *fiber.Ctx) error {
 	return nil
 }
 
-func (endpoints) apiGetElectionOutcome(ctx *fiber.Ctx) error {
-	userID, authStatus := getSessionAuth(ctx)
-	if authStatus == authNotAuthed {
-		return fiber.ErrUnauthorized
-	}
+func (endpoints) apiGetPollOutcome(ctx *fiber.Ctx) error {
+	userID, _ := getSessionAuth(ctx)
 
 	electionID := ctx.QueryInt("id")
 
@@ -462,12 +509,12 @@ func (endpoints) apiGetElectionOutcome(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiGetElectionOutcome get user: %w", err)
 	}
 
-	electionOutcome, err := database.GetOutcomeForElection(electionID, tx)
+	electionOutcome, err := database.GetOutcomeForPoll(electionID, tx)
 	if err != nil {
 		if errors.Is(err, database.ErrNotFound) {
 			return &fiber.Error{
 				Code:    fiber.StatusNotFound,
-				Message: "Outcome for election with that ID not found",
+				Message: "Outcome for poll with that ID not found",
 			}
 		}
 		return fmt.Errorf("apiGetElectionOutcome get election outcome for id %d: %w", electionID, err)

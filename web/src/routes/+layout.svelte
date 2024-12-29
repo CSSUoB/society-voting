@@ -9,38 +9,38 @@
 	import {
 		user,
 		type User,
-		elections,
-		type Election,
-		type CurrentElection,
-		currentElection,
+		polls,
+		type CurrentPoll,
+		currentPoll,
+		type Poll,
 	} from "../store";
 	import Alert from "$lib/alert.svelte";
 	import { API } from "$lib/endpoints";
-	import { _getCurrentElection, _getElections } from "./+layout";
+	import { _getCurrentPoll, _getPolls } from "./+layout";
 
 	/** @type {import('./$types').PageData} */
-	export let data: { user: User; elections: Election[]; currentElection: CurrentElection | null };
+	export let data: { user: User; polls: Poll[]; currentPoll: CurrentPoll | null };
 
 	$: user.set(data.user);
-	$: elections.set(data.elections);
-	$: currentElection.set(data.currentElection);
+	$: polls.set(data.polls);
+	$: currentPoll.set(data.currentPoll);
 
 	let menuOpen = false;
 	const toggleMenu = (e: CustomEvent<boolean>) => {
 		menuOpen = e.detail;
 	};
 
-	const eventSource = new EventSource(API.ELECTION_SSE, {
-		withCredentials: true,
-	});
-	const electionStatusChanged = async () => {
-		if (!$user.isAdmin) {
-			$elections = await _getElections();
-			$currentElection = await _getCurrentElection();
-		}
-	};
-	eventSource.addEventListener("election-start", electionStatusChanged);
-	eventSource.addEventListener("election-end", electionStatusChanged);
+	//const eventSource = new EventSource(API.ELECTION_SSE, {
+	//	withCredentials: true,
+	//});
+	//const electionStatusChanged = async () => {
+	//	if (!$user.isAdmin) {
+	//		$polls = await _getPolls();
+	//		$currentElection = await _getCurrentElection();
+	//	}
+	//};
+	//eventSource.addEventListener("election-start", electionStatusChanged);
+	//eventSource.addEventListener("election-end", electionStatusChanged);
 </script>
 
 <div class="container">
@@ -49,13 +49,13 @@
 	<main style:left={menuOpen ? "0" : ""}>
 		<div class="rail">
 			<Profile />
-			{#if $currentElection && (!$currentElection.hasVoted || $user.isAdmin)}
+			{#if $currentPoll && (!$currentPoll.hasVoted || $user.isAdmin)}
 				<Current />
 			{/if}
-			{#if $user.isAdmin || $elections?.some((e) => !e.isConcluded)}
+			{#if $user.isAdmin || $polls?.some((e) => !e.isConcluded)}
 				<Upcoming />
 			{/if}
-			{#if $elections?.some((e) => e.isConcluded)}
+			{#if $polls?.some((e) => e.isConcluded)}
 				<Past />
 			{/if}
 			{#if data.user.isAdmin}

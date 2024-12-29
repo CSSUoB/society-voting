@@ -3,17 +3,15 @@ package httpcore
 import (
 	"errors"
 	"fmt"
+	"sort"
+
 	"github.com/CSSUoB/society-voting/internal/database"
 	"github.com/CSSUoB/society-voting/internal/events"
 	"github.com/gofiber/fiber/v2"
-	"sort"
 )
 
 func (endpoints) apiAdminDeleteUser(ctx *fiber.Ctx) error {
-	actingUserID, authStatus := getSessionAuth(ctx)
-	if authStatus&authAdminUser == 0 {
-		return fiber.ErrUnauthorized
-	}
+	actingUserID, _ := getSessionAuth(ctx)
 
 	var request = struct {
 		UserID string `json:"userID" validate:"ne=0"`
@@ -55,10 +53,6 @@ func (endpoints) apiAdminDeleteUser(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiAdminListUsers(ctx *fiber.Ctx) error {
-	if _, status := getSessionAuth(ctx); status&authAdminUser == 0 {
-		return fiber.ErrUnauthorized
-	}
-
 	users, err := database.GetAllUsers()
 	if err != nil {
 		return fmt.Errorf("apiAdminListUsers get all users: %w", err)
@@ -76,10 +70,7 @@ func (endpoints) apiAdminListUsers(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiAdminToggleRestrictUser(ctx *fiber.Ctx) error {
-	actingUserID, authStatus := getSessionAuth(ctx)
-	if authStatus&authAdminUser == 0 {
-		return fiber.ErrUnauthorized
-	}
+	actingUserID, _ := getSessionAuth(ctx)
 
 	var request = struct {
 		UserID string `json:"userID" validate:"ne=0"`

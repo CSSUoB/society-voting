@@ -26,6 +26,8 @@ import (
 
 type endpoints struct{}
 
+type middleware struct{}
+
 const loginActionEndpoint = "/auth/login/do"
 
 func ListenAndServe(ctx context.Context, addr string) error {
@@ -55,6 +57,7 @@ func ListenAndServe(ctx context.Context, addr string) error {
 	})
 
 	e := endpoints{}
+	m := middleware{}
 
 	app.Use(func(ctx *fiber.Ctx) error {
 		authToken := ctx.Cookies(sessionTokenCookieName)
@@ -80,29 +83,37 @@ func ListenAndServe(ctx context.Context, addr string) error {
 
 	app.Get("/auth/logout", e.authLogout)
 
-	app.Get("/api/me", e.apiMe)
-	app.Put("/api/me/name", e.apiSetOwnName)
+	apiGroup := app.Group("/api", m.requireAuthenticated)
+	apiGroup.Get("/me", e.apiMe)
+	apiGroup.Put("/me/name", e.apiSetOwnName)
 
-	app.Get("/api/election", e.apiListElections)
-	app.Get("/api/election/sse", e.apiElectionsSSE)
-	app.Post("/api/election/stand", e.apiStandForElection)
-	app.Delete("/api/election/stand", e.apiWithdrawFromElection)
-	app.Get("/api/election/results", e.apiGetElectionOutcome)
-	app.Get("/api/election/current", e.apiGetActiveElectionInformation)
-	app.Post("/api/election/current/vote", e.apiVote)
+	//todo fix
+	//apiGroup.Get("/election/sse", e.apiElectionsSSE)
+	apiGroup.Get("/poll", e.apiListPolls)
+	apiGroup.Get("/poll/current", e.apiGetActivePollInformation)
+	apiGroup.Get("/poll/results", e.apiGetPollOutcome)
+	apiGroup.Post("/election/stand", e.apiStandForElection)
+	apiGroup.Delete("/election/stand", e.apiWithdrawFromElection)
+	apiGroup.Post("/election/vote", e.apiVoteInElection)
+	apiGroup.Post("/referendum/vote", e.apiVoteInReferendum)
 
-	app.Post("/api/admin/election", e.apiAdminCreateElection)
-	app.Delete("/api/admin/election", e.apiAdminDeleteElection)
-	app.Get("/api/admin/election/sse", e.apiAdminRunningElectionSSE)
-	app.Post("/api/admin/election/start", e.apiAdminStartElection)
-	app.Post("/api/admin/election/stop", e.apiAdminStopElection)
-	app.Post("/api/admin/election/publish", e.apiAdminPublishElectionOutcome)
-	app.Get("/api/admin/user", e.apiAdminListUsers)
-	app.Post("/api/admin/user/restrict", e.apiAdminToggleRestrictUser)
-	app.Delete("/api/admin/user/delete", e.apiAdminDeleteUser)
+	adminGroup := apiGroup.Group("/admin", m.requireAdmin)
+	adminGroup.Post("/election", e.apiAdminCreateElection)
+	adminGroup.Post("/election/start", e.apiAdminStartElection)
+	adminGroup.Post("/election/stop", e.apiAdminStopElection)
+	adminGroup.Post("/referendum", e.apiAdminCreateReferendum)
+	adminGroup.Post("/referendum/start", e.apiAdminStartReferendum)
+	adminGroup.Post("/referendum/stop", e.apiAdminStopReferendum)
+	adminGroup.Delete("/poll", e.apiAdminDeletePoll)
+	adminGroup.Post("/poll/publish", e.apiAdminPublishPollOutcome)
+	//todo fix
+	//adminGroup.Get("/election/sse", e.apiAdminRunningElectionSSE)
+	adminGroup.Get("/user", e.apiAdminListUsers)
+	adminGroup.Post("/user/restrict", e.apiAdminToggleRestrictUser)
+	adminGroup.Delete("/user/delete", e.apiAdminDeleteUser)
 
-	app.Get("/presenter", e.presenterPage)
-	app.Get("/presenter/qr", e.presenterQRCode)
+	app.Get("/presenter", m.requireAdmin, e.presenterPage)
+	app.Get("/presenter/qr", m.requireAdmin, e.presenterQRCode)
 
 	app.Use("/", func(ctx *fiber.Ctx) error {
 		if p := ctx.Path(); p != "/" && !urlFileRegexp.MatchString(p) {

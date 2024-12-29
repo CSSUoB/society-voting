@@ -3,9 +3,12 @@ package events
 import "github.com/CSSUoB/society-voting/internal/database"
 
 const (
-	TopicElectionStarted Topic = "election-start"
-	TopicElectionEnded   Topic = "election-end"
-	TopicVoteReceived    Topic = "vote-received"
+	//TODO fix
+	TopicElectionStarted   Topic = "election-start"
+	TopicElectionEnded     Topic = "election-end"
+	TopicReferendumStarted Topic = "election-start"
+	TopicReferendumEnded   Topic = "election-end"
+	TopicVoteReceived      Topic = "vote-received"
 
 	TopicUserElectionStand    Topic = "user-stand"
 	TopicUserElectionWithdraw Topic = "user-withdraw"
@@ -29,9 +32,14 @@ type ElectionEndedData struct {
 	Result   string             `json:"result,omitempty"`
 }
 
+type ReferendumEndedData struct {
+	Referendum *database.Referendum `json:"referendum"`
+	Result     string               `json:"result,omitempty"`
+}
+
 type UserRestrictedData struct {
-	User *database.User `json:"user"`
-	ActingUserID string `json:"actingUserID"`
+	User         *database.User `json:"user"`
+	ActingUserID string         `json:"actingUserID"`
 }
 
 type UserDeletedData struct {

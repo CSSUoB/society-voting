@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Panel from "$lib/panel.svelte";
-	import { currentElection, elections } from "../store";
+	import { currentPoll, polls } from "../store";
 	import { goto } from "$app/navigation";
 	const images = [
 		"original",
@@ -14,12 +14,13 @@
 	];
 	const image = images[Math.floor(Math.random() * images.length)];
 
-	$: upcomingElections = $elections?.filter((e) => !e.isActive && !e.isConcluded) ?? [];
+	$: upcomingPolls = $polls?.filter((e) => !e.isActive && !e.isConcluded) ?? [];
 
-	$: if ($currentElection && !$currentElection.hasVoted) {
+	$: if ($currentPoll && !$currentPoll.hasVoted) {
 		goto(`/vote`);
-	} else if (upcomingElections.length > 0) {
-		goto(`/election/${upcomingElections[0].id}`);
+	} else if (upcomingPolls.length > 0) {
+		let poll = upcomingPolls[0];
+		goto(`/${poll.pollType.name.toLowerCase()}/${poll.id}`);
 	}
 </script>
 

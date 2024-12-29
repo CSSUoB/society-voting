@@ -39,7 +39,7 @@ func run() error {
 	}
 
 	if err := database.Migrate(database.Get()); err != nil {
-		return fmt.Errorf("migrate dataase: %w", err)
+		return fmt.Errorf("migrate database: %w", err)
 	}
 
 	if conf.Platform.DiscordWebhook.URL != "" {

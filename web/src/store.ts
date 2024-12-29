@@ -8,13 +8,31 @@ export interface User {
 	isRestricted: boolean;
 }
 
-export interface Election {
-	roleName: string;
-	description: string;
+export interface Poll {
+	id: number;
 	isActive: boolean;
 	isConcluded: boolean;
-	id: number;
+	pollType: PollType;
+	election: Optional<Election>;
+	referendum: Optional<Referendum>;
 	candidates: Optional<Array<{ name: string; isMe: boolean }>>;
+}
+
+export interface PollType {
+	id: number;
+	name: string;
+}
+
+export interface Election {
+	id: number;
+	roleName: string;
+	description: string;
+}
+
+export interface Referendum {
+	title: string;
+	question: string;
+	description: string;
 }
 
 export interface BallotEntry {
@@ -23,20 +41,31 @@ export interface BallotEntry {
 	isRON: boolean;
 }
 
-export interface CurrentElection {
-	election: Election;
-	ballot: Array<BallotEntry>;
+export interface CurrentPoll {
 	numEligibleVoters: number;
 	hasVoted: boolean;
+	poll: Poll;
+	ballot: Optional<Array<BallotEntry>>;
+}
+
+export interface PollOutcome {
+	date: string;
+	isPublished: boolean;
+	poll: Poll;
+	ballots: number;
+	electionOutcome: Optional<ElectionOutcome>;
+	referendumOutcome: Optional<ReferendumOutcome>;
 }
 
 export interface ElectionOutcome {
-	election: Election;
-	date: number;
-	ballots: number;
 	rounds: number;
-	isPublished: boolean;
 	results: Array<ElectionOutcomeResult>;
+}
+
+export interface ReferendumOutcome {
+	votesFor: number;
+	votesAgainst: number;
+	votesAbstain: number;
 }
 
 export interface ElectionOutcomeResult {
@@ -48,7 +77,7 @@ export interface ElectionOutcomeResult {
 }
 
 export const user = writable<User>(null!);
-export const elections = writable<Array<Election> | null>(null);
-export const currentElection = writable<CurrentElection | null>(null);
+export const polls = writable<Array<Poll> | null>(null);
+export const currentPoll = writable<CurrentPoll | null>(null);
 export const fetching = writable<boolean>(false);
 export const error = writable<Error | null>(null);

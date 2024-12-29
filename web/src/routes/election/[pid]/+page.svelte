@@ -7,20 +7,22 @@
 	import Panel from "$lib/panel.svelte";
 
 	import run from "$lib/assets/run_for_election.svg";
-	import { currentElection, elections, error, fetching, user } from "../../../store";
+	import { currentPoll, polls, error, fetching, user } from "../../../store";
 	import { goto } from "$app/navigation";
 	import { API } from "$lib/endpoints";
-	import { _getCurrentElection, _getElections } from "../../+layout";
+	import { _getCurrentPoll, _getPolls } from "../../+layout";
+	import PollHeader from "$lib/poll-header.svelte";
 
 	export let data: { id: number };
-	$: election = $elections?.find((e) => e.id === data.id);
-	$: if (!election) {
+	$: poll = $polls?.find((e) => e.id === data.id);
+	$: if (!poll || !poll.election) {
 		goto("/", { replaceState: true });
-	} else if (election.isActive) {
+	} else if (poll.isActive) {
 		goto("/vote");
 	}
 
 	let buttonText = "Stand for election";
+	$: election = poll?.election;
 	$: buttonText = `Stand for ${election ? election.roleName : "election"}`;
 
 	const standOrWithdraw = async (id: number, stand: boolean) => {
@@ -31,7 +33,7 @@
 		});
 
 		if (response.ok) {
-			elections.set(await _getElections());
+			polls.set(await _getPolls());
 		} else {
 			$error = new Error(await response.text());
 		}
@@ -53,8 +55,8 @@
 		});
 
 		if (response.ok) {
-			elections.set(await _getElections());
-			currentElection.set(await _getCurrentElection());
+			polls.set(await _getPolls());
+			currentPoll.set(await _getCurrentPoll());
 			await new Promise((r) => setTimeout(r, 200));
 			goto("/stats");
 		} else {
@@ -66,13 +68,13 @@
 	let deleteElectionDialog: HTMLDialogElement;
 	const deleteElection = async (id: number) => {
 		$fetching = true;
-		const response = await fetch(API.ADMIN_ELECTION, {
+		const response = await fetch(API.ADMIN_POLL, {
 			method: "DELETE",
 			body: JSON.stringify({ id }),
 		});
 
 		if (response.ok) {
-			elections.set(await _getElections());
+			polls.set(await _getPolls());
 			goto("/");
 		} else {
 			$error = new Error(await response.text());
@@ -81,14 +83,11 @@
 	};
 </script>
 
-<svelte:head>
-	<title>Electing: {election?.roleName}</title>
-</svelte:head>
-<Panel title={`Electing: ${election?.roleName}`}>
-	<p>{election?.description}</p>
-</Panel>
+{#if poll}
+	<PollHeader poll={poll}></PollHeader>
+{/if}
 
-{#if !election?.candidates?.some((c) => c.isMe)}
+{#if !poll?.candidates?.some((c) => c.isMe)}
 	<Banner title="Interested in running?" kind="emphasis">
 		<img slot="image" src={run} alt="" class="banner-image" />
 		<svelte:fragment slot="content">
@@ -101,14 +100,14 @@
 			<Button
 				text={buttonText}
 				kind="primary"
-				on:click={() => standOrWithdraw(election?.id ?? -1, true)}
+				on:click={() => standOrWithdraw(poll?.id ?? -1, true)}
 			/>
 		</svelte:fragment>
 	</Banner>
 {/if}
 
 <Panel title="Candidates" headerIcon="groups">
-	<List items={election?.candidates ?? []} let:prop={candidate}>
+	<List items={poll?.candidates ?? []} let:prop={candidate}>
 		<li class="candidate">
 			<Avatar name={candidate.name} />
 			<p>
@@ -117,11 +116,11 @@
 				{/if}
 			</p>
 			{#if candidate.isMe}
-				<Button text="Withdraw" on:click={() => standOrWithdraw(election?.id ?? -1, false)} />
+				<Button text="Withdraw" on:click={() => standOrWithdraw(poll?.id ?? -1, false)} />
 			{/if}
 		</li>
 	</List>
-	{#if (election?.candidates?.length ?? 0) === 0}
+	{#if (poll?.candidates?.length ?? 0) === 0}
 		<p>There are no candidates currently running in this election</p>
 	{/if}
 </Panel>
@@ -145,7 +144,7 @@
 	<Dialog
 		bind:dialog={startElectionDialog}
 		title="Confirm candidates and start election?"
-		on:submit={() => startElection(election?.id ?? -1)}
+		on:submit={() => startElection(poll?.id ?? -1)}
 	>
 		<svelte:fragment slot="actions">
 			<Button text="Cancel" />
@@ -155,7 +154,7 @@
 	<Dialog
 		bind:dialog={deleteElectionDialog}
 		title="Delete election?"
-		on:submit={() => deleteElection(election?.id ?? -1)}
+		on:submit={() => deleteElection(poll?.id ?? -1)}
 	>
 		<p>This action cannot be undone.</p>
 		<svelte:fragment slot="actions">
