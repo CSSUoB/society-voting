@@ -11,7 +11,6 @@ import (
 	"github.com/CSSUoB/society-voting/internal/config"
 	"github.com/CSSUoB/society-voting/internal/database"
 	"github.com/CSSUoB/society-voting/internal/discordWebhookNotify"
-	"github.com/CSSUoB/society-voting/internal/events"
 	"github.com/CSSUoB/society-voting/internal/httpcore"
 )
 
@@ -55,13 +54,13 @@ func run() error {
 
 	if os.Getenv("SOCIETY_VOTING_RESTART_ENABLED") != "" {
 		slog.Info("restart shim enabled")
-		_, electionEndReceiver := events.NewReceiver(events.TopicElectionEnded)
-		go func() {
-			<-electionEndReceiver
-			slog.Info("election ended - restarting")
-			exitingForRestart = true
-			cancel()
-		}()
+		//_, electionEndReceiver := events.NewReceiver(events.TopicElectionEnded)
+		//go func() {
+		//	<-electionEndReceiver
+		//	slog.Info("election ended - restarting")
+		//	exitingForRestart = true
+		//	cancel()
+		//}()
 	}
 
 	return httpcore.ListenAndServe(ctx, conf.HTTP.Address())

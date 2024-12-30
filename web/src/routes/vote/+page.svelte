@@ -29,6 +29,7 @@
 
 		$fetching = true;
 		const url = getEndpointForPollType("vote", $currentPoll.poll.pollType.id);
+		console.log($currentPoll)
 		if (!url) {
 			$error = new Error(`Cannot vote for unknown poll type "${$currentPoll.poll.pollType.name}""`);
 			$fetching = false;

@@ -22,30 +22,37 @@ type Poll struct {
 	Referendum *Referendum `bun:"rel:has-one,join:id=id" json:"referendum,omitempty"`
 }
 
-func (e *Poll) Insert(x ...bun.IDB) error {
+type Pollable interface {
+	GetPoll() *Poll
+	GetFriendlyTitle() string
+	GetElection() *Election
+	GetReferendum() *Referendum
+}
+
+func (p *Poll) Insert(x ...bun.IDB) error {
 	db := fromVariadic(x)
 
-	if err := db.NewInsert().Model(e).Returning("id").Scan(context.Background(), &e.ID); err != nil {
+	if err := db.NewInsert().Model(p).Returning("id").Scan(context.Background(), &p.ID); err != nil {
 		return fmt.Errorf("insert Poll model: %w", err)
 	}
 
 	return nil
 }
 
-func (e *Poll) Update(x ...bun.IDB) error {
+func (p *Poll) Update(x ...bun.IDB) error {
 	db := fromVariadic(x)
 
-	if _, err := db.NewUpdate().Model(e).Where("id = ?", e.ID).Exec(context.Background()); err != nil {
+	if _, err := db.NewUpdate().Model(p).Where("id = ?", p.ID).Exec(context.Background()); err != nil {
 		return fmt.Errorf("update Poll model: %w", err)
 	}
 
 	return nil
 }
 
-func (e *Poll) Delete(x ...bun.IDB) error {
+func (p *Poll) Delete(x ...bun.IDB) error {
 	db := fromVariadic(x)
 
-	if _, err := db.NewDelete().Model(e).Where("id = ?", e.ID).Exec(context.Background()); err != nil {
+	if _, err := db.NewDelete().Model(p).Where("id = ?", p.ID).Exec(context.Background()); err != nil {
 		return fmt.Errorf("delete Poll model: %w", err)
 	}
 

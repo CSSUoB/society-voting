@@ -4,11 +4,10 @@ import "github.com/CSSUoB/society-voting/internal/database"
 
 const (
 	//TODO fix
-	TopicElectionStarted   Topic = "election-start"
-	TopicElectionEnded     Topic = "election-end"
-	TopicReferendumStarted Topic = "election-start"
-	TopicReferendumEnded   Topic = "election-end"
-	TopicVoteReceived      Topic = "vote-received"
+	TopicPollStarted     Topic = "poll-start"
+	TopicPollEnded       Topic = "poll-start"
+	TopicReferendumEnded Topic = "referendum-end"
+	TopicVoteReceived    Topic = "vote-received"
 
 	TopicUserElectionStand    Topic = "user-stand"
 	TopicUserElectionWithdraw Topic = "user-withdraw"
@@ -27,14 +26,9 @@ type UserElectionWithdrawData struct {
 	ActingUserID string             `json:"actingUserID,omitempty"`
 }
 
-type ElectionEndedData struct {
-	Election *database.Election `json:"election"`
-	Result   string             `json:"result,omitempty"`
-}
-
-type ReferendumEndedData struct {
-	Referendum *database.Referendum `json:"referendum"`
-	Result     string               `json:"result,omitempty"`
+type PollEndedData struct {
+	Poll   *database.Poll `json:"poll"`
+	Result string         `json:"result,omitempty"`
 }
 
 type UserRestrictedData struct {

@@ -81,21 +81,21 @@ func ListenAndServe(ctx context.Context, addr string) error {
 	app.Get(loginActionEndpoint, e.authLogin)
 	app.Post(loginActionEndpoint, e.authLogin)
 
-	app.Get("/auth/logout", e.authLogout)
+	app.Get("/auth/logout", m.requireAuthenticated, m.validateUserExists, e.authLogout)
 
 	apiGroup := app.Group("/api", m.requireAuthenticated)
-	apiGroup.Get("/me", e.apiMe)
-	apiGroup.Put("/me/name", e.apiSetOwnName)
+	apiGroup.Get("/me", m.validateUserExists, e.apiMe)
+	apiGroup.Put("/me/name", m.requireNotRestricted, m.validateUserExists, e.apiSetOwnName)
 
 	//todo fix
 	//apiGroup.Get("/election/sse", e.apiElectionsSSE)
 	apiGroup.Get("/poll", e.apiListPolls)
 	apiGroup.Get("/poll/current", e.apiGetActivePollInformation)
 	apiGroup.Get("/poll/results", e.apiGetPollOutcome)
-	apiGroup.Post("/election/stand", e.apiStandForElection)
-	apiGroup.Delete("/election/stand", e.apiWithdrawFromElection)
-	apiGroup.Post("/election/vote", e.apiVoteInElection)
-	apiGroup.Post("/referendum/vote", e.apiVoteInReferendum)
+	apiGroup.Post("/election/stand", m.requireNotRestricted, m.validateUserExists, e.apiStandForElection)
+	apiGroup.Delete("/election/stand", m.validateUserExists, e.apiWithdrawFromElection)
+	apiGroup.Post("/election/vote", m.validateUserExists, e.apiVoteInElection)
+	apiGroup.Post("/referendum/vote", m.validateUserExists, e.apiVoteInReferendum)
 
 	adminGroup := apiGroup.Group("/admin", m.requireAdmin)
 	adminGroup.Post("/election", e.apiAdminCreateElection)
@@ -244,6 +244,7 @@ const (
 	authNotAuthed   authType = 0
 	authRegularUser authType = 1 << iota
 	authAdminUser
+	authRestricted
 )
 
 func getSessionAuth(ctx *fiber.Ctx) (string, authType) {
@@ -255,7 +256,8 @@ func getSessionAuth(ctx *fiber.Ctx) (string, authType) {
 	decodedToken := ctx.Locals("token").(string)
 
 	var isAdmin bool
-	if err := database.Get().NewSelect().Table("users").Column("is_admin").Where("id = ?", decodedToken).Scan(context.Background(), &isAdmin); err != nil {
+	var isRestricted bool
+	if err := database.Get().NewSelect().Table("users").Column("is_admin").Column("is_restricted").Where("id = ?", decodedToken).Scan(context.Background(), &isAdmin, &isRestricted); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return "", authNotAuthed
 		}
@@ -265,6 +267,9 @@ func getSessionAuth(ctx *fiber.Ctx) (string, authType) {
 
 	if isAdmin {
 		return decodedToken, authRegularUser | authAdminUser
+	}
+	if isRestricted {
+		return decodedToken, authRegularUser | authRestricted
 	}
 	return decodedToken, authRegularUser
 }

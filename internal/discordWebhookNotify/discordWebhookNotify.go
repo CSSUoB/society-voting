@@ -3,13 +3,13 @@ package discordWebhookNotify
 import (
 	"context"
 	"fmt"
-	"github.com/CSSUoB/society-voting/internal/config"
-	"github.com/CSSUoB/society-voting/internal/database"
-	"github.com/CSSUoB/society-voting/internal/events"
-	"github.com/carlmjohnson/requests"
 	"log/slog"
 	"net/http"
 	"time"
+
+	"github.com/CSSUoB/society-voting/internal/config"
+	"github.com/CSSUoB/society-voting/internal/events"
+	"github.com/carlmjohnson/requests"
 )
 
 func Run() {
@@ -18,8 +18,8 @@ func Run() {
 	_, receiver := events.NewReceiver(
 		events.TopicUserElectionStand,
 		events.TopicUserElectionWithdraw,
-		events.TopicElectionStarted,
-		events.TopicElectionEnded,
+		events.TopicPollStarted,
+		events.TopicPollEnded,
 		events.TopicUserRestricted,
 		events.TopicUserDeleted,
 	)
@@ -45,19 +45,19 @@ func Run() {
 				me.Description += fmt.Sprintf("\n\n**User was removed by admin with ID %s**", data.ActingUserID)
 			}
 
-		case events.TopicElectionStarted:
-			data := msg.Data.(*database.Election)
+		//case events.TopicPollStarted:
+		//	data := msg.Data.(*database.Election)
 
-			me.Colour = ColourMid
-			me.Title = fmt.Sprintf("Voting for %s has started!", data.RoleName)
-			me.Description = fmt.Sprintf("Election ID: %d", data.ID)
+		//	me.Colour = ColourMid
+		//	me.Title = fmt.Sprintf("Voting for %s has started!", data.RoleName)
+		//	me.Description = fmt.Sprintf("Election ID: %d", data.ID)
 
-		case events.TopicElectionEnded:
-			data := msg.Data.(*events.ElectionEndedData)
+		//case events.TopicElectionEnded:
+		//	data := msg.Data.(*events.ElectionEndedData)
 
-			me.Colour = ColourGood
-			me.Title = fmt.Sprintf("Voting for %s has ended!", data.Election.RoleName)
-			me.Description = fmt.Sprintf("Election ID: %d\n\n```%s```", data.Election.ID, data.Result)
+		//	me.Colour = ColourGood
+		//	me.Title = fmt.Sprintf("Voting for %s has ended!", data.Election.RoleName)
+		//	me.Description = fmt.Sprintf("Election ID: %d\n\n```%s```", data.Election.ID, data.Result)
 
 		case events.TopicUserRestricted:
 			data := msg.Data.(*events.UserRestrictedData)

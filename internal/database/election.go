@@ -30,6 +30,22 @@ type ElectionWithCandidates struct {
 	Candidates []*ElectionCandidate `json:"candidates"`
 }
 
+func (e *Election) GetPoll() *Poll {
+	return e.Poll
+}
+
+func (e *Election) GetFriendlyTitle() string {
+	return e.RoleName
+}
+
+func (e *Election) GetElection() *Election {
+	return e
+}
+
+func (e *Election) GetReferendum() *Referendum {
+	return nil
+}
+
 func (e *Election) Insert(x ...bun.IDB) error {
 	db := fromVariadic(x)
 

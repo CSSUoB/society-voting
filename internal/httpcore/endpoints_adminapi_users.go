@@ -11,8 +11,6 @@ import (
 )
 
 func (endpoints) apiAdminDeleteUser(ctx *fiber.Ctx) error {
-	actingUserID, _ := getSessionAuth(ctx)
-
 	var request = struct {
 		UserID string `json:"userID" validate:"ne=0"`
 	}{}
@@ -43,8 +41,9 @@ func (endpoints) apiAdminDeleteUser(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiAdminDeleteUser commit tx: %w", err)
 	}
 
+	actor := ctx.Locals("userID").(string)
 	events.SendEvent(events.TopicUserDeleted, &events.UserDeletedData{
-		ActingUserID: actingUserID,
+		ActingUserID: actor,
 		UserID:       request.UserID,
 	})
 
@@ -70,8 +69,6 @@ func (endpoints) apiAdminListUsers(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiAdminToggleRestrictUser(ctx *fiber.Ctx) error {
-	actingUserID, _ := getSessionAuth(ctx)
-
 	var request = struct {
 		UserID string `json:"userID" validate:"ne=0"`
 	}{}
@@ -120,8 +117,9 @@ func (endpoints) apiAdminToggleRestrictUser(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiAdminToggleRestrictUser commit tx: %w", err)
 	}
 
+	actor := ctx.Locals("userID").(string)
 	events.SendEvent(events.TopicUserRestricted, &events.UserRestrictedData{
-		ActingUserID: actingUserID,
+		ActingUserID: actor,
 		User:         user,
 	})
 

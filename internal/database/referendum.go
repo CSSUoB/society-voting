@@ -23,30 +23,46 @@ type Referendum struct {
 	Poll *Poll `bun:"rel:belongs-to,join:id=id" json:"-"`
 }
 
-func (e *Referendum) Insert(x ...bun.IDB) error {
+func (r *Referendum) GetPoll() *Poll {
+	return r.Poll
+}
+
+func (r *Referendum) GetFriendlyTitle() string {
+	return r.Title
+}
+
+func (r *Referendum) GetElection() *Election {
+	return nil
+}
+
+func (r *Referendum) GetReferendum() *Referendum {
+	return r
+}
+
+func (r *Referendum) Insert(x ...bun.IDB) error {
 	db := fromVariadic(x)
 
-	if err := db.NewInsert().Model(e).Returning("id").Scan(context.Background(), &e.ID); err != nil {
+	if err := db.NewInsert().Model(r).Returning("id").Scan(context.Background(), &r.ID); err != nil {
 		return fmt.Errorf("insert Referendum model: %w", err)
 	}
 
 	return nil
 }
 
-func (e *Referendum) Update(x ...bun.IDB) error {
+func (r *Referendum) Update(x ...bun.IDB) error {
 	db := fromVariadic(x)
 
-	if _, err := db.NewUpdate().Model(e).Where("id = ?", e.ID).Exec(context.Background()); err != nil {
+	if _, err := db.NewUpdate().Model(r).Where("id = ?", r.ID).Exec(context.Background()); err != nil {
 		return fmt.Errorf("update Referendum model: %w", err)
 	}
 
 	return nil
 }
 
-func (e *Referendum) Delete(x ...bun.IDB) error {
+func (r *Referendum) Delete(x ...bun.IDB) error {
 	db := fromVariadic(x)
 
-	if _, err := db.NewDelete().Model(e).Where("id = ?", e.ID).Exec(context.Background()); err != nil {
+	if _, err := db.NewDelete().Model(r).Where("id = ?", r.ID).Exec(context.Background()); err != nil {
 		return fmt.Errorf("delete Referendum model: %w", err)
 	}
 

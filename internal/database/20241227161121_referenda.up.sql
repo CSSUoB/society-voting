@@ -11,7 +11,6 @@ CREATE TABLE "polls" (
   "poll_type_id" INTEGER NOT NULL, 
   "is_active" BOOLEAN NOT NULL, 
   "is_concluded" BOOLEAN NOT NULL, 
-  "ballots" INTEGER, 
   PRIMARY KEY ("id"), 
   FOREIGN KEY ("poll_type_id") REFERENCES "poll_types" ("id")
 );

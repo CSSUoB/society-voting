@@ -24,34 +24,50 @@ type PollOutcome struct {
 	ReferendumOutcome *ReferendumOutcome `bun:"rel:has-one,join:id=id" json:"referendumOutcome,omitempty"`
 }
 
-func (e *PollOutcome) Insert(x ...bun.IDB) error {
+func (p *PollOutcome) Insert(x ...bun.IDB) error {
 	db := fromVariadic(x)
 
-	if err := db.NewInsert().Model(e).Returning("id").Scan(context.Background(), &e.ID); err != nil {
+	if err := db.NewInsert().Model(p).Returning("id").Scan(context.Background(), &p.ID); err != nil {
 		return fmt.Errorf("insert PollOutcome model: %w", err)
 	}
 
 	return nil
 }
 
-func (e *PollOutcome) Update(x ...bun.IDB) error {
+func (p *PollOutcome) Update(x ...bun.IDB) error {
 	db := fromVariadic(x)
 
-	if _, err := db.NewUpdate().Model(e).Where("id = ?", e.ID).Exec(context.Background()); err != nil {
+	if _, err := db.NewUpdate().Model(p).Where("id = ?", p.ID).Exec(context.Background()); err != nil {
 		return fmt.Errorf("update PollOutcome model: %w", err)
 	}
 
 	return nil
 }
 
-func (e *PollOutcome) Delete(x ...bun.IDB) error {
+func (p *PollOutcome) Delete(x ...bun.IDB) error {
 	db := fromVariadic(x)
 
-	if _, err := db.NewDelete().Model(e).Where("id = ?", e.ID).Exec(context.Background()); err != nil {
+	if _, err := db.NewDelete().Model(p).Where("id = ?", p.ID).Exec(context.Background()); err != nil {
 		return fmt.Errorf("delete PollOutcome model: %w", err)
 	}
 
 	return nil
+}
+
+func CreatePollOutcome(pollID int, ballots int, x ...bun.IDB) (*PollOutcome, error) {
+	db := fromVariadic(x)
+
+	pollOutcome := &PollOutcome{
+		PollID:      pollID,
+		IsPublished: false,
+		Ballots:     ballots,
+	}
+
+	if err := pollOutcome.Insert(db); err != nil {
+		return nil, fmt.Errorf("create PollOutcome: %w", err)
+	}
+
+	return pollOutcome, nil
 }
 
 func GetOutcomeForPoll(id int, x ...bun.IDB) (*PollOutcome, error) {

@@ -17,8 +17,6 @@ import (
 )
 
 func (endpoints) apiListPolls(ctx *fiber.Ctx) error {
-	userID, _ := getSessionAuth(ctx)
-
 	polls, err := database.GetAllPolls()
 	if err != nil {
 		return fmt.Errorf("apiListPolls get all polls: %w", err)
@@ -31,8 +29,9 @@ func (endpoints) apiListPolls(ctx *fiber.Ctx) error {
 
 	var res []*PollWithData
 
+	userID := ctx.Locals("userID").(string)
 	for _, poll := range polls {
-		if poll.Election != nil {
+		if poll.Election != nil && !poll.IsConcluded {
 			if ec, err := poll.Election.WithCandidates(); err != nil {
 				return fmt.Errorf("apiListPolls: %w", err)
 			} else {
@@ -103,8 +102,6 @@ func (endpoints) apiListPolls(ctx *fiber.Ctx) error {
 //}
 
 func (endpoints) apiGetActivePollInformation(ctx *fiber.Ctx) error {
-	userID, _ := getSessionAuth(ctx)
-
 	poll, err := database.GetActivePoll()
 	if err != nil {
 		if errors.Is(err, database.ErrNotFound) {
@@ -121,6 +118,7 @@ func (endpoints) apiGetActivePollInformation(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiGetActivePollInformation count users: %w", err)
 	}
 
+	userID := ctx.Locals("userID").(string)
 	hasVoted, err := database.HasUserVotedInPoll(userID, poll.ID)
 	if err != nil {
 		return fmt.Errorf("apiGetActivePollInformation check if user has voted: %w", err)
@@ -162,7 +160,7 @@ func (endpoints) apiGetActivePollInformation(ctx *fiber.Ctx) error {
 }
 
 func apiVote(ctx *fiber.Ctx, fetchPoll func(int, bun.Tx) (*database.Poll, error), validateVote func(int, []int, bun.Tx) error) error {
-	userID, _ := getSessionAuth(ctx)
+	userID := ctx.Locals("userID").(string)
 
 	var request = struct {
 		ID   int    `json:"id" validate:"required"`
@@ -187,15 +185,6 @@ func apiVote(ctx *fiber.Ctx, fetchPoll func(int, bun.Tx) (*database.Poll, error)
 	}
 	defer tx.Rollback()
 
-	user, err := database.GetUser(userID, tx)
-	if err != nil {
-		if errors.Is(err, database.ErrNotFound) {
-			ctx.Cookie(newSessionTokenDeletionCookie())
-			return fiber.ErrUnauthorized
-		}
-		return fmt.Errorf("apiVote get user: %w", err)
-	}
-
 	poll, err := fetchPoll(request.ID, tx)
 	if err != nil {
 		if errors.Is(err, database.ErrNotFound) {
@@ -214,9 +203,9 @@ func apiVote(ctx *fiber.Ctx, fetchPoll func(int, bun.Tx) (*database.Poll, error)
 		}
 	}
 
-	hasVotedAlready, err := database.HasUserVotedInPoll(user.StudentID, poll.ID, tx)
+	hasVotedAlready, err := database.HasUserVotedInPoll(userID, poll.ID, tx)
 	if err != nil {
-		return fmt.Errorf("apiVote check if user %s has already voted: %w", user.StudentID, err)
+		return fmt.Errorf("apiVote check if user %s has already voted: %w", userID, err)
 	}
 	if hasVotedAlready {
 		return &fiber.Error{
@@ -305,8 +294,6 @@ func (endpoints) apiVoteInReferendum(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiStandForElection(ctx *fiber.Ctx) error {
-	userID, _ := getSessionAuth(ctx)
-
 	var request = struct {
 		ElectionID int `json:"id" validate:"ne=0"`
 	}{}
@@ -321,22 +308,7 @@ func (endpoints) apiStandForElection(ctx *fiber.Ctx) error {
 	}
 	defer tx.Rollback()
 
-	user, err := database.GetUser(userID, tx)
-	if err != nil {
-		if errors.Is(err, database.ErrNotFound) {
-			// User has been deleted
-			ctx.Cookie(newSessionTokenDeletionCookie())
-			return fiber.ErrUnauthorized
-		}
-		return fmt.Errorf("apiStandForElection get user: %w", err)
-	}
-
-	if user.IsRestricted {
-		return &fiber.Error{
-			Code:    fiber.StatusForbidden,
-			Message: "You can't do that because you're restricted - please speak to a member of committee.",
-		}
-	}
+	user := ctx.Locals("user").(*database.User)
 
 	election, err := database.GetElection(request.ElectionID, tx)
 	if err != nil {
@@ -348,8 +320,6 @@ func (endpoints) apiStandForElection(ctx *fiber.Ctx) error {
 		}
 		return fmt.Errorf("apiStandForElection get election with id %d: %w", request.ElectionID, err)
 	}
-
-	println(election.Poll)
 
 	if election.Poll == nil || election.Poll.IsConcluded {
 		return &fiber.Error{
@@ -397,10 +367,8 @@ func (endpoints) apiWithdrawFromElection(ctx *fiber.Ctx) error {
 		userID     string
 	)
 
-	actingUserID, authStatus := getSessionAuth(ctx)
-	if authStatus == authNotAuthed {
-		return fiber.ErrUnauthorized
-	}
+	actingUserID := ctx.Locals("userID").(string)
+	authStatus := ctx.Locals("authStatus").(authType)
 
 	if authStatus&authAdminUser != 0 {
 		var request = struct {
@@ -489,8 +457,6 @@ func (endpoints) apiWithdrawFromElection(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiGetPollOutcome(ctx *fiber.Ctx) error {
-	userID, _ := getSessionAuth(ctx)
-
 	electionID := ctx.QueryInt("id")
 
 	tx, err := database.GetTx()
@@ -498,16 +464,6 @@ func (endpoints) apiGetPollOutcome(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiGetElectionOutcome start tx: %w", err)
 	}
 	defer tx.Rollback()
-
-	user, err := database.GetUser(userID, tx)
-	if err != nil {
-		if errors.Is(err, database.ErrNotFound) {
-			// User has been deleted
-			ctx.Cookie(newSessionTokenDeletionCookie())
-			return fiber.ErrUnauthorized
-		}
-		return fmt.Errorf("apiGetElectionOutcome get user: %w", err)
-	}
 
 	electionOutcome, err := database.GetOutcomeForPoll(electionID, tx)
 	if err != nil {
@@ -520,7 +476,8 @@ func (endpoints) apiGetPollOutcome(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiGetElectionOutcome get election outcome for id %d: %w", electionID, err)
 	}
 
-	if !electionOutcome.IsPublished && !user.IsAdmin {
+	authStatus := ctx.Locals("authStatus").(authType)
+	if !electionOutcome.IsPublished && authStatus&authAdminUser == 0 {
 		return &fiber.Error{
 			Code:    fiber.StatusForbidden,
 			Message: "The outcome for this election has not been published yet",
