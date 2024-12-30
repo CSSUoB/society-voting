@@ -112,18 +112,8 @@ func (endpoints) apiAdminDeletePoll(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	tx, err := database.GetTx()
-	if err != nil {
-		return fmt.Errorf("apiAdminDeletePoll start tx: %w", err)
-	}
-	defer tx.Rollback()
-
-	if err := database.DeletePollByID(request.PollID, tx); err != nil {
+	if err := database.DeletePollByID(request.PollID); err != nil {
 		return fmt.Errorf("apiAdminDeletePoll delete poll: %w", err)
-	}
-
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("apiAdminDeletePoll commit tx: %w", err)
 	}
 
 	ctx.Status(fiber.StatusNoContent)

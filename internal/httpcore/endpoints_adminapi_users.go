@@ -19,26 +19,8 @@ func (endpoints) apiAdminDeleteUser(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	tx, err := database.GetTx()
-	if err != nil {
-		return fmt.Errorf("apiAdminDeleteUser start tx: %w", err)
-	}
-	defer tx.Rollback()
-
-	if err := database.DeleteUser(request.UserID, tx); err != nil {
+	if err := database.DeleteUser(request.UserID); err != nil {
 		return fmt.Errorf("apiAdminDeleteUser delete user: %w", err)
-	}
-
-	if err := database.DeleteAllCandidatesForUser(request.UserID, tx); err != nil {
-		return fmt.Errorf("apiAdminDeleteUser delete user candidates: %w", err)
-	}
-
-	if err := database.DeleteAllVotesForUser(request.UserID, tx); err != nil {
-		return fmt.Errorf("apiAdminDeleteUser delete user votes: %w", err)
-	}
-
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("apiAdminDeleteUser commit tx: %w", err)
 	}
 
 	actor := ctx.Locals("userID").(string)
