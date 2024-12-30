@@ -88,7 +88,7 @@
     </div>
     <div class="column">
         <div class="vertical-center">
-            <h1 id="now-electing" class="hidden">Now electing <span id="now-electing-role">some miscellanous role</span></h1>
+            <h1 id="now-voting" class="hidden">Voting: <span id="now-voting-thing">some miscellanous role</span></h1>
             <h1 id="vote-code" class="hidden">Vote code: {{votecode}}</h1>
             <h1>Scan the QR code to <span id="action">register</span></h1>
             <h3>or go to <a href="{{url}}">{{url}}</a></h3>
@@ -101,14 +101,14 @@
         // const messageLine = document.getElementById("messageline")
         const currentAction = document.getElementById("action")
         const voteCodeDisplay = document.getElementById("vote-code")
-        const nowElectingDisplay = document.getElementById("now-electing")
-        const nowElectingRole = document.getElementById("now-electing-role")
+        const nowVotingDisplay = document.getElementById("now-voting")
+        const nowVotingThing = document.getElementById("now-voting-thing")
 
         const electionStart = (data) => {
             console.log("election start")
-            nowElectingRole.innerText = data.roleName
+            nowVotingThing.innerText = data.roleName ?? data.title
             currentAction.innerText = "vote"
-            nowElectingDisplay.classList.remove("hidden")
+            nowVotingDisplay.classList.remove("hidden")
             voteCodeDisplay.classList.remove("hidden")
             document.body.classList.add("pinkbackground")
         }
@@ -116,24 +116,25 @@
         const electionEnd = () => {
             console.log("election end")
             currentAction.innerText = "register"
-            nowElectingDisplay.classList.add("hidden")
+            nowVotingDisplay.classList.add("hidden")
             voteCodeDisplay.classList.add("hidden")
             document.body.classList.remove("pinkbackground")
         }
 
-        let eventSrc = new EventSource("/api/election/sse", {
+        let eventSrc = new EventSource("/api/poll/sse", {
             withCredentials: true,
         })
         eventSrc.onerror = console.log
         eventSrc.addEventListener("open", console.log)
         eventSrc.addEventListener("error", () => { setTimeout(() => {location.reload()}, 1000) }) // sorry
-        eventSrc.addEventListener("election-start", async (event) => {electionStart(JSON.parse(event.data))})
-        eventSrc.addEventListener("election-end", electionEnd)
+        eventSrc.addEventListener("poll-start", async (event) => {electionStart(JSON.parse(event.data))})
+        eventSrc.addEventListener("poll-end", electionEnd)
 
         // check for a current election
-        let httpResult = await fetch("/api/election/current")
+        let httpResult = await fetch("/api/poll/current")
         if (httpResult.status == 200) {
-            electionStart((await httpResult.json()).election)
+            const data = await httpResult.json()
+            electionStart(data.election ?? data.referendum)
         }
 
         console.log(eventSrc.readyState)

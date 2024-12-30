@@ -110,8 +110,8 @@ func ListenAndServe(ctx context.Context, addr string) error {
 	adminGroup.Post("/user/restrict", e.apiAdminToggleRestrictUser)
 	adminGroup.Delete("/user/delete", e.apiAdminDeleteUser)
 
-	app.Get("/presenter", m.requireAdmin, e.presenterPage)
-	app.Get("/presenter/qr", m.requireAdmin, e.presenterQRCode)
+	app.Get("/presenter", m.requireAuthenticated, m.requireAdmin, e.presenterPage)
+	app.Get("/presenter/qr", m.requireAuthenticated, m.requireAdmin, e.presenterQRCode)
 
 	app.Use("/", func(ctx *fiber.Ctx) error {
 		if p := ctx.Path(); p != "/" && !urlFileRegexp.MatchString(p) {
