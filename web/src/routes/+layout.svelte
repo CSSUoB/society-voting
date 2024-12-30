@@ -13,10 +13,12 @@
 		type CurrentPoll,
 		currentPoll,
 		type Poll,
+		navigating
 	} from "../store";
 	import Alert from "$lib/alert.svelte";
 	import { API } from "$lib/endpoints";
 	import { _getCurrentPoll, _getPolls } from "./+layout";
+	import { afterNavigate, beforeNavigate } from "$app/navigation";
 
 	/** @type {import('./$types').PageData} */
 	export let data: { user: User; polls: Poll[]; currentPoll: CurrentPoll | null };
@@ -39,6 +41,14 @@
 	};
 	eventSource.addEventListener("poll-start", pollStatusChanged);
 	eventSource.addEventListener("poll-end", pollStatusChanged);
+	
+	beforeNavigate(() => {
+		$navigating = true;
+	});
+
+	afterNavigate(() => {
+		$navigating = false;
+	});
 </script>
 
 <div class="container">

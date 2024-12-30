@@ -12,6 +12,7 @@
 	import { API } from "$lib/endpoints";
 	import { _getCurrentPoll, _getPolls } from "../../+layout";
 	import PollHeader from "$lib/poll-header.svelte";
+	import Textarea from "$lib/textarea.svelte";
 
 	export let data: { id: number };
 	$: poll = $polls?.find((e) => e.id === data.id);
@@ -40,11 +41,11 @@
 		$fetching = false;
 	};
 
-	let floorCandidatesInput: HTMLTextAreaElement;
+	let floorCandidates: string;
 	let startElectionDialog: HTMLDialogElement;
 	const startElection = async (id: number) => {
 		$fetching = true;
-		const extraNames = floorCandidatesInput.value
+		const extraNames = floorCandidates
 			.trim()
 			.split("\n")
 			.filter((x) => x)
@@ -129,8 +130,8 @@
 	<Panel title="Admin stuff" headerIcon="admin_panel_settings">
 		<div class="admin-controls">
 			<h3>Candidates standing from the floor</h3>
-			<textarea
-				bind:this={floorCandidatesInput}
+			<Textarea
+				bind:value={floorCandidates}
 				placeholder="Enter each candidate's name in a new line"
 			/>
 			<Button
@@ -203,17 +204,6 @@
 		flex-direction: column;
 		align-items: flex-start;
 		gap: 8px;
-	}
-
-	textarea {
-		border: 2px solid;
-		border-radius: 4px;
-		padding: 2px 12px;
-		width: calc(100% - 24px);
-		min-height: 5rem;
-		font-family: "Inter", sans-serif;
-		resize: vertical;
-		margin-bottom: 12px;
 	}
 
 	@media only screen and (max-width: 600px) {

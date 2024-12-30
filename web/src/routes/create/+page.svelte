@@ -41,28 +41,26 @@
 		e.preventDefault();
 		const target = e.target as HTMLFormElement;
 		const formData = new FormData(target);
-		
-		$fetching = true;
-		
 		const option = options[selectedIndex];
 
 		const url = getEndpointForPollType("create", option.pollTypeId);
 		if (!url) {
 			$error = new Error("Unknown poll type");
-			$fetching = false;
 			return;
 		}
+		$fetching = true;
+
 		const response = await fetch(url, {
 			method: "POST",
 			body: JSON.stringify(Object.fromEntries(formData)),
 		});
 		
 		if (response.ok) {
-			$fetching = false;
 			const json = await response.json();
 			const id = json.id;
 
 			$polls = await _getPolls();
+			$fetching = false;
 
 			if (stayOnPage) {
 				lastPollId = id;

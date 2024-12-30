@@ -80,4 +80,5 @@ export const user = writable<User>(null!);
 export const polls = writable<Array<Poll> | null>(null);
 export const currentPoll = writable<CurrentPoll | null>(null);
 export const fetching = writable<boolean>(false);
+export const navigating = writable<boolean>(false);
 export const error = writable<Error | null>(null);

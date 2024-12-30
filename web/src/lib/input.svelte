@@ -2,12 +2,13 @@
 	import type { Optional } from "$lib/optional";
 
 	export let name: Optional<string> = null;
-	export let type: Optional<string> = null;
 	export let placeholder: Optional<string> = null;
 	export let value = "";
+	let clazz: Optional<string> = null;
+	export { clazz as class };
 </script>
 
-<input {name} {type} {value} {placeholder} />
+<input class={clazz} {name} {placeholder} bind:value={value} />
 
 <style>
 	input {

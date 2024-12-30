@@ -3,12 +3,13 @@
 
 	export let name: Optional<string> = null;
 	export let placeholder: Optional<string> = null;
+	export let rows: Optional<number> = 5;
 	export let value = "";
 	let clazz: Optional<string> = null;
 	export { clazz as class };
 </script>
 
-<textarea class={clazz} {name} {value} {placeholder} />
+<textarea class={clazz} {name} {placeholder} {rows} bind:value={value} />
 
 <style>
 	textarea {

@@ -9,9 +9,10 @@
 	import InstantRunoffBallot from "./instant-runoff-ballot.svelte";
 	import ReferendumBallot from "./referendum-ballot.svelte";
 	import PollHeader from "$lib/poll-header.svelte";
+	import Input from "$lib/input.svelte";
 
-	let codeInput: HTMLInputElement;
 	let votedDialog: HTMLDialogElement;
+	let voteCode: string;
 	let validBallot: boolean;
 	let choices: Array<number | undefined>;
 
@@ -37,7 +38,7 @@
 
 		const response = await fetch(url, {
 			method: "POST",
-			body: JSON.stringify({ id: $currentPoll.poll.id, vote: choices, code: codeInput.value.trim().toUpperCase() }),
+			body: JSON.stringify({ id: $currentPoll.poll.id, vote: choices, code: voteCode.trim().toUpperCase() }),
 		});
 
 		if (!response.ok) {
@@ -67,7 +68,7 @@
 
 <Panel title="Submit" kind="emphasis">
 	<div class="submit-container">
-		<input bind:this={codeInput} placeholder="Enter election code" type="text" />
+		<Input class="vote-code" bind:value={voteCode} placeholder="Enter election code" type="text" />
 		<Button
 			kind="primary"
 			text="Submit vote"
@@ -99,13 +100,13 @@
 		gap: 8px;
 		align-items: flex-start;
 	}
-
-	.submit-container > input {
-		height: 36px;
-		padding: 2px 12px;
-		border-radius: 8px;
-		border: 2px solid #000;
+	
+	.submit-container :global(input) {
 		text-transform: uppercase;
+	}
+
+	.submit-container :global(input:placeholder-shown) {
+		text-transform: none;
 	}
 
 	.dialog-container {
