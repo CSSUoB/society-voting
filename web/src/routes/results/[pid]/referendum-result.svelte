@@ -34,7 +34,7 @@
 					<tr>
 						<td>Against</td>
 						<td>
-							{referendumOutcome.votesAbstain}
+							{referendumOutcome.votesAgainst}
 						</td>
 					</tr>
 			</tbody>
