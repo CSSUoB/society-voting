@@ -44,14 +44,13 @@
 		<List items={options} let:prop={option}>
 			<li class="option {option.index == selectedIndex ? 'selected' : null == selectedIndex ? '' : 'not-selected'}" on:click={() => selectOption(option.index)}>
 				{#if option.index === selectedIndex}
-					<span class="ballot--valid material-symbols-rounded">check_circle</span>
+					<span class="check-mark material-symbols-rounded">check_circle</span>
 				{:else}
 					<span />
 				{/if}
 				<span class="option-icon material-symbols-rounded">{ option.symbol }</span>
 				<span />
 				<span class="option-label">{ option.label }</span>
-				<span />
 			</li>
 		</List>
 		
@@ -71,7 +70,7 @@
 	li.option {
 		padding: 8px 4px;
 		display: grid;
-		grid-template-columns: 8px 40px 8px auto 1fr auto;
+		grid-template-columns: 8px 40px 8px auto;
 		align-items: center;
 		cursor: pointer;
 		min-height: 32px;
@@ -80,12 +79,12 @@
 	}
 
 	li.option.selected {
-		grid-template-columns: 28px 40px 8px auto 1fr auto;
+		grid-template-columns: 28px 40px 8px auto;
 		background-color: #eee;
 	}
 
 	li.option.not-selected {
-		grid-template-columns: 5px 40px 8px auto 1fr auto;
+		grid-template-columns: 5px 40px 8px auto;
 		opacity: 0.6;
 	}
 
@@ -114,8 +113,7 @@
 		position: relative;
 	}
 
-
-	span.ballot--valid {
+	span.check-mark {
 		color: #00aa00;
 	}
 </style>

@@ -22,7 +22,7 @@
 </svelte:head>
 
 <Panel title="{prefix ? prefix + ": " : ""}{title}">
-	{description}
+	<p>{description}</p>
 </Panel>
 
 {#if poll.referendum} 

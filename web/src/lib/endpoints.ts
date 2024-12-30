@@ -32,17 +32,19 @@ export const PollTypeId = {
 	REFERENDUM: 2,
 }
 
-type EndpointType = "vote" | "start" | "stop";
+type EndpointType = "vote" | "create" | "start" | "stop";
 
 export const getEndpointForPollType = (endpointType: EndpointType, pollType: number): string | undefined => {
 	const endpoints = {
 	  1: {
 		vote: API.ELECTION_VOTE,
+		create: API.ADMIN_ELECTION,
 		start: API.ADMIN_ELECTION_START,
 		stop: API.ADMIN_ELECTION_STOP,
 	  },
 	  2: {
 		vote: API.REFERENDUM_VOTE,
+		create: API.ADMIN_REFERENDUM,
 		start: API.ADMIN_REFERENDUM_START,
 		stop: API.ADMIN_REFERENDUM_STOP, 
 	  },

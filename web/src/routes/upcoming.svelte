@@ -9,36 +9,6 @@
 	import List from "$lib/list.svelte";
 	import { _getPolls } from "./+layout";
 	import { goto } from "$app/navigation";
-
-	let electionDialog: HTMLDialogElement;
-	let referendumDialog: HTMLDialogElement;
-	const createElection = async (e: CustomEvent<any>) => {
-		const response = await fetch(API.ADMIN_ELECTION, {
-			method: "POST",
-			body: JSON.stringify(e.detail),
-		});
-
-		if (response.ok) {
-			polls.set(await _getPolls());
-			goto(`/election/${$polls?.slice(-1)[0].id}`);
-		} else {
-			$error = new Error(await response.text());
-		}
-	};
-
-	const createReferendum = async (e: CustomEvent<any>) => {
-		const response = await fetch(API.ADMIN_REFERENDUM, {
-			method: "POST",
-			body: JSON.stringify(e.detail),
-		});
-
-		if (response.ok) {
-			polls.set(await _getPolls());
-			goto(`/referendum/${$polls?.slice(-1)[0].id}`);
-		} else {
-			$error = new Error(await response.text());
-		}
-	};
 </script>
 
 <Panel title="Upcoming" headerIcon="campaign">
@@ -69,44 +39,13 @@
 	<div class="create-poll">
 		<Button
 			kind="emphasis"
-			text="New election"
+			text="Create poll"
 			icon="add"
-			on:click={() => electionDialog.showModal()}
-		/>
-
-		<Button
-			kind="emphasis"
-			text="New referendum"
-			icon="add"
-			on:click={() => referendumDialog.showModal()}
+			on:click={() => goto("/create")}
 		/>
 	</div>
 	{/if}
 </Panel>
-
-<Dialog bind:dialog={electionDialog} title="Create a new election" on:submit={createElection}>
-	<p>Create election with name:</p>
-	<Input name="roleName" />
-	<p>And description:</p>
-	<Input name="description" />
-	<svelte:fragment slot="actions">
-		<Button text="Cancel" />
-		<Button text="Create election" kind="emphasis" name="submit" />
-	</svelte:fragment>
-</Dialog>
-
-<Dialog bind:dialog={referendumDialog} title="Create a new referendum" on:submit={createReferendum}>
-	<p>Create referendum with title:</p>
-	<Input name="title" />
-	<p>And question:</p>
-	<Input name="question" />
-	<p>And description:</p>
-	<Input name="description" />
-	<svelte:fragment slot="actions">
-		<Button text="Cancel" />
-		<Button text="Create referendum" kind="emphasis" name="submit" />
-	</svelte:fragment>
-</Dialog>
 
 <style>
 	li.poll {

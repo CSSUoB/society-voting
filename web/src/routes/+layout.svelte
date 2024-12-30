@@ -104,7 +104,7 @@
 		padding: 12px;
 	}
 
-	div.rail {
+	div.rail, div.rail :global(.rail) {
 		display: flex;
 		flex-direction: column;
 		gap: 8px;

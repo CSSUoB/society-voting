@@ -2,28 +2,30 @@
 	import type { Optional } from "$lib/optional";
 
 	export let name: Optional<string> = null;
-	export let type: Optional<string> = null;
 	export let placeholder: Optional<string> = null;
 	export let value = "";
+	let clazz: Optional<string> = null;
+	export { clazz as class };
 </script>
 
-<input {name} {type} {value} {placeholder} />
+<textarea class={clazz} {name} {value} {placeholder} />
 
 <style>
-	input {
-		height: 40px;
-		padding: 2px 12px;
+	textarea {
 		border: 2px solid;
 		border-radius: 4px;
-		width: 100%;
+		padding: 8px 12px;
 		box-sizing: border-box;
+		width: 100%;
+		min-height: 5rem;
+		resize: vertical;
 		font-family: "Inter", sans-serif;
 		font-size: medium;
 		outline: 2px solid #1c2e5800;
 		transition: 0.2s;
 	}
 	
-	input:focus {
+	textarea:focus {
 		border: 2px solid #1c2e58;
 		outline: 1px solid #1c2e58;
 		background-color: #eee;
