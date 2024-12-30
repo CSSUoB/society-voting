@@ -3,9 +3,8 @@ package events
 import "github.com/CSSUoB/society-voting/internal/database"
 
 const (
-	//TODO fix
 	TopicPollStarted     Topic = "poll-start"
-	TopicPollEnded       Topic = "poll-start"
+	TopicPollEnded       Topic = "poll-end"
 	TopicReferendumEnded Topic = "referendum-end"
 	TopicVoteReceived    Topic = "vote-received"
 
@@ -28,6 +27,7 @@ type UserElectionWithdrawData struct {
 
 type PollEndedData struct {
 	Poll   *database.Poll `json:"poll"`
+	Name   string         `json:"name"`
 	Result string         `json:"result,omitempty"`
 }
 

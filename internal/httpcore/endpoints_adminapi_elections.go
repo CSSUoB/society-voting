@@ -1,8 +1,10 @@
 package httpcore
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/CSSUoB/society-voting/internal/database"
@@ -374,6 +376,7 @@ func (endpoints) apiAdminStopElection(ctx *fiber.Ctx) error {
 
 	events.SendEvent(events.TopicPollEnded, &events.PollEndedData{
 		Poll:   pollable.GetPoll(),
+		Name:   pollable.GetFriendlyTitle(),
 		Result: resultText,
 	})
 
@@ -415,7 +418,7 @@ func (endpoints) apiAdminStopReferendum(ctx *fiber.Ctx) error {
 		}
 	}
 
-	resultText := fmt.Sprintf("REFERENDUM ON %s BY %d MEMBERS ON %s UTC\n=================================================================\n\nQuestion: %s\n\nFor: %d\nAgainst: %d\nAbstain:%d", referendum.Title, len(votes), time.Now().UTC().Format(time.DateTime), referendum.Question, votesFor, votesAgainst, votesAbstain)
+	resultText := fmt.Sprintf("REFERENDUM ON %s BY %d MEMBERS ON %s UTC\n=================================================================\n\nQuestion: %s\n\nFor: %d\nAgainst: %d\nAbstain: %d", referendum.Title, len(votes), time.Now().UTC().Format(time.DateTime), referendum.Question, votesFor, votesAgainst, votesAbstain)
 
 	pollOutcome, err := database.CreatePollOutcome(referendum.ID, len(votes), tx)
 	if err != nil {
@@ -438,6 +441,7 @@ func (endpoints) apiAdminStopReferendum(ctx *fiber.Ctx) error {
 
 	events.SendEvent(events.TopicPollEnded, &events.PollEndedData{
 		Poll:   pollable.GetPoll(),
+		Name:   pollable.GetFriendlyTitle(),
 		Result: resultText,
 	})
 
@@ -486,64 +490,92 @@ func (endpoints) apiAdminPublishPollOutcome(ctx *fiber.Ctx) error {
 	return nil
 }
 
-//func (endpoints) apiAdminRunningElectionSSE(ctx *fiber.Ctx) error {
-//	activeElection, err := database.GetActiveElection()
-//	if err != nil {
-//		if errors.Is(err, database.ErrNotFound) {
-//			return &fiber.Error{
-//				Code:    fiber.StatusConflict,
-//				Message: "There is no election in progress.",
-//			}
-//		}
-//		return fmt.Errorf("apiAdminRunningElectionSSE get active election: %w", err)
-//	}
-//
-//	receiverID, receiver := events.NewReceiver(events.TopicVoteReceived)
-//	electionEndReceiverID, electionEndReceiver := events.NewReceiver(events.TopicElectionEnded)
-//
-//	ctx.Set("Content-Type", "text/event-stream")
-//	fr := ctx.Response()
-//	fr.SetBodyStreamWriter(
-//		func(w *bufio.Writer) {
-//			count, err := database.CountVotesForElection(activeElection.ID)
-//			if err != nil {
-//				slog.Error("SSE error", "error", fmt.Errorf("apiAdminRunningElectionSSE count votes: %w", err))
-//				goto cleanup
-//			}
-//
-//		loop:
-//			for {
-//				select {
-//				case msg := <-receiver:
-//					count += 1
-//					msg.Data = count
-//					sseData, err := msg.ToSSE()
-//					if err != nil {
-//						slog.Error("SSE error", "error", fmt.Errorf("failed to generate SSE event from message: %w", err))
-//						continue loop
-//					}
-//					_, _ = w.Write(sseData)
-//					if err := w.Flush(); err != nil {
-//						// Client disconnected
-//						break loop
-//					}
-//				case <-electionEndReceiver:
-//					var err error
-//					for err == nil {
-//						// if we force the client to disconnect, it'll just try to reconnect.
-//						// wait for it to disconnect, which will cause an error on Flush
-//						err = w.Flush()
-//						time.Sleep(time.Second * 5)
-//					}
-//					break loop
-//				}
-//			}
-//
-//		cleanup:
-//			events.CloseReceiver(receiverID)
-//			events.CloseReceiver(electionEndReceiverID)
-//		},
-//	)
-//
-//	return nil
-//}
+func (endpoints) apiAdminRunningPollSSE(ctx *fiber.Ctx) error {
+	activeElection, err := database.GetActivePoll()
+	if err != nil {
+		if errors.Is(err, database.ErrNotFound) {
+			return &fiber.Error{
+				Code:    fiber.StatusConflict,
+				Message: "There is no election in progress.",
+			}
+		}
+		return fmt.Errorf("apiAdminRunningElectionSSE get active election: %w", err)
+	}
+
+	receiverID, receiver := events.NewReceiver(events.TopicVoteReceived)
+
+	ctx.Set("Content-Type", "text/event-stream")
+	ctx.Set("Connection", "keep-alive")
+
+	doneNotify := ctx.Context().Done()
+	fr := ctx.Response()
+	fr.SetBodyStreamWriter(
+		func(w *bufio.Writer) {
+			ticker := time.NewTicker(time.Second * 10)
+			defer ticker.Stop()
+
+			count, err := database.CountVotesForElection(activeElection.ID)
+			if err != nil {
+				slog.Error("SSE error", "error", fmt.Errorf("apiAdminRunningElectionSSE count votes: %w", err))
+				goto cleanup
+			}
+
+			// send initial vote count for late visitors
+			{
+				msg := events.Message{
+					Topic: events.TopicVoteReceived,
+					Data:  count,
+				}
+				sseData, err := msg.ToSSE()
+				if err != nil {
+					slog.Error("SSE error", "error", fmt.Errorf("failed to generate SSE event from message: %w", err))
+					goto cleanup
+				}
+
+				if _, err := w.Write(sseData); err != nil {
+					goto cleanup
+				}
+				if err := w.Flush(); err != nil {
+					goto cleanup
+				}
+			}
+
+		loop:
+			for {
+				select {
+				case <-doneNotify:
+					break loop
+				case msg := <-receiver:
+					count += 1
+					msg.Data = count
+					sseData, err := msg.ToSSE()
+					if err != nil {
+						slog.Error("SSE error", "error", fmt.Errorf("failed to generate SSE event from message: %w", err))
+						continue loop
+					}
+
+					if _, err := w.Write(sseData); err != nil {
+						break loop
+					}
+					if err := w.Flush(); err != nil {
+						// Client disconnected
+						break loop
+					}
+				case <-ticker.C:
+					// heartbeat
+					if _, err := w.Write([]byte(":\n\n")); err != nil {
+						break loop
+					}
+					if err := w.Flush(); err != nil {
+						break loop
+					}
+				}
+			}
+
+		cleanup:
+			events.CloseReceiver(receiverID)
+		},
+	)
+
+	return nil
+}

@@ -1,13 +1,16 @@
 package httpcore
 
 import (
+	"bufio"
 	"crypto/subtle"
 	"errors"
 	"fmt"
+	"log/slog"
 	"math/rand"
 	"slices"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/CSSUoB/society-voting/internal/database"
 	"github.com/CSSUoB/society-voting/internal/events"
@@ -53,53 +56,60 @@ func (endpoints) apiListPolls(ctx *fiber.Ctx) error {
 	return ctx.JSON(res)
 }
 
-// TODO fix
-//func (endpoints) apiElectionsSSE(ctx *fiber.Ctx) error {
-//	if _, status := getSessionAuth(ctx); status == authNotAuthed {
-//		return fiber.ErrUnauthorized
-//	}
-//
-//	id, receiver := events.NewReceiver(events.TopicElectionStarted, events.TopicElectionEnded)
-//
-//	ctx.Set("Content-Type", "text/event-stream")
-//	fr := ctx.Response()
-//	fr.SetBodyStreamWriter(
-//		func(w *bufio.Writer) {
-//			ticker := time.NewTicker(time.Second * 10)
-//			for {
-//				select {
-//				case msg := <-receiver:
-//					if msg.Topic == events.TopicElectionEnded {
-//						// we're going to be modifying this msg so let's create a copy and work with that
-//						{
-//							// TODO: Refactor away this copying mess
-//							x := *msg
-//							y := *(msg.Data.(*events.ElectionEndedData))
-//							x.Data = &y
-//							msg = &x
-//						}
-//						msg.Data.(*events.ElectionEndedData).Result = ""
-//					}
-//					sseData, err := msg.ToSSE()
-//					if err != nil {
-//						slog.Error("SSE error", "error", fmt.Errorf("failed to generate SSE event from message: %w", err))
-//						break
-//					}
-//					_, _ = w.Write(sseData)
-//				case <-ticker.C:
-//				}
-//
-//				if err := w.Flush(); err != nil {
-//					// Client disconnected
-//					break
-//				}
-//			}
-//			events.CloseReceiver(id)
-//		},
-//	)
-//
-//	return nil
-//}
+func (endpoints) apiPollsSSE(ctx *fiber.Ctx) error {
+	id, receiver := events.NewReceiver(events.TopicPollStarted, events.TopicPollEnded)
+
+	ctx.Set("Content-Type", "text/event-stream")
+	ctx.Set("Connection", "keep-alive")
+
+	notify := ctx.Context().Done()
+	fr := ctx.Response()
+	fr.SetBodyStreamWriter(func(w *bufio.Writer) {
+		ticker := time.NewTicker(time.Second * 10)
+		defer ticker.Stop()
+
+	loop:
+		for {
+			select {
+			case <-notify:
+				break loop
+			case msg := <-receiver:
+				if msg.Topic == events.TopicPollEnded {
+					// we're going to be modifying this msg so let's create a copy and work with that
+					{
+						// TODO: Refactor away this copying mess
+						x := *msg
+						y := *(msg.Data.(*events.PollEndedData))
+						x.Data = &y
+						msg = &x
+					}
+					msg.Data.(*events.PollEndedData).Result = ""
+				}
+				sseData, err := msg.ToSSE()
+				if err != nil {
+					slog.Error("SSE error", "error", fmt.Errorf("failed to generate SSE event from message: %w", err))
+					break
+				}
+				if _, err := w.Write(sseData); err != nil {
+					break loop
+				}
+			case <-ticker.C:
+				// heartbeat
+				if _, err := w.Write([]byte(":\n\n")); err != nil {
+					break loop
+				}
+			}
+
+			if err := w.Flush(); err != nil {
+				// Client disconnected
+				break loop
+			}
+		}
+		events.CloseReceiver(id)
+	})
+
+	return nil
+}
 
 func (endpoints) apiGetActivePollInformation(ctx *fiber.Ctx) error {
 	poll, err := database.GetActivePoll()

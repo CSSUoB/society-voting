@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/CSSUoB/society-voting/internal/config"
+	"github.com/CSSUoB/society-voting/internal/database"
 	"github.com/CSSUoB/society-voting/internal/events"
 	"github.com/carlmjohnson/requests"
 )
@@ -45,19 +46,19 @@ func Run() {
 				me.Description += fmt.Sprintf("\n\n**User was removed by admin with ID %s**", data.ActingUserID)
 			}
 
-		//case events.TopicPollStarted:
-		//	data := msg.Data.(*database.Election)
+		case events.TopicPollStarted:
+			data := msg.Data.(database.Pollable)
 
-		//	me.Colour = ColourMid
-		//	me.Title = fmt.Sprintf("Voting for %s has started!", data.RoleName)
-		//	me.Description = fmt.Sprintf("Election ID: %d", data.ID)
+			me.Colour = ColourMid
+			me.Title = fmt.Sprintf("Voting for %s has started!", data.GetFriendlyTitle())
+			me.Description = fmt.Sprintf("Poll ID: %d", data.GetPoll().ID)
 
-		//case events.TopicElectionEnded:
-		//	data := msg.Data.(*events.ElectionEndedData)
+		case events.TopicPollEnded:
+			data := msg.Data.(*events.PollEndedData)
 
-		//	me.Colour = ColourGood
-		//	me.Title = fmt.Sprintf("Voting for %s has ended!", data.Election.RoleName)
-		//	me.Description = fmt.Sprintf("Election ID: %d\n\n```%s```", data.Election.ID, data.Result)
+			me.Colour = ColourGood
+			me.Title = fmt.Sprintf("Voting for %s has ended!", data.Name)
+			me.Description = fmt.Sprintf("Election ID: %d\n\n```%s```", data.Poll.ID, data.Result)
 
 		case events.TopicUserRestricted:
 			data := msg.Data.(*events.UserRestrictedData)

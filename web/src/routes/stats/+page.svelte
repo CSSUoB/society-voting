@@ -16,7 +16,7 @@
 		goto("/");
 	}
 
-	const eventSource = new EventSource(API.ADMIN_ELECTION_SSE, {
+	const eventSource = new EventSource(API.ADMIN_POLL_SSE, {
 		withCredentials: true,
 	});
 	eventSource.addEventListener("vote-received", (e) => {

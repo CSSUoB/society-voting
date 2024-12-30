@@ -158,7 +158,7 @@
 
 	li.option.selected {
 		grid-template-columns: 28px 40px 8px auto;
-		background-color: #eee;
+		background-color: rgba(55, 93, 182, 0.1);
 	}
 
 	li.option.not-selected {
@@ -167,7 +167,7 @@
 	}
 
 	li.option:hover {
-		background-color: #eee;
+		background-color: rgba(55, 93, 182, 0.1);
 	}
 
 	li.option:not(:last-child) {

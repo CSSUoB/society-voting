@@ -30,17 +30,15 @@
 		menuOpen = e.detail;
 	};
 
-	//const eventSource = new EventSource(API.ELECTION_SSE, {
-	//	withCredentials: true,
-	//});
-	//const electionStatusChanged = async () => {
-	//	if (!$user.isAdmin) {
-	//		$polls = await _getPolls();
-	//		$currentElection = await _getCurrentElection();
-	//	}
-	//};
-	//eventSource.addEventListener("election-start", electionStatusChanged);
-	//eventSource.addEventListener("election-end", electionStatusChanged);
+	const eventSource = new EventSource(API.POLL_SSE, {
+		withCredentials: true,
+	});
+	const pollStatusChanged = async () => {
+		$polls = await _getPolls();
+		$currentPoll = await _getCurrentPoll();
+	};
+	eventSource.addEventListener("poll-start", pollStatusChanged);
+	eventSource.addEventListener("poll-end", pollStatusChanged);
 </script>
 
 <div class="container">

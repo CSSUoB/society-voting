@@ -87,11 +87,10 @@ func ListenAndServe(ctx context.Context, addr string) error {
 	apiGroup.Get("/me", m.validateUserExists, e.apiMe)
 	apiGroup.Put("/me/name", m.requireNotRestricted, m.validateUserExists, e.apiSetOwnName)
 
-	//todo fix
-	//apiGroup.Get("/election/sse", e.apiElectionsSSE)
 	apiGroup.Get("/poll", e.apiListPolls)
 	apiGroup.Get("/poll/current", e.apiGetActivePollInformation)
 	apiGroup.Get("/poll/results", e.apiGetPollOutcome)
+	apiGroup.Get("/poll/sse", e.apiPollsSSE)
 	apiGroup.Post("/election/stand", m.requireNotRestricted, m.validateUserExists, e.apiStandForElection)
 	apiGroup.Delete("/election/stand", m.validateUserExists, e.apiWithdrawFromElection)
 	apiGroup.Post("/election/vote", m.validateUserExists, e.apiVoteInElection)
@@ -106,8 +105,7 @@ func ListenAndServe(ctx context.Context, addr string) error {
 	adminGroup.Post("/referendum/stop", e.apiAdminStopReferendum)
 	adminGroup.Delete("/poll", e.apiAdminDeletePoll)
 	adminGroup.Post("/poll/publish", e.apiAdminPublishPollOutcome)
-	//todo fix
-	//adminGroup.Get("/election/sse", e.apiAdminRunningElectionSSE)
+	adminGroup.Get("/poll/sse", e.apiAdminRunningPollSSE)
 	adminGroup.Get("/user", e.apiAdminListUsers)
 	adminGroup.Post("/user/restrict", e.apiAdminToggleRestrictUser)
 	adminGroup.Delete("/user/delete", e.apiAdminDeleteUser)
