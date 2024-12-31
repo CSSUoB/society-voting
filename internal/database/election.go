@@ -9,6 +9,8 @@ import (
 	"github.com/uptrace/bun"
 )
 
+var _ Pollable = (*Election)(nil)
+
 type Election struct {
 	bun.BaseModel `json:"-"`
 

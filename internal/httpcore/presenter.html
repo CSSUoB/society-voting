@@ -134,7 +134,7 @@
         let httpResult = await fetch("/api/poll/current")
         if (httpResult.status == 200) {
             const data = await httpResult.json()
-            electionStart(data.election ?? data.referendum)
+            electionStart(data.poll.election ?? data.poll.referendum)
         }
 
         console.log(eventSrc.readyState)

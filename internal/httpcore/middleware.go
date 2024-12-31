@@ -1,20 +1,23 @@
 package httpcore
 
 import (
-	"errors"
-	"fmt"
-
-	"github.com/CSSUoB/society-voting/internal/database"
 	"github.com/gofiber/fiber/v2"
 )
 
 func (middleware) requireAuthenticated(ctx *fiber.Ctx) error {
-	userID, authStatus := getSessionAuth(ctx)
+	authToken := ctx.Cookies(sessionTokenCookieName)
+	user, authStatus := getAuthStatus(authToken)
+
 	if authStatus == authNotAuthed {
+		return fiber.ErrUnauthorized
+	} else if authStatus == authInvalid {
+		// Token signature invalid or user has been deleted
+		ctx.Cookie(newSessionTokenDeletionCookie())
 		return fiber.ErrUnauthorized
 	}
 
-	ctx.Locals("userID", userID)
+	ctx.Locals("user", user)
+	ctx.Locals("userID", user.StudentID)
 	ctx.Locals("authStatus", authStatus)
 
 	return ctx.Next()
@@ -37,23 +40,6 @@ func (middleware) requireNotRestricted(ctx *fiber.Ctx) error {
 			Message: "You can't do that because you're restricted - please speak to a member of committee.",
 		}
 	}
-
-	return ctx.Next()
-}
-
-func (middleware) validateUserExists(ctx *fiber.Ctx) error {
-	userID := ctx.Locals("userID").(string)
-	user, err := database.GetUser(userID)
-	if err != nil {
-		if errors.Is(err, database.ErrNotFound) {
-			// User has been deleted
-			ctx.Cookie(newSessionTokenDeletionCookie())
-			return fiber.ErrUnauthorized
-		}
-		return fmt.Errorf("validateUserExists: %w", err)
-	}
-
-	ctx.Locals("user", user)
 
 	return ctx.Next()
 }

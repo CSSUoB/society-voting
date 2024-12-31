@@ -4,13 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-
-	// "database/sql"
-	// "errors"
 	"fmt"
 
 	"github.com/uptrace/bun"
 )
+
+var _ Pollable = (*Referendum)(nil)
 
 type Referendum struct {
 	bun.BaseModel `json:"-"`

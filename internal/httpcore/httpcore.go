@@ -24,9 +24,9 @@ import (
 	"github.com/maragudk/gomponents/html"
 )
 
-type endpoints struct{}
-
 type middleware struct{}
+
+type endpoints struct{}
 
 const loginActionEndpoint = "/auth/login/do"
 
@@ -56,45 +56,28 @@ func ListenAndServe(ctx context.Context, addr string) error {
 		AppName:               "society-voting",
 	})
 
-	e := endpoints{}
 	m := middleware{}
-
-	app.Use(func(ctx *fiber.Ctx) error {
-		authToken := ctx.Cookies(sessionTokenCookieName)
-		authSet := authToken != ""
-
-		if authSet {
-			decodedToken, isValid := validateData(authToken)
-			if !isValid {
-				authSet = false
-			} else {
-				ctx.Locals("token", decodedToken)
-			}
-		}
-		ctx.Locals("isauthset", authSet)
-
-		return ctx.Next()
-	})
+	e := endpoints{}
 
 	app.Get("/auth/login", e.authLoginPage)
 	app.Post("/auth/login", e.authLoginPage)
 	app.Get(loginActionEndpoint, e.authLogin)
 	app.Post(loginActionEndpoint, e.authLogin)
 
-	app.Get("/auth/logout", m.requireAuthenticated, m.validateUserExists, e.authLogout)
+	app.Get("/auth/logout", m.requireAuthenticated, e.authLogout)
 
 	apiGroup := app.Group("/api", m.requireAuthenticated)
-	apiGroup.Get("/me", m.validateUserExists, e.apiMe)
-	apiGroup.Put("/me/name", m.requireNotRestricted, m.validateUserExists, e.apiSetOwnName)
+	apiGroup.Get("/me", e.apiMe)
+	apiGroup.Put("/me/name", m.requireNotRestricted, e.apiSetOwnName)
 
 	apiGroup.Get("/poll", e.apiListPolls)
 	apiGroup.Get("/poll/current", e.apiGetActivePollInformation)
 	apiGroup.Get("/poll/results", e.apiGetPollOutcome)
 	apiGroup.Get("/poll/sse", e.apiPollsSSE)
-	apiGroup.Post("/election/stand", m.requireNotRestricted, m.validateUserExists, e.apiStandForElection)
-	apiGroup.Delete("/election/stand", m.validateUserExists, e.apiWithdrawFromElection)
-	apiGroup.Post("/election/vote", m.validateUserExists, e.apiVoteInElection)
-	apiGroup.Post("/referendum/vote", m.validateUserExists, e.apiVoteInReferendum)
+	apiGroup.Post("/election/stand", m.requireNotRestricted, e.apiStandForElection)
+	apiGroup.Delete("/election/stand", e.apiWithdrawFromElection)
+	apiGroup.Post("/election/vote", e.apiVoteInElection)
+	apiGroup.Post("/referendum/vote", e.apiVoteInReferendum)
 
 	adminGroup := apiGroup.Group("/admin", m.requireAdmin)
 	adminGroup.Post("/election", e.apiAdminCreateElection)
@@ -239,37 +222,39 @@ func validateData(token string) (string, bool) {
 type authType uint
 
 const (
-	authNotAuthed   authType = 0
-	authRegularUser authType = 1 << iota
+	authInvalid authType = 1 << iota
+	authRegularUser
 	authAdminUser
 	authRestricted
+	authNotAuthed authType = 0
 )
 
-func getSessionAuth(ctx *fiber.Ctx) (string, authType) {
-	authSet := ctx.Locals("isauthset").(bool)
-	if !authSet {
-		return "", authNotAuthed
+func getAuthStatus(authToken string) (*database.User, authType) {
+	if authToken == "" {
+		return nil, authNotAuthed
 	}
 
-	decodedToken := ctx.Locals("token").(string)
+	decodedToken, isValid := validateData(authToken)
+	if !isValid {
+		return nil, authInvalid
+	}
 
-	var isAdmin bool
-	var isRestricted bool
-	if err := database.Get().NewSelect().Table("users").Column("is_admin").Column("is_restricted").Where("id = ?", decodedToken).Scan(context.Background(), &isAdmin, &isRestricted); err != nil {
+	var user database.User
+	if err := database.Get().NewSelect().Table("users").Where("id = ?", decodedToken).Scan(context.Background(), &user); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return "", authNotAuthed
+			return nil, authInvalid
 		}
 		// if we can't handle sessions properly we may as well not run
 		panic(err)
 	}
 
-	if isAdmin {
-		return decodedToken, authRegularUser | authAdminUser
+	if user.IsAdmin {
+		return &user, authRegularUser | authAdminUser
 	}
-	if isRestricted {
-		return decodedToken, authRegularUser | authRestricted
+	if user.IsRestricted {
+		return &user, authRegularUser | authRestricted
 	}
-	return decodedToken, authRegularUser
+	return &user, authRegularUser
 }
 
 func parseAndValidateRequestBody(ctx *fiber.Ctx, x any) error {
