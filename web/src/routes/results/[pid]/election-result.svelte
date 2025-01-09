@@ -51,8 +51,13 @@
 	</div>
 	<div class="results">
 		<p>
-			This election was held on <b>{date}</b>. There were {ballotsCast}
-			ballots cast and {electionOutcome.rounds} rounds in total.
+			This election was held on <b>{date}</b>. 
+			{#if ballotsCast === 1}
+				There was 1 ballot cast
+			{:else}
+				There were {ballotsCast} ballots cast
+			{/if}
+			and {electionOutcome.rounds} rounds in total.
 		</p>
 		{#each Object.entries(resultsByRound) as [round, results]}
 			<h3>Round {round}</h3>

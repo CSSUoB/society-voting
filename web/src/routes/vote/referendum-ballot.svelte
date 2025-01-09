@@ -1,6 +1,4 @@
 <script lang="ts">
-	import BallotEntry from "./ballot-entry.svelte";
-	import { type BallotEntry as BallotEntryT, fetching, user } from "../../store";
 	import List from "../../lib/list.svelte";
 	import Panel from "../../lib/panel.svelte";
 	import { createEventDispatcher } from "svelte";
@@ -17,7 +15,7 @@
 		label: "Abstain",
 		symbol: "back_hand",
 		value: 0
-	}] as { label: string, symbol: string, value: number }[]
+	}];
 
 	let selectedIndex: number | null;
 
@@ -100,7 +98,6 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		color: #1c2e58;
 		color: #fff;
 		background-color: #1c2e58;
 		border-radius: 999em;

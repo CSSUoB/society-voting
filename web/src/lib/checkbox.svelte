@@ -29,13 +29,13 @@
 		opacity: 1;
 		transition: 0.2s;
 		color: #aaa;
-		content: "cancel";
+		content: "check_box_outline_blank";
 	}
 
 	input:checked ~ .check::after {
 		opacity: 1;
 		color: #1c2e58;
-		content: "check_circle";
+		content: "check_box";
 	}
 
 </style>

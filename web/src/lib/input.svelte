@@ -4,11 +4,12 @@
 	export let name: Optional<string> = null;
 	export let placeholder: Optional<string> = null;
 	export let value = "";
+	export let required = false
 	let clazz: Optional<string> = null;
 	export { clazz as class };
 </script>
 
-<input class={clazz} {name} {placeholder} bind:value={value} />
+<input class={clazz} {name} {placeholder} {required} bind:value={value} />
 
 <style>
 	input {

@@ -7,11 +7,11 @@
 
 <Panel title="Referendum" headerIcon="rule">
 	<div class="create-referendum">
-		<InputGroup label="Title" helpText="Required. Maximum 64 characters.">
-			<Input placeholder="TeX Dictatorship" name="title" />
+		<InputGroup label="Title" helpText="Maximum 64 characters.">
+			<Input placeholder="TeX Dictatorship" name="title" required={true} />
 		</InputGroup>
-		<InputGroup label="Question" helpText="Required. Maximum 256 characters.">
-			<Input placeholder="Should the Committee be abolished and replaced with a dictatorship with TeX as the sole leader?" name="question" />
+		<InputGroup label="Question" helpText="Maximum 256 characters.">
+			<Input placeholder="Should the Committee be abolished and replaced with a dictatorship with TeX as the sole leader?" name="question" required={true} />
 		</InputGroup>
 		<InputGroup label="Description" helpText="Maximum 1024 characters.">
 			<Textarea

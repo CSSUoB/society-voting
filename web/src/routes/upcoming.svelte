@@ -9,11 +9,12 @@
 	import List from "$lib/list.svelte";
 	import { _getPolls } from "./+layout";
 	import { goto } from "$app/navigation";
+	import { isElectionPoll } from "$lib/poll";
 </script>
 
 <Panel title="Upcoming" headerIcon="campaign">
 		<List items={$polls?.filter((p) => !p.isActive && !p.isConcluded) ?? []} let:prop={poll}>
-			{#if poll.election}
+			{#if isElectionPoll(poll)}
 			<li
 				class={`poll ${
 					$page.url.pathname === `/election/${poll.id}` ? "poll--selected" : ""
@@ -23,7 +24,7 @@
 				<p>{poll.election.roleName}</p>
 				<Button icon="arrow_forward" on:click={() => goto(`/election/${poll.id}`)} />
 			</li>
-			{:else if poll.referendum}
+			{:else}
 			<li
 				class={`poll ${
 					$page.url.pathname === `/referendum/${poll.id}` ? "poll--selected" : ""

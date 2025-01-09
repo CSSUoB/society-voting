@@ -10,6 +10,7 @@
 	import ReferendumBallot from "./referendum-ballot.svelte";
 	import PollHeader from "$lib/poll-header.svelte";
 	import Input from "$lib/input.svelte";
+	import { isElectionPoll, isReferendumPoll } from "$lib/poll";
 
 	let votedDialog: HTMLDialogElement;
 	let voteCode: string;
@@ -55,20 +56,20 @@
 
 {#if $currentPoll}
 	<PollHeader prefix="Voting" poll={$currentPoll.poll}></PollHeader>
-{/if}
 
-{#if $currentPoll?.poll.election && $currentPoll.ballot}
-	<InstantRunoffBallot
-		candidates={$currentPoll.ballot}	
-		on:update={ballotUpdate}
-	></InstantRunoffBallot>
-{:else if $currentPoll?.poll.referendum}
-	<ReferendumBallot on:update={ballotUpdate}></ReferendumBallot>
+	{#if isElectionPoll($currentPoll.poll) && $currentPoll.ballot}
+		<InstantRunoffBallot
+			candidates={$currentPoll.ballot}	
+			on:update={ballotUpdate}
+		></InstantRunoffBallot>
+	{:else if isReferendumPoll($currentPoll.poll)}
+		<ReferendumBallot on:update={ballotUpdate}></ReferendumBallot>
+	{/if}
 {/if}
 
 <Panel title="Submit" kind="emphasis">
 	<div class="submit-container">
-		<Input class="vote-code" bind:value={voteCode} placeholder="Enter election code" type="text" />
+		<Input class="vote-code" bind:value={voteCode} placeholder="Enter election code" />
 		<Button
 			kind="primary"
 			text="Submit vote"

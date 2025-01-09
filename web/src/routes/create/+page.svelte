@@ -77,10 +77,14 @@
 	};
 </script>
 
+<svelte:head>
+	<title>Create a new poll</title>
+</svelte:head>
+
 <form class="rail" on:submit={submit}>
 	<Panel title="Create a new poll" headerIcon="post_add">
 		<div class="container">
-			<p>Select a poll type.</p>
+			<p>Select a poll type</p>
 			<List items={options} let:prop={option}>
 				<li class="option {option.index == selectedIndex ? 'selected' : null == selectedIndex ? '' : 'not-selected'}" on:click={() => selectOption(option.index)}>
 					{#if option.index === selectedIndex}
@@ -107,15 +111,15 @@
 
 	{#if null !== selectedIndex}
 		{#if 0 === selectedIndex}
-			<CreateElection></CreateElection>
+			<CreateElection />
 		{:else if 1 === selectedIndex}
-			<CreateReferendum></CreateReferendum>
+			<CreateReferendum />
 		{/if}
 
 		<Panel>
 			<div class="controls">
 				<Button text="Create" kind="primary" name="submit" />
-				<Checkbox label="Keep this page open" bind:value={stayOnPage}></Checkbox>
+				<Checkbox label="Keep this page open" bind:value={stayOnPage} />
 			</div>
 		</Panel>
 	{/if}
@@ -176,7 +180,6 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		color: #1c2e58;
 		color: #fff;
 		background-color: #1c2e58;
 		border-radius: 999em;

@@ -8,10 +8,11 @@
 	import { API } from "$lib/endpoints";
 	import { _getCurrentPoll, _getPolls } from "../../+layout";
 	import PollHeader from "$lib/poll-header.svelte";
+	import { isReferendumPoll } from "$lib/poll";
 
 	export let data: { id: number };
 	$: poll = $polls?.find((e) => e.id === data.id);
-	$: if (!poll || !poll.referendum) {
+	$: if (!poll || !isReferendumPoll(poll)) {
 		goto("/", { replaceState: true });
 	} else if (poll.isActive) {
 		goto("/vote");
@@ -55,41 +56,41 @@
 </script>
 
 {#if poll}
-	<PollHeader prefix="Referendum" poll={poll}></PollHeader>
-{/if}
+	<PollHeader poll={poll}></PollHeader>
 
-{#if $user.isAdmin}
-	<Panel title="Admin stuff" headerIcon="admin_panel_settings">
-		<div class="admin-controls">
-			<Button
-				kind="primary"
-				text="Start referendum"
-				on:click={() => startReferendumDialog.showModal()}
-			/>
-			<Button text="Delete referendum" on:click={() => deleteReferendumDialog.showModal()} />
-		</div>
-	</Panel>
-	<Dialog
-		bind:dialog={startReferendumDialog}
-		title="Start referendum?"
-		on:submit={() => startReferendum(poll?.id ?? -1)}
-	>
-		<svelte:fragment slot="actions">
-			<Button text="Cancel" />
-			<Button text="Start referendum" kind="emphasis" name="submit" />
-		</svelte:fragment>
-	</Dialog>
-	<Dialog
-		bind:dialog={deleteReferendumDialog}
-		title="Delete referendum?"
-		on:submit={() => deleteReferendum(poll?.id ?? -1)}
-	>
-		<p>This action cannot be undone.</p>
-		<svelte:fragment slot="actions">
-			<Button text="Cancel" />
-			<Button text="Delete referendum" kind="emphasis" name="submit" />
-		</svelte:fragment>
-	</Dialog>
+	{#if $user.isAdmin}
+		<Panel title="Admin stuff" headerIcon="admin_panel_settings">
+			<div class="admin-controls">
+				<Button
+					kind="primary"
+					text="Start referendum"
+					on:click={() => startReferendumDialog.showModal()}
+				/>
+				<Button text="Delete referendum" on:click={() => deleteReferendumDialog.showModal()} />
+			</div>
+		</Panel>
+		<Dialog
+			bind:dialog={startReferendumDialog}
+			title="Start referendum?"
+			on:submit={() => startReferendum(poll.id ?? -1)}
+		>
+			<svelte:fragment slot="actions">
+				<Button text="Cancel" />
+				<Button text="Start referendum" kind="emphasis" name="submit" />
+			</svelte:fragment>
+		</Dialog>
+		<Dialog
+			bind:dialog={deleteReferendumDialog}
+			title="Delete referendum?"
+			on:submit={() => deleteReferendum(poll.id ?? -1)}
+		>
+			<p>This action cannot be undone.</p>
+			<svelte:fragment slot="actions">
+				<Button text="Cancel" />
+				<Button text="Delete referendum" kind="danger" name="submit" />
+			</svelte:fragment>
+		</Dialog>
+	{/if}
 {/if}
 
 <style>

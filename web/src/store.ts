@@ -1,4 +1,3 @@
-import type { Optional } from "$lib/optional";
 import { writable } from "svelte/store";
 
 export interface User {
@@ -8,19 +7,28 @@ export interface User {
 	isRestricted: boolean;
 }
 
-export interface Poll {
-	id: number;
-	isActive: boolean;
-	isConcluded: boolean;
-	pollType: PollType;
-	election: Optional<Election>;
-	referendum: Optional<Referendum>;
-	candidates: Optional<Array<{ name: string; isMe: boolean }>>;
-}
-
 export interface PollType {
 	id: number;
 	name: string;
+}
+
+export type Poll = ElectionPoll | ReferendumPoll;
+
+export interface ElectionPoll {
+    id: number;
+    isActive: boolean;
+    isConcluded: boolean;
+    pollType: PollType; 
+    election: Election;
+	candidates: Array<{ name: string; isMe: boolean }>;
+}
+
+export interface ReferendumPoll {
+    id: number;
+    isActive: boolean;
+    isConcluded: boolean;
+    pollType: PollType; 
+    referendum: Referendum;
 }
 
 export interface Election {
@@ -45,16 +53,25 @@ export interface CurrentPoll {
 	numEligibleVoters: number;
 	hasVoted: boolean;
 	poll: Poll;
-	ballot: Optional<Array<BallotEntry>>;
+	ballot?: Array<BallotEntry>;
 }
 
-export interface PollOutcome {
+export type PollOutcome = ElectionPollOutcome | ReferendumPollOutcome;
+
+export interface ElectionPollOutcome {
 	date: string;
 	isPublished: boolean;
-	poll: Poll;
+	poll: ElectionPoll;
 	ballots: number;
-	electionOutcome: Optional<ElectionOutcome>;
-	referendumOutcome: Optional<ReferendumOutcome>;
+	electionOutcome: ElectionOutcome;
+}
+
+export interface ReferendumPollOutcome {
+	date: string;
+	isPublished: boolean;
+	poll: ReferendumPoll;
+	ballots: number;
+	referendumOutcome: ReferendumOutcome;
 }
 
 export interface ElectionOutcome {

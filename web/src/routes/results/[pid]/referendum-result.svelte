@@ -10,12 +10,18 @@
 		dateStyle: "full",
 		timeStyle: "long",
 	}).format(new Date(date));
+	$: passed = referendumOutcome.votesFor > referendumOutcome.votesAgainst;
 </script>
 
 <Panel title="Results" headerIcon="receipt_long">
 	<div class="results">
 		<p>
-			This referendum was held on <b>{date}</b>. There were {ballotsCast} ballots cast.
+			This referendum was held on <b>{date}</b>. 
+			{#if ballotsCast === 1}
+				There was 1 ballot cast.
+			{:else}
+				There were {ballotsCast} ballots cast.
+			{/if}
 		</p>
 		<table>
 			<thead>
@@ -41,8 +47,29 @@
 		</table>
 		{#if referendumOutcome.votesAbstain > 0}
 			<p>
-				There were {referendumOutcome.votesAbstain}	abstentions.
+				{#if referendumOutcome.votesAbstain === 1}
+					There was 1 abstention.
+				{:else}
+					There were {referendumOutcome.votesAbstain}	abstentions.
+				{/if}
 			</p>
+		{/if}
+		{#if passed}
+			<div class="interpretation">
+				<span class="interpretation-icon material-symbols-rounded">thumb_up</span>
+				<span class="interpretation-text">
+					As the number of votes in support of this referendum exceeds the number 
+					of votes in opposition, this referendum has <b>passed</b>.
+				</span>
+			</div>
+		{:else}
+			<div class="interpretation">
+				<span class="interpretation-icon material-symbols-rounded">thumb_down</span>
+				<span class="interpretation-text">
+					As the number of votes in support of this referendum does not exceed the number 
+					of votes in opposition, this referendum has <b>failed</b>.
+				</span>
+			</div>
 		{/if}
 	</div>
 </Panel>
@@ -70,5 +97,29 @@
 	table td {
 		padding: 0.5em;
 		border: 1px solid #ddd;
+	}
+
+	div.interpretation {
+		display: grid;
+		grid-template-columns: 40px auto;
+		gap: 8px;
+		align-items: flex-start;
+		min-height: 32px;
+		width: 100%;
+	}
+
+	span.interpretation-text {
+		font-family: "Inter", sans-serif;
+		align-self: center;
+	}
+
+	span.interpretation-icon {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: #000;
+		background-color: #ddd;
+		border-radius: 999em;
+		height: 40px;
 	}
 </style>

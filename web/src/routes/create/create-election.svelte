@@ -7,8 +7,8 @@
 
 <Panel title="Election" headerIcon="people">
 	<div class="create-election">
-		<InputGroup label="Role name" helpText="Required. Maximum 64 characters.">
-			<Input placeholder="Publicity Officer" name="roleName" />
+		<InputGroup label="Role name" helpText="Maximum 64 characters.">
+			<Input placeholder="Publicity Officer" name="roleName" required={true} />
 		</InputGroup>
 		<InputGroup label="Description" helpText="Maximum 1024 characters.">
 			<Textarea

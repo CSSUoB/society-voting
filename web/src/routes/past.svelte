@@ -6,6 +6,7 @@
 	import List from "$lib/list.svelte";
 	import { _getPolls } from "./+layout";
 	import { goto } from "$app/navigation";
+	import { getFriendlyName } from "$lib/poll";
 </script>
 
 <Panel title="Archive" headerIcon="inventory_2">
@@ -16,7 +17,7 @@
 			}`}
 			on:click={() => goto(`/results/${poll.id}`)}
 		>
-			<p>{poll.election?.roleName || poll.referendum?.title}</p>
+			<p>{getFriendlyName(poll)}</p>
 			<Button icon="arrow_forward" on:click={() => goto(`/results/${poll.id}`)} />
 		</li>
 	</List>

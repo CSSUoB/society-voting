@@ -27,28 +27,28 @@ export const API = {
 	ADMIN_USER_RESTRICT: `/api/admin/user/restrict`,
 } as const;
 
-export const PollTypeId = {
-	ELECTION: 1,
-	REFERENDUM: 2,
+export enum PollTypeId {
+	ELECTION = 1,
+	REFERENDUM
 }
 
 type EndpointType = "vote" | "create" | "start" | "stop";
 
-export const getEndpointForPollType = (endpointType: EndpointType, pollType: number): string | undefined => {
-	const endpoints = {
-	  1: {
-		vote: API.ELECTION_VOTE,
-		create: API.ADMIN_ELECTION,
-		start: API.ADMIN_ELECTION_START,
-		stop: API.ADMIN_ELECTION_STOP,
-	  },
-	  2: {
-		vote: API.REFERENDUM_VOTE,
-		create: API.ADMIN_REFERENDUM,
-		start: API.ADMIN_REFERENDUM_START,
-		stop: API.ADMIN_REFERENDUM_STOP, 
-	  },
-	} as {[key: number]: {[key: string]: string}};
-  
+const endpoints = {
+  1: {
+	vote: API.ELECTION_VOTE,
+	create: API.ADMIN_ELECTION,
+	start: API.ADMIN_ELECTION_START,
+	stop: API.ADMIN_ELECTION_STOP,
+  },
+  2: {
+	vote: API.REFERENDUM_VOTE,
+	create: API.ADMIN_REFERENDUM,
+	start: API.ADMIN_REFERENDUM_START,
+	stop: API.ADMIN_REFERENDUM_STOP, 
+  },
+} as {[key: number]: {[key: string]: string}};
+
+export const getEndpointForPollType = (endpointType: EndpointType, pollType: PollTypeId): string | undefined => {
 	return endpoints[pollType]?.[endpointType];
-  };
+};

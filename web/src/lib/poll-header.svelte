@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { type Poll } from "../store";
 	import Panel from "./panel.svelte";
+	import { isElectionPoll, isReferendumPoll } from "./poll";
 
 	export let poll: Poll;
 	export let prefix: string = "";
@@ -8,11 +9,11 @@
 	$: title = "";
 	$: description = "";
 
-	$: if (poll.election) {
+	$: if (isElectionPoll(poll)) {
 		title = `Election of ${poll.election.roleName}`
 		description = poll.election.description
-	} else if (poll.referendum) {
-		title = poll.referendum.title
+	} else {
+		title = `Referendum on ${poll.referendum.title}`
 		description = poll.referendum.description
 	}
 </script>
@@ -25,7 +26,7 @@
 	<p>{description}</p>
 </Panel>
 
-{#if poll.referendum} 
+{#if isReferendumPoll(poll)} 
 <Panel kind="primary">
 	<div class="question">
 		<span class="material-symbols-rounded">help_outline</span>

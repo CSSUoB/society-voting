@@ -16,6 +16,7 @@
 	import ElectionResult from "./election-result.svelte";
 	import PollHeader from "$lib/poll-header.svelte";
 	import ReferendumResult from "./referendum-result.svelte";
+	import { getFriendlyName, isElectionPollOutcome } from "$lib/poll";
 
 	export let data: { data: PollOutcome };
 
@@ -56,7 +57,7 @@
 </script>
 
 <svelte:head>
-	<title>Poll outcome</title>
+	<title>Poll outcome: {getFriendlyName(pollOutcome.poll)}</title>
 </svelte:head>
 
 <PollHeader poll={pollOutcome.poll}></PollHeader>
@@ -77,10 +78,10 @@
 	</Panel>
 {/if}
 
-{#if pollOutcome.poll.election && pollOutcome.electionOutcome}
-	<ElectionResult date={pollOutcome.date} ballotsCast={pollOutcome.ballots} electionName={pollOutcome.poll.election.roleName} electionOutcome={pollOutcome.electionOutcome}></ElectionResult>
-{:else if pollOutcome.poll.referendum && pollOutcome.referendumOutcome}
-	<ReferendumResult date={pollOutcome.date} ballotsCast={pollOutcome.ballots} referendumOutcome={pollOutcome.referendumOutcome}></ReferendumResult>
+{#if isElectionPollOutcome(pollOutcome)}
+	<ElectionResult date={pollOutcome.date} ballotsCast={pollOutcome.ballots} electionName={pollOutcome.poll.election.roleName} electionOutcome={pollOutcome.electionOutcome} />
+{:else}
+	<ReferendumResult date={pollOutcome.date} ballotsCast={pollOutcome.ballots} referendumOutcome={pollOutcome.referendumOutcome} />
 {/if}
 
 {#if $user.isAdmin}

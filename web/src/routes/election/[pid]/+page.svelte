@@ -13,18 +13,20 @@
 	import { _getCurrentPoll, _getPolls } from "../../+layout";
 	import PollHeader from "$lib/poll-header.svelte";
 	import Textarea from "$lib/textarea.svelte";
+	import { isElectionPoll } from "$lib/poll";
 
 	export let data: { id: number };
-	$: poll = $polls?.find((e) => e.id === data.id);
-	$: if (!poll || !poll.election) {
-		goto("/", { replaceState: true });
-	} else if (poll.isActive) {
-		goto("/vote");
-	}
-
 	let buttonText = "Stand for election";
-	$: election = poll?.election;
-	$: buttonText = `Stand for ${election ? election.roleName : "election"}`;
+	$: poll = $polls?.find((e) => e.id === data.id);
+	$: {
+		if (!poll || !isElectionPoll(poll)) {
+			goto("/", { replaceState: true });
+		} else if (poll.isActive) {
+			goto("/vote");
+		} else {
+			buttonText = `Stand for ${poll.election.roleName ?? "election"}`;
+		}
+	}
 
 	const standOrWithdraw = async (id: number, stand: boolean) => {
 		$fetching = true;
@@ -84,85 +86,85 @@
 	};
 </script>
 
-{#if poll}
+{#if poll && isElectionPoll(poll)}
 	<PollHeader poll={poll}></PollHeader>
-{/if}
 
-{#if !poll?.candidates?.some((c) => c.isMe)}
-	<Banner title="Interested in running?" kind="emphasis">
-		<img slot="image" src={run} alt="" class="banner-image" />
-		<svelte:fragment slot="content">
-			<p>
-				If you're thinking of running for election, go for it! Being on committee is super
-				rewarding, super good fun, and a great way to bolster your CV and give back to the
-				community.
-			</p>
-			<br />
-			<Button
-				text={buttonText}
-				kind="primary"
-				on:click={() => standOrWithdraw(poll?.id ?? -1, true)}
-			/>
-		</svelte:fragment>
-	</Banner>
-{/if}
-
-<Panel title="Candidates" headerIcon="groups">
-	<List items={poll?.candidates ?? []} let:prop={candidate}>
-		<li class="candidate">
-			<Avatar name={candidate.name} />
-			<p>
-				{candidate.name}{#if candidate.isMe}
-					<span><small>You</small></span>
-				{/if}
-			</p>
-			{#if candidate.isMe}
-				<Button text="Withdraw" on:click={() => standOrWithdraw(poll?.id ?? -1, false)} />
-			{/if}
-		</li>
-	</List>
-	{#if (poll?.candidates?.length ?? 0) === 0}
-		<p>There are no candidates currently running in this election</p>
+	{#if !poll.candidates.some((c) => c.isMe)}
+		<Banner title="Interested in running?" kind="emphasis">
+			<img slot="image" src={run} alt="" class="banner-image" />
+			<svelte:fragment slot="content">
+				<p>
+					If you're thinking of running for election, go for it! Being on committee is super
+					rewarding, super good fun, and a great way to bolster your CV and give back to the
+					community.
+				</p>
+				<br />
+				<Button
+					text={buttonText}
+					kind="primary"
+					on:click={() => standOrWithdraw(poll.id ?? -1, true)}
+				/>
+			</svelte:fragment>
+		</Banner>
 	{/if}
-</Panel>
 
-{#if $user.isAdmin}
-	<Panel title="Admin stuff" headerIcon="admin_panel_settings">
-		<div class="admin-controls">
-			<h3>Candidates standing from the floor</h3>
-			<Textarea
-				bind:value={floorCandidates}
-				placeholder="Enter each candidate's name in a new line"
-			/>
-			<Button
-				kind="primary"
-				text="Save candidates and start election"
-				on:click={() => startElectionDialog.showModal()}
-			/>
-			<Button text="Delete election" on:click={() => deleteElectionDialog.showModal()} />
-		</div>
+	<Panel title="Candidates" headerIcon="groups">
+		<List items={poll.candidates} let:prop={candidate}>
+			<li class="candidate">
+				<Avatar name={candidate.name} />
+				<p>
+					{candidate.name}{#if candidate.isMe}
+						<span><small>You</small></span>
+					{/if}
+				</p>
+				{#if candidate.isMe}
+					<Button text="Withdraw" on:click={() => standOrWithdraw(poll.id ?? -1, false)} />
+				{/if}
+			</li>
+		</List>
+		{#if poll.candidates.length === 0}
+			<p>There are no candidates currently running in this election</p>
+		{/if}
 	</Panel>
-	<Dialog
-		bind:dialog={startElectionDialog}
-		title="Confirm candidates and start election?"
-		on:submit={() => startElection(poll?.id ?? -1)}
-	>
-		<svelte:fragment slot="actions">
-			<Button text="Cancel" />
-			<Button text="Start election" kind="emphasis" name="submit" />
-		</svelte:fragment>
-	</Dialog>
-	<Dialog
-		bind:dialog={deleteElectionDialog}
-		title="Delete election?"
-		on:submit={() => deleteElection(poll?.id ?? -1)}
-	>
-		<p>This action cannot be undone.</p>
-		<svelte:fragment slot="actions">
-			<Button text="Cancel" />
-			<Button text="Delete election" kind="emphasis" name="submit" />
-		</svelte:fragment>
-	</Dialog>
+
+	{#if $user.isAdmin}
+		<Panel title="Admin stuff" headerIcon="admin_panel_settings">
+			<div class="admin-controls">
+				<h3>Candidates standing from the floor</h3>
+				<Textarea
+					bind:value={floorCandidates}
+					placeholder="Enter each candidate's name in a new line"
+				/>
+				<Button
+					kind="primary"
+					text="Save candidates and start election"
+					on:click={() => startElectionDialog.showModal()}
+				/>
+				<Button text="Delete election" on:click={() => deleteElectionDialog.showModal()} />
+			</div>
+		</Panel>
+		<Dialog
+			bind:dialog={startElectionDialog}
+			title="Confirm candidates and start election?"
+			on:submit={() => startElection(poll.id ?? -1)}
+		>
+			<svelte:fragment slot="actions">
+				<Button text="Cancel" />
+				<Button text="Start election" kind="emphasis" name="submit" />
+			</svelte:fragment>
+		</Dialog>
+		<Dialog
+			bind:dialog={deleteElectionDialog}
+			title="Delete election?"
+			on:submit={() => deleteElection(poll.id ?? -1)}
+		>
+			<p>This action cannot be undone.</p>
+			<svelte:fragment slot="actions">
+				<Button text="Cancel" />
+				<Button text="Delete election" kind="danger" name="submit" />
+			</svelte:fragment>
+		</Dialog>
+	{/if}
 {/if}
 
 <style>
