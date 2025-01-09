@@ -83,7 +83,7 @@ func (e *Election) WithCandidates(x ...bun.IDB) (*ElectionWithCandidates, error)
 	if err != nil {
 		return nil, fmt.Errorf("populate Election candidates: %w", err)
 	}
-	var candidateModels []*ElectionCandidate
+	candidateModels := make([]*ElectionCandidate, 0)
 	for _, cand := range candidates {
 		candidateModels = append(candidateModels, &ElectionCandidate{Name: cand.Name, ID: cand.StudentID})
 	}

@@ -3,10 +3,9 @@ package events
 import "github.com/CSSUoB/society-voting/internal/database"
 
 const (
-	TopicPollStarted     Topic = "poll-start"
-	TopicPollEnded       Topic = "poll-end"
-	TopicReferendumEnded Topic = "referendum-end"
-	TopicVoteReceived    Topic = "vote-received"
+	TopicPollStarted  Topic = "poll-start"
+	TopicPollEnded    Topic = "poll-end"
+	TopicVoteReceived Topic = "vote-received"
 
 	TopicUserElectionStand    Topic = "user-stand"
 	TopicUserElectionWithdraw Topic = "user-withdraw"

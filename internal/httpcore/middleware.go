@@ -10,7 +10,7 @@ func (middleware) requireAuthenticated(ctx *fiber.Ctx) error {
 
 	if authStatus == authNotAuthed {
 		return fiber.ErrUnauthorized
-	} else if authStatus == authInvalid {
+	} else if authStatus&authInvalid != 0 {
 		// Token signature invalid or user has been deleted
 		ctx.Cookie(newSessionTokenDeletionCookie())
 		return fiber.ErrUnauthorized
