@@ -1,7 +1,6 @@
 package httpcore
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/CSSUoB/society-voting/internal/database"
@@ -9,29 +8,12 @@ import (
 )
 
 func (endpoints) apiMe(ctx *fiber.Ctx) error {
-	userID, authStatus := getSessionAuth(ctx)
-	if authStatus == authNotAuthed {
-		return fiber.ErrUnauthorized
-	}
-
-	user, err := database.GetUser(userID)
-	if err != nil {
-		if errors.Is(err, database.ErrNotFound) {
-			// User has been deleted
-			ctx.Cookie(newSessionTokenDeletionCookie())
-			return fiber.ErrUnauthorized
-		}
-		return fmt.Errorf("apiVote get user: %w", err)
-	}
-
+	user := ctx.Locals("user").(*database.User)
 	return ctx.JSON(user)
 }
 
 func (endpoints) apiSetOwnName(ctx *fiber.Ctx) error {
-	userID, authStatus := getSessionAuth(ctx)
-	if authStatus == authNotAuthed {
-		return fiber.ErrUnauthorized
-	}
+	user := ctx.Locals("user").(*database.User)
 
 	var request = struct {
 		Name string `json:"name" validate:"required,max=64"`
@@ -46,23 +28,6 @@ func (endpoints) apiSetOwnName(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiSetOwnName start tx: %w", err)
 	}
 	defer tx.Rollback()
-
-	user, err := database.GetUser(userID, tx)
-	if err != nil {
-		if errors.Is(err, database.ErrNotFound) {
-			// User has been deleted
-			ctx.Cookie(newSessionTokenDeletionCookie())
-			return fiber.ErrUnauthorized
-		}
-		return fmt.Errorf("apiSetOwnName get user: %w", err)
-	}
-
-	if user.IsRestricted {
-		return &fiber.Error{
-			Code:    fiber.StatusForbidden,
-			Message: "You can't do that because you're restricted - please speak to a member of committee.",
-		}
-	}
 
 	user.Name = request.Name
 

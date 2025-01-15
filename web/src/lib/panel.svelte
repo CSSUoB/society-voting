@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Optional } from "$lib/optional";
 
-	export let kind: "regular" | "emphasis" = "regular";
+	export let kind: "regular" | "emphasis" | "primary" = "regular";
 	export let title: string | undefined = undefined;
 	export let headerIcon: Optional<string> = null;
 </script>
@@ -37,6 +37,10 @@
 
 	section.emphasis {
 		background-color: #c3abdf;
+	}
+
+	section.primary {
+		background-color: #93f193;
 	}
 
 	span.header {

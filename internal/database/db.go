@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"embed"
 	"errors"
 	"log/slog"
 	"os"
@@ -16,6 +17,9 @@ import (
 	"github.com/uptrace/bun/extra/bundebug"
 	"github.com/uptrace/bun/migrate"
 )
+
+//go:embed *.sql
+var sqlMigrations embed.FS
 
 var Migrations = migrate.NewMigrations()
 
@@ -76,6 +80,10 @@ func fromVariadic(x []bun.IDB) bun.IDB {
 
 func Migrate(db *bun.DB) error {
 	slog.Info("running database migrations")
+
+	if err := Migrations.Discover(sqlMigrations); err != nil {
+		return err
+	}
 
 	mig := migrate.NewMigrator(db, Migrations)
 

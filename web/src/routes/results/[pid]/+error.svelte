@@ -7,6 +7,6 @@
 	<title>Error</title>
 </svelte:head>
 
-<Panel title="Cannot view election outcome">
+<Panel title="Cannot view poll outcome">
 	<p>{$page.error?.message} ({$page.status})</p>
 </Panel>

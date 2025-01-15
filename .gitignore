@@ -1,7 +1,7 @@
 run/
 memberspage.html
 config.yml
-voting.sqlite3.db
+voting.sqlite3.db*
 test/users.json
 test/result.*.txt
 society-voting

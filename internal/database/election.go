@@ -9,15 +9,16 @@ import (
 	"github.com/uptrace/bun"
 )
 
+var _ Pollable = (*Election)(nil)
+
 type Election struct {
 	bun.BaseModel `json:"-"`
 
-	ID          int    `bun:",pk,autoincrement" json:"id"`
-	RoleName    string `json:"roleName"`
-	Description string `json:"description"`
+	ID          int    `bun:",pk" json:"id"`
+	RoleName    string `bun:",notnull" json:"roleName"`
+	Description string `bun:",notnull" json:"description"`
 
-	IsActive    bool `json:"isActive"`
-	IsConcluded bool `json:"isConcluded"`
+	Poll *Poll `bun:"rel:belongs-to,join:id=id" json:"-"`
 }
 
 type ElectionCandidate struct {
@@ -29,6 +30,22 @@ type ElectionCandidate struct {
 type ElectionWithCandidates struct {
 	Election
 	Candidates []*ElectionCandidate `json:"candidates"`
+}
+
+func (e *Election) GetPoll() *Poll {
+	return e.Poll
+}
+
+func (e *Election) GetFriendlyTitle() string {
+	return e.RoleName
+}
+
+func (e *Election) GetElection() *Election {
+	return e
+}
+
+func (e *Election) GetReferendum() *Referendum {
+	return nil
 }
 
 func (e *Election) Insert(x ...bun.IDB) error {
@@ -66,7 +83,7 @@ func (e *Election) WithCandidates(x ...bun.IDB) (*ElectionWithCandidates, error)
 	if err != nil {
 		return nil, fmt.Errorf("populate Election candidates: %w", err)
 	}
-	var candidateModels []*ElectionCandidate
+	candidateModels := make([]*ElectionCandidate, 0)
 	for _, cand := range candidates {
 		candidateModels = append(candidateModels, &ElectionCandidate{Name: cand.Name, ID: cand.StudentID})
 	}
@@ -79,42 +96,11 @@ func (e *Election) WithCandidates(x ...bun.IDB) (*ElectionWithCandidates, error)
 func GetElection(id int, x ...bun.IDB) (*Election, error) {
 	db := fromVariadic(x)
 	res := new(Election)
-	if err := db.NewSelect().Model(res).Where("id = ?", id).Scan(context.Background(), res); err != nil {
+	if err := db.NewSelect().Model(res).Where(`"election"."id" = ?`, id).Relation("Poll").Scan(context.Background(), res); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNotFound
 		}
 		return nil, fmt.Errorf("get Election model by ID: %w", err)
-	}
-	return res, nil
-}
-
-func GetAllElections(x ...bun.IDB) ([]*Election, error) {
-	db := fromVariadic(x)
-	var res []*Election
-	if err := db.NewSelect().Model(&res).Scan(context.Background(), &res); err != nil {
-		return nil, fmt.Errorf("get all Elections: %w", err)
-	}
-	return res, nil
-}
-
-func DeleteElectionByID(electionID int, x ...bun.IDB) error {
-	db := fromVariadic(x)
-	if _, err := db.NewDelete().Model((*Election)(nil)).Where("id = ?", electionID).Exec(context.Background()); err != nil {
-		return fmt.Errorf("delete Election: %w", err)
-	}
-	return nil
-}
-
-func GetActiveElection(x ...bun.IDB) (*Election, error) {
-	db := fromVariadic(x)
-	res := new(Election)
-	if count, err := db.NewSelect().Model(res).Where("is_active = 1").ScanAndCount(context.Background(), res); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrNotFound
-		}
-		return nil, fmt.Errorf("get active Election: %w", err)
-	} else if count != 1 {
-		return nil, fmt.Errorf("database corrupted: expected 0 active elections, found %d", count)
 	}
 	return res, nil
 }

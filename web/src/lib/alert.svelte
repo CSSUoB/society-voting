@@ -2,7 +2,7 @@
 	import { error, fetching } from "../store";
 </script>
 
-<div class={$fetching || $error ? "visible" : ""}>
+<div class="{$fetching || $error ? "visible" : ""} {$fetching ? "fetching" : ""}">
 	{#if $error}
 		<p class="error" on:click={() => ($error = null)}>
 			{$error.message}
@@ -38,6 +38,10 @@
 		--alpha: 0.2;
 		--top: 12px;
 		pointer-events: all;
+	}
+	
+	div.fetching {
+		cursor: wait;
 	}
 
 	p {

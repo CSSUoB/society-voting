@@ -39,7 +39,7 @@ func run() error {
 	}
 
 	if err := database.Migrate(database.Get()); err != nil {
-		return fmt.Errorf("migrate dataase: %w", err)
+		return fmt.Errorf("migrate database: %w", err)
 	}
 
 	if conf.Platform.DiscordWebhook.URL != "" {
@@ -55,10 +55,10 @@ func run() error {
 
 	if os.Getenv("SOCIETY_VOTING_RESTART_ENABLED") != "" {
 		slog.Info("restart shim enabled")
-		_, electionEndReceiver := events.NewReceiver(events.TopicElectionEnded)
+		_, pollEndReceiver := events.NewReceiver(events.TopicPollEnded)
 		go func() {
-			<-electionEndReceiver
-			slog.Info("election ended - restarting")
+			<-pollEndReceiver
+			slog.Info("poll ended - restarting")
 			exitingForRestart = true
 			cancel()
 		}()
