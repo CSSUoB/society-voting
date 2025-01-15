@@ -3,6 +3,7 @@ package guildScraper
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"github.com/CSSUoB/society-voting/internal/config"
 	"github.com/PuerkitoBio/goquery"
@@ -54,6 +55,11 @@ func fetchMembershipPage() (string, error) {
 
 	if err != nil {
 		return "", err
+	}
+
+	// MSL does not return proper error codes so we have to resort to this instead
+	if strings.Contains(pageData, "Student Login") || strings.Contains(pageData, "You do not have permission to see this organisation's members.") {
+		return "", errors.New("access token expired or invalid")
 	}
 
 	return pageData, nil
