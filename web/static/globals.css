@@ -26,8 +26,9 @@ p {
 }
 
 table,
+label,
 p {
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Inter', sans-serif;
 }
 
 .material-symbols-rounded {

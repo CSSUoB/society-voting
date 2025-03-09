@@ -48,6 +48,7 @@
 		position: relative;
 		z-index: 0;
 		cursor: pointer;
+		transition: background-color 0.2s;
 	}
 
 	button::after {
@@ -61,10 +62,12 @@
 		background-color: var(--background-colour);
 		z-index: -1;
 		border: 1px dashed var(--border-colour);
+		transition: background-color 0.2s;
 	}
 
 	button:disabled {
 		opacity: 0.8;
+		cursor: not-allowed;
 	}
 
 	button:not(:disabled):hover,

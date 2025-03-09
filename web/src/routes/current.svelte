@@ -2,15 +2,16 @@
 	import { goto } from "$app/navigation";
 	import Button from "$lib/button.svelte";
 	import Panel from "$lib/panel.svelte";
-	import { currentElection, elections, user } from "../store";
-	$: current = $elections?.find((e) => e.isActive);
+	import { getFriendlyName } from "$lib/poll";
+	import { currentPoll, polls, user } from "../store";
+	$: current = $polls?.find((p) => p.isActive);
 </script>
 
 <Panel title="Vote now!" kind="emphasis" headerIcon="how_to_vote">
 	<div class="container">
-		<h3>Voting is now open for: {current?.roleName}</h3>
+		<h3>Voting is now open for: {current && getFriendlyName(current)}</h3>
 		<div class="actions">
-			{#if !$currentElection?.hasVoted}
+			{#if !$currentPoll?.hasVoted}
 				<Button
 					icon="arrow_forward"
 					text="Vote now"
@@ -19,7 +20,7 @@
 				/>
 			{/if}
 			{#if $user.isAdmin}
-				<Button text="Manage election" kind="emphasis" on:click={() => goto(`/stats`)} />
+				<Button text="Manage poll" kind="emphasis" on:click={() => goto(`/stats`)} />
 			{/if}
 		</div>
 	</div>

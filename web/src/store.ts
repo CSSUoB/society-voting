@@ -1,4 +1,3 @@
-import type { Optional } from "$lib/optional";
 import { writable } from "svelte/store";
 
 export interface User {
@@ -8,13 +7,40 @@ export interface User {
 	isRestricted: boolean;
 }
 
+export interface PollType {
+	id: number;
+	name: string;
+}
+
+export type Poll = ElectionPoll | ReferendumPoll;
+
+export interface ElectionPoll {
+    id: number;
+    isActive: boolean;
+    isConcluded: boolean;
+    pollType: PollType; 
+    election: Election;
+	candidates: Array<{ name: string; isMe: boolean }>;
+}
+
+export interface ReferendumPoll {
+    id: number;
+    isActive: boolean;
+    isConcluded: boolean;
+    pollType: PollType; 
+    referendum: Referendum;
+}
+
 export interface Election {
+	id: number;
 	roleName: string;
 	description: string;
-	isActive: boolean;
-	isConcluded: boolean;
-	id: number;
-	candidates: Optional<Array<{ name: string; isMe: boolean }>>;
+}
+
+export interface Referendum {
+	title: string;
+	question: string;
+	description: string;
 }
 
 export interface BallotEntry {
@@ -23,20 +49,40 @@ export interface BallotEntry {
 	isRON: boolean;
 }
 
-export interface CurrentElection {
-	election: Election;
-	ballot: Array<BallotEntry>;
+export interface CurrentPoll {
 	numEligibleVoters: number;
 	hasVoted: boolean;
+	poll: Poll;
+	ballot?: Array<BallotEntry>;
+}
+
+export type PollOutcome = ElectionPollOutcome | ReferendumPollOutcome;
+
+export interface ElectionPollOutcome {
+	date: string;
+	isPublished: boolean;
+	poll: ElectionPoll;
+	ballots: number;
+	electionOutcome: ElectionOutcome;
+}
+
+export interface ReferendumPollOutcome {
+	date: string;
+	isPublished: boolean;
+	poll: ReferendumPoll;
+	ballots: number;
+	referendumOutcome: ReferendumOutcome;
 }
 
 export interface ElectionOutcome {
-	election: Election;
-	date: number;
-	ballots: number;
 	rounds: number;
-	isPublished: boolean;
 	results: Array<ElectionOutcomeResult>;
+}
+
+export interface ReferendumOutcome {
+	votesFor: number;
+	votesAgainst: number;
+	votesAbstain: number;
 }
 
 export interface ElectionOutcomeResult {
@@ -48,7 +94,8 @@ export interface ElectionOutcomeResult {
 }
 
 export const user = writable<User>(null!);
-export const elections = writable<Array<Election> | null>(null);
-export const currentElection = writable<CurrentElection | null>(null);
+export const polls = writable<Array<Poll> | null>(null);
+export const currentPoll = writable<CurrentPoll | null>(null);
 export const fetching = writable<boolean>(false);
+export const navigating = writable<boolean>(false);
 export const error = writable<Error | null>(null);

@@ -48,11 +48,6 @@
 		border-bottom: 2px solid #eee;
 	}
 
-	li.candidate p.candidate-name {
-		text-overflow: ellipsis;
-		overflow: hidden;
-	}
-
 	p.candidate-position {
 		display: flex;
 		align-items: center;

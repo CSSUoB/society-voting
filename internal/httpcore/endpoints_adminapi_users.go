@@ -3,18 +3,14 @@ package httpcore
 import (
 	"errors"
 	"fmt"
+	"sort"
+
 	"github.com/CSSUoB/society-voting/internal/database"
 	"github.com/CSSUoB/society-voting/internal/events"
 	"github.com/gofiber/fiber/v2"
-	"sort"
 )
 
 func (endpoints) apiAdminDeleteUser(ctx *fiber.Ctx) error {
-	actingUserID, authStatus := getSessionAuth(ctx)
-	if authStatus&authAdminUser == 0 {
-		return fiber.ErrUnauthorized
-	}
-
 	var request = struct {
 		UserID string `json:"userID" validate:"ne=0"`
 	}{}
@@ -23,30 +19,13 @@ func (endpoints) apiAdminDeleteUser(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	tx, err := database.GetTx()
-	if err != nil {
-		return fmt.Errorf("apiAdminDeleteUser start tx: %w", err)
-	}
-	defer tx.Rollback()
-
-	if err := database.DeleteUser(request.UserID, tx); err != nil {
+	if err := database.DeleteUser(request.UserID); err != nil {
 		return fmt.Errorf("apiAdminDeleteUser delete user: %w", err)
 	}
 
-	if err := database.DeleteAllCandidatesForUser(request.UserID, tx); err != nil {
-		return fmt.Errorf("apiAdminDeleteUser delete user candidates: %w", err)
-	}
-
-	if err := database.DeleteAllVotesForUser(request.UserID, tx); err != nil {
-		return fmt.Errorf("apiAdminDeleteUser delete user votes: %w", err)
-	}
-
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("apiAdminDeleteUser commit tx: %w", err)
-	}
-
+	actor := ctx.Locals("userID").(string)
 	events.SendEvent(events.TopicUserDeleted, &events.UserDeletedData{
-		ActingUserID: actingUserID,
+		ActingUserID: actor,
 		UserID:       request.UserID,
 	})
 
@@ -55,10 +34,6 @@ func (endpoints) apiAdminDeleteUser(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiAdminListUsers(ctx *fiber.Ctx) error {
-	if _, status := getSessionAuth(ctx); status&authAdminUser == 0 {
-		return fiber.ErrUnauthorized
-	}
-
 	users, err := database.GetAllUsers()
 	if err != nil {
 		return fmt.Errorf("apiAdminListUsers get all users: %w", err)
@@ -76,11 +51,6 @@ func (endpoints) apiAdminListUsers(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiAdminToggleRestrictUser(ctx *fiber.Ctx) error {
-	actingUserID, authStatus := getSessionAuth(ctx)
-	if authStatus&authAdminUser == 0 {
-		return fiber.ErrUnauthorized
-	}
-
 	var request = struct {
 		UserID string `json:"userID" validate:"ne=0"`
 	}{}
@@ -129,8 +99,9 @@ func (endpoints) apiAdminToggleRestrictUser(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiAdminToggleRestrictUser commit tx: %w", err)
 	}
 
+	actor := ctx.Locals("userID").(string)
 	events.SendEvent(events.TopicUserRestricted, &events.UserRestrictedData{
-		ActingUserID: actingUserID,
+		ActingUserID: actor,
 		User:         user,
 	})
 
