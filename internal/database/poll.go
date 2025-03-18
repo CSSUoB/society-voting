@@ -17,9 +17,10 @@ type Poll struct {
 	IsActive    bool `bun:",notnull" json:"isActive"`
 	IsConcluded bool `bun:",notnull" json:"isConcluded"`
 
-	PollType   *PollType   `bun:"rel:has-one,join:poll_type_id=id" json:"pollType"`
-	Election   *Election   `bun:"rel:has-one,join:id=id" json:"election,omitempty"`
-	Referendum *Referendum `bun:"rel:has-one,join:id=id" json:"referendum,omitempty"`
+	PollType   *PollType    `bun:"rel:has-one,join:poll_type_id=id" json:"pollType"`
+	Election   *Election    `bun:"rel:has-one,join:id=id" json:"election,omitempty"`
+	Referendum *Referendum  `bun:"rel:has-one,join:id=id" json:"referendum,omitempty"`
+	Outcome    *PollOutcome `bun:"rel:has-one,join:id=poll_id" json:"-"`
 }
 
 type Pollable interface {
@@ -74,7 +75,7 @@ func GetPoll(id int, x ...bun.IDB) (*Poll, error) {
 func GetAllPolls(x ...bun.IDB) ([]*Poll, error) {
 	db := fromVariadic(x)
 	var res []*Poll
-	if err := db.NewSelect().Model(&res).Relation("PollType").Relation("Election").Relation("Referendum").Scan(context.Background(), &res); err != nil {
+	if err := db.NewSelect().Model(&res).Relation("PollType").Relation("Election").Relation("Referendum").Relation("Outcome").Scan(context.Background(), &res); err != nil {
 		return nil, fmt.Errorf("get all Polls: %w", err)
 	}
 	return res, nil

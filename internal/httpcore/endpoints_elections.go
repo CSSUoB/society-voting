@@ -28,12 +28,18 @@ func (endpoints) apiListPolls(ctx *fiber.Ctx) error {
 	type PollWithData struct {
 		database.Poll
 		Candidates *[]*database.ElectionCandidate `json:"candidates,omitempty"`
+		Date       time.Time                      `json:"date,omitempty"`
 	}
 
 	var res []*PollWithData
 
 	userID := ctx.Locals("userID").(string)
 	for _, poll := range polls {
+		var date time.Time
+		if poll.Outcome != nil {
+			date = poll.Outcome.Date
+		}
+
 		if poll.Election != nil && !poll.IsConcluded {
 			if ec, err := poll.Election.WithCandidates(); err != nil {
 				return fmt.Errorf("apiListPolls: %w", err)
@@ -44,11 +50,13 @@ func (endpoints) apiListPolls(ctx *fiber.Ctx) error {
 				res = append(res, &PollWithData{
 					Poll:       *poll,
 					Candidates: &ec.Candidates,
+					Date:       date,
 				})
 			}
 		} else {
 			res = append(res, &PollWithData{
 				Poll: *poll,
+				Date: date,
 			})
 		}
 	}
@@ -467,6 +475,37 @@ func (endpoints) apiWithdrawFromElection(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiGetPollOutcome(ctx *fiber.Ctx) error {
+	electionID := ctx.QueryInt("id")
+
+	tx, err := database.GetTx()
+	if err != nil {
+		return fmt.Errorf("apiGetElectionOutcome start tx: %w", err)
+	}
+	defer tx.Rollback()
+
+	electionOutcome, err := database.GetOutcomeForPoll(electionID, tx)
+	if err != nil {
+		if errors.Is(err, database.ErrNotFound) {
+			return &fiber.Error{
+				Code:    fiber.StatusNotFound,
+				Message: "Outcome for poll with that ID not found",
+			}
+		}
+		return fmt.Errorf("apiGetElectionOutcome get election outcome for id %d: %w", electionID, err)
+	}
+
+	authStatus := ctx.Locals("authStatus").(authType)
+	if !electionOutcome.IsPublished && authStatus&authAdminUser == 0 {
+		return &fiber.Error{
+			Code:    fiber.StatusForbidden,
+			Message: "The outcome for this election has not been published yet",
+		}
+	}
+
+	return ctx.JSON(electionOutcome)
+}
+
+func (endpoints) apiPollOutcomes(ctx *fiber.Ctx) error {
 	electionID := ctx.QueryInt("id")
 
 	tx, err := database.GetTx()
