@@ -11,6 +11,7 @@ const (
 	TopicUserElectionWithdraw Topic = "user-withdraw"
 	TopicUserRestricted       Topic = "user-restrict"
 	TopicUserDeleted          Topic = "user-delete"
+	TopicUserDeletedAll       Topic = "user-delete-all"
 )
 
 type UserElectionStandData struct {
@@ -37,5 +38,9 @@ type UserRestrictedData struct {
 
 type UserDeletedData struct {
 	UserID       string `json:"user"`
+	ActingUserID string `json:"actingUserID"`
+}
+
+type UserDeletedAllData struct {
 	ActingUserID string `json:"actingUserID"`
 }
