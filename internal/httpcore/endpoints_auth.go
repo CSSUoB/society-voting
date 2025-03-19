@@ -158,7 +158,7 @@ func (endpoints) authLogin(ctx *fiber.Ctx) error {
 		var passwordHash string
 		if requestData.Password != "" {
 			var err error
-			passwordHash, err  = argon2id.CreateHash(requestData.Password, argon2id.DefaultParams)
+			passwordHash, err = argon2id.CreateHash(requestData.Password, argon2id.DefaultParams)
 			if err != nil {
 				return fmt.Errorf("authLogin hash password: %w", err)
 			}
