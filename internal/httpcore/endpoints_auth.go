@@ -242,10 +242,6 @@ unregisteredAskPassword:
 			html.Em(g.Text(requestProblem)),
 		)),
 		html.P(g.Text("Please choose a password.")),
-		html.P(
-			g.Attr("style", "font-style: italic;"), 
-			g.Text("Note: Salted and hashed using Argon2id"),
-		),
 		htmlutil.FormInput("password", "password", "", "Password"),
 		htmlutil.FormInput("password", "passwordconf", "", "Confirm password"),
 		htmlutil.FormSubmitButton(),
