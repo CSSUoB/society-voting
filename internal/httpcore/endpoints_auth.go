@@ -9,11 +9,11 @@ import (
 	"github.com/CSSUoB/society-voting/internal/database"
 	"github.com/CSSUoB/society-voting/internal/guildScraper"
 	"github.com/CSSUoB/society-voting/internal/httpcore/htmlutil"
+	"github.com/alexedwards/argon2id"
 	"github.com/gofiber/fiber/v2"
 	g "github.com/maragudk/gomponents"
 	"github.com/maragudk/gomponents/html"
 	"strings"
-	"github.com/alexedwards/argon2id"
 )
 
 func (endpoints) authLoginPage(ctx *fiber.Ctx) error {
@@ -82,8 +82,8 @@ func (endpoints) authLogin(ctx *fiber.Ctx) error {
 				match, err := argon2id.ComparePasswordAndHash(requestData.Password, user.PasswordHash)
 				if err != nil {
 					return fmt.Errorf("authLogin compare password hash: %w", err)
-				}					
-					
+				}
+
 				if match {
 					// Yes: issue token, redirect
 					goto success
