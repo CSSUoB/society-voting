@@ -13,7 +13,7 @@ type User struct {
 
 	StudentID    string `bun:"id,pk" json:"studentID"`
 	Name         string `json:"name"`
-	PasswordHash []byte `json:"-"`
+	PasswordHash string `json:"-"`
 	IsRestricted bool   `json:"isRestricted"`
 	IsAdmin      bool   `json:"isAdmin"`
 }

@@ -1,7 +1,6 @@
 package httpcore
 
 import (
-	"crypto/sha512"
 	"crypto/subtle"
 	"encoding/json"
 	"errors"
@@ -10,6 +9,7 @@ import (
 	"github.com/CSSUoB/society-voting/internal/database"
 	"github.com/CSSUoB/society-voting/internal/guildScraper"
 	"github.com/CSSUoB/society-voting/internal/httpcore/htmlutil"
+	"github.com/alexedwards/argon2id"
 	"github.com/gofiber/fiber/v2"
 	g "github.com/maragudk/gomponents"
 	"github.com/maragudk/gomponents/html"
@@ -70,11 +70,6 @@ func (endpoints) authLogin(ctx *fiber.Ctx) error {
 			goto askStudentID
 		}
 
-		var passwordHash [64]byte
-		if requestData.Password != "" {
-			passwordHash = sha512.Sum512([]byte(requestData.Password))
-		}
-
 		// SID already registered?
 		user, err := database.GetUser(requestData.StudentID)
 		if err != nil && !errors.Is(err, database.ErrNotFound) {
@@ -84,7 +79,12 @@ func (endpoints) authLogin(ctx *fiber.Ctx) error {
 			// Yes: has password?
 			if requestData.Password != "" {
 				// Yes: Is password valid?
-				if subtle.ConstantTimeCompare(passwordHash[:], user.PasswordHash) == 1 {
+				match, err := argon2id.ComparePasswordAndHash(requestData.Password, user.PasswordHash)
+				if err != nil {
+					return fmt.Errorf("authLogin compare password hash: %w", err)
+				}
+
+				if match {
 					// Yes: issue token, redirect
 					goto success
 				}
@@ -155,11 +155,19 @@ func (endpoints) authLogin(ctx *fiber.Ctx) error {
 
 			goto unregisteredAskPassword
 		}
+		var passwordHash string
+		if requestData.Password != "" {
+			var err error
+			passwordHash, err = argon2id.CreateHash(requestData.Password, argon2id.DefaultParams)
+			if err != nil {
+				return fmt.Errorf("authLogin hash password: %w", err)
+			}
+		}
 
 		user = &database.User{
 			StudentID:    requestData.StudentID,
 			Name:         guildMember.FirstName + " " + guildMember.LastName,
-			PasswordHash: passwordHash[:],
+			PasswordHash: passwordHash,
 			IsAdmin:      guildMember.IsCommitteeMember,
 		}
 
