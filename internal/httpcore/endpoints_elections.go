@@ -25,15 +25,23 @@ func (endpoints) apiListPolls(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiListPolls get all polls: %w", err)
 	}
 
+	type ElectionCandidate struct {
+		Name string  `json:"name"`
+		ID   *string `json:"id,omitempty"`
+		IsMe bool    `json:"isMe"`
+	}
+
 	type PollWithData struct {
 		database.Poll
-		Candidates *[]*database.ElectionCandidate `json:"candidates,omitempty"`
-		Date       time.Time                      `json:"date,omitempty"`
+		Candidates *[]ElectionCandidate `json:"candidates,omitempty"`
+		Date       time.Time            `json:"date,omitempty"`
 	}
 
 	var res []*PollWithData
 
 	userID := ctx.Locals("userID").(string)
+	authStatus := ctx.Locals("authStatus").(authType)
+
 	for _, poll := range polls {
 		var date time.Time
 		if poll.Outcome != nil {
@@ -44,12 +52,26 @@ func (endpoints) apiListPolls(ctx *fiber.Ctx) error {
 			if ec, err := poll.Election.WithCandidates(); err != nil {
 				return fmt.Errorf("apiListPolls: %w", err)
 			} else {
-				for _, cand := range ec.Candidates {
-					cand.IsMe = cand.ID == userID
+				candidates := make([]ElectionCandidate, 0)
+				if authStatus&authAdminUser != 0 {
+					for _, cand := range ec.Candidates {
+						candidates = append(candidates, ElectionCandidate{
+							Name: cand.Name,
+							IsMe: cand.ID == userID,
+							ID:   &cand.ID,
+						})
+					}
+				} else {
+					for _, cand := range ec.Candidates {
+						candidates = append(candidates, ElectionCandidate{
+							Name: cand.Name,
+							IsMe: cand.ID == userID,
+						})
+					}
 				}
 				res = append(res, &PollWithData{
 					Poll:       *poll,
-					Candidates: &ec.Candidates,
+					Candidates: &candidates,
 					Date:       date,
 				})
 			}
