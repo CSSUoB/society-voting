@@ -28,7 +28,7 @@
 		}
 	}
 
-	const standOrWithdraw = async (id: number, stand: boolean, who?: number) => {
+	const standOrWithdraw = async (id: number, stand: boolean, who?: string) => {
 		$fetching = true;
 		const response = await fetch(API.ELECTION_STAND, {
 			method: stand ? "POST" : "DELETE",
@@ -117,8 +117,10 @@
 						<span><small>You</small></span>
 					{/if}
 				</p>
-				{#if candidate.isMe || $user.isAdmin}
-					<Button text="Withdraw" on:click={() => standOrWithdraw(poll.id ?? -1, false, ($user.isAdmin && !candidate.isMe) ? candidate.id : undefined)} />
+				{#if candidate.isMe }
+					<Button text="Withdraw" on:click={() => standOrWithdraw(poll.id ?? -1, false)} />
+				{:else if $user.isAdmin}
+					<Button text="Remove" on:click={() => standOrWithdraw(poll.id ?? -1, false, candidate.id)} />
 				{/if}
 			</li>
 		</List>
