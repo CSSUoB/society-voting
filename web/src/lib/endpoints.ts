@@ -24,6 +24,7 @@ export const API = {
 	ADMIN_REFERENDUM_STOP: `/api/admin/referendum/stop`,
 	ADMIN_USER: `/api/admin/user`,
 	ADMIN_USER_DELETE: `/api/admin/user/delete`,
+	ADMIN_USER_DELETE_ALL: `/api/admin/user/delete/all`,
 	ADMIN_USER_RESTRICT: `/api/admin/user/restrict`,
 } as const;
 

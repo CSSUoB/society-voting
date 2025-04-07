@@ -20,7 +20,8 @@ export interface ElectionPoll {
     isConcluded: boolean;
     pollType: PollType; 
     election: Election;
-	candidates: Array<{ name: string; isMe: boolean }>;
+	candidates: Array<{ name: string; isMe: boolean; id?: string }>;
+	date: string;
 }
 
 export interface ReferendumPoll {
@@ -29,6 +30,7 @@ export interface ReferendumPoll {
     isConcluded: boolean;
     pollType: PollType; 
     referendum: Referendum;
+	date: string;
 }
 
 export interface Election {

@@ -23,6 +23,7 @@ func Run() {
 		events.TopicPollEnded,
 		events.TopicUserRestricted,
 		events.TopicUserDeleted,
+		events.TopicUserDeletedAll,
 	)
 
 	for msg := range receiver {
@@ -72,6 +73,13 @@ func Run() {
 
 			me.Colour = ColourMid
 			me.Title = fmt.Sprintf("Account with ID %s has been deleted", data.UserID)
+			me.Description = fmt.Sprintf("Deleted by admin with ID %s", data.ActingUserID)
+
+		case events.TopicUserDeletedAll:
+			data := msg.Data.(*events.UserDeletedAllData)
+
+			me.Colour = ColourMid
+			me.Title = "All user accounts have been deleted"
 			me.Description = fmt.Sprintf("Deleted by admin with ID %s", data.ActingUserID)
 		}
 

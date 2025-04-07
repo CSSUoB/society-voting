@@ -23,7 +23,7 @@
 </svelte:head>
 
 <Panel title="{prefix ? prefix + ": " : ""}{title}">
-	<p>{description}</p>
+	<p class="description">{description}</p>
 </Panel>
 
 {#if isReferendumPoll(poll)} 
@@ -41,5 +41,9 @@
 		flex-direction: row;		
 		gap: 0.5rem;
 		align-items: center;
+	}
+
+	p.description {
+		white-space: pre-line;
 	}
 </style>

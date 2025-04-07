@@ -30,6 +30,24 @@
 		$fetching = false;
 	};
 
+	let deleteAllUsersDialog: HTMLDialogElement;
+	const confirmDeleteAllUsers = () => {
+		deleteAllUsersDialog.showModal();
+	};
+	const deleteAllUsers = async () => {
+		$fetching = true;
+		const response = await fetch(API.ADMIN_USER_DELETE_ALL, {
+			method: "DELETE",
+		});
+
+		if (response.ok) {
+			location.reload()
+		} else {
+			$error = new Error(await response.text());
+		}
+		$fetching = false;
+	};
+
 	let restrictUserDialog: HTMLDialogElement;
 	const confirmRestrictUser = (user: User) => {
 		if (user.isRestricted) return toggleUserRestriction(user.studentID, user.isRestricted);
@@ -66,7 +84,10 @@
 </svelte:head>
 
 <Panel title="Manage users" headerIcon="admin_panel_settings">
-	<Button slot="header-action" icon="search" kind="emphasis" text="Search users" />
+	<div slot="header-action" class="header-group">
+		<Button icon="search" kind="emphasis" text="Search users" />
+		<Button icon="person_remove" kind="danger" text="Delete all users" on:click={confirmDeleteAllUsers}/>
+	</div>
 	<List items={data.users} let:prop={user}>
 		<li class="user" class:restricted={user.isRestricted}>
 			<p>{user.studentID}</p>
@@ -107,6 +128,21 @@
 	<svelte:fragment slot="actions">
 		<Button text="Cancel" />
 		<Button text="Delete user" kind="emphasis" name="submit" />
+	</svelte:fragment>
+</Dialog>
+
+<Dialog
+	bind:dialog={deleteAllUsersDialog}
+	title={`Delete all users?`}
+	on:submit={() => deleteAllUsers()}
+>
+	<p>
+		Once deleted, all users will have to sign up again and re-run for any elections they are currently
+		contesting. This includes yourself.
+	</p>
+	<svelte:fragment slot="actions">
+		<Button text="Cancel" />
+		<Button text="Delete all users" kind="danger" name="submit" />
 	</svelte:fragment>
 </Dialog>
 
@@ -166,5 +202,10 @@
 
 	li.user p > span.pill--black {
 		background: black;
+	}
+
+	div.header-group {
+		display: flex;
+		gap: 1rem;
 	}
 </style>
