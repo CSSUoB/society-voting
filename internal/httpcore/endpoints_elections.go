@@ -331,10 +331,10 @@ func (endpoints) apiStandForElection(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiStandForElection get election with id %d: %w", request.ElectionID, err)
 	}
 
-	if election.Poll == nil || election.Poll.IsConcluded {
+	if election.Poll == nil || election.Poll.IsConcluded || election.Poll.IsActive {
 		return &fiber.Error{
 			Code:    fiber.StatusConflict,
-			Message: "This election has already concluded",
+			Message: "You can no longer stand in this election",
 		}
 	}
 
