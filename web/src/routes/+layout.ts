@@ -26,7 +26,8 @@ export const _getPolls = async () => {
     if (!response.ok) {
         throw redirect(302, API.AUTH_LOGIN);
     }
-    return await response.json();
+
+    return (await response.json())?.map((p) => ({ ...p, date: new Date(p.date) }));
 }
 
 export const _getCurrentPoll = async () => {

@@ -25,30 +25,60 @@ func (endpoints) apiListPolls(ctx *fiber.Ctx) error {
 		return fmt.Errorf("apiListPolls get all polls: %w", err)
 	}
 
+	type ElectionCandidate struct {
+		Name string  `json:"name"`
+		ID   *string `json:"id,omitempty"`
+		IsMe bool    `json:"isMe"`
+	}
+
 	type PollWithData struct {
 		database.Poll
-		Candidates *[]*database.ElectionCandidate `json:"candidates,omitempty"`
+		Candidates *[]ElectionCandidate `json:"candidates,omitempty"`
+		Date       time.Time            `json:"date,omitempty"`
 	}
 
 	var res []*PollWithData
 
 	userID := ctx.Locals("userID").(string)
+	authStatus := ctx.Locals("authStatus").(authType)
+
 	for _, poll := range polls {
+		var date time.Time
+		if poll.Outcome != nil {
+			date = poll.Outcome.Date
+		}
+
 		if poll.Election != nil && !poll.IsConcluded {
 			if ec, err := poll.Election.WithCandidates(); err != nil {
 				return fmt.Errorf("apiListPolls: %w", err)
 			} else {
-				for _, cand := range ec.Candidates {
-					cand.IsMe = cand.ID == userID
+				candidates := make([]ElectionCandidate, 0)
+				if authStatus&authAdminUser != 0 {
+					for _, cand := range ec.Candidates {
+						candidates = append(candidates, ElectionCandidate{
+							Name: cand.Name,
+							IsMe: cand.ID == userID,
+							ID:   &cand.ID,
+						})
+					}
+				} else {
+					for _, cand := range ec.Candidates {
+						candidates = append(candidates, ElectionCandidate{
+							Name: cand.Name,
+							IsMe: cand.ID == userID,
+						})
+					}
 				}
 				res = append(res, &PollWithData{
 					Poll:       *poll,
-					Candidates: &ec.Candidates,
+					Candidates: &candidates,
+					Date:       date,
 				})
 			}
 		} else {
 			res = append(res, &PollWithData{
 				Poll: *poll,
+				Date: date,
 			})
 		}
 	}
@@ -467,6 +497,37 @@ func (endpoints) apiWithdrawFromElection(ctx *fiber.Ctx) error {
 }
 
 func (endpoints) apiGetPollOutcome(ctx *fiber.Ctx) error {
+	electionID := ctx.QueryInt("id")
+
+	tx, err := database.GetTx()
+	if err != nil {
+		return fmt.Errorf("apiGetElectionOutcome start tx: %w", err)
+	}
+	defer tx.Rollback()
+
+	electionOutcome, err := database.GetOutcomeForPoll(electionID, tx)
+	if err != nil {
+		if errors.Is(err, database.ErrNotFound) {
+			return &fiber.Error{
+				Code:    fiber.StatusNotFound,
+				Message: "Outcome for poll with that ID not found",
+			}
+		}
+		return fmt.Errorf("apiGetElectionOutcome get election outcome for id %d: %w", electionID, err)
+	}
+
+	authStatus := ctx.Locals("authStatus").(authType)
+	if !electionOutcome.IsPublished && authStatus&authAdminUser == 0 {
+		return &fiber.Error{
+			Code:    fiber.StatusForbidden,
+			Message: "The outcome for this election has not been published yet",
+		}
+	}
+
+	return ctx.JSON(electionOutcome)
+}
+
+func (endpoints) apiPollOutcomes(ctx *fiber.Ctx) error {
 	electionID := ctx.QueryInt("id")
 
 	tx, err := database.GetTx()

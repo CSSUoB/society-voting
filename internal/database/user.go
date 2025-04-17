@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
 	"github.com/uptrace/bun"
 )
 
@@ -54,6 +55,14 @@ func DeleteUser(id string, x ...bun.IDB) error {
 	db := fromVariadic(x)
 	if _, err := db.NewDelete().Model((*User)(nil)).Where("id = ?", id).Exec(context.Background()); err != nil {
 		return fmt.Errorf("delete User: %w", err)
+	}
+	return nil
+}
+
+func DeleteAllUsers(x ...bun.IDB) error {
+	db := fromVariadic(x)
+	if _, err := db.NewRaw("DELETE FROM users;").Exec(context.Background()); err != nil {
+		return fmt.Errorf("delete all User: %w", err)
 	}
 	return nil
 }
