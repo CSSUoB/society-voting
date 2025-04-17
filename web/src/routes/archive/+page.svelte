@@ -25,7 +25,7 @@
 		<List items={archivedPolls} let:prop={poll}>
 			<li class="poll">
 				<div class="poll-details">
-					<p><b>{getFriendlyName(poll)}</b></p>
+					<p class="poll-title">{getFriendlyName(poll)}</p>
 					<p>{dateFormat.format(poll.date)}</p>
 				</div>
 				<Button
@@ -60,6 +60,10 @@
 		div.poll-details {
 			justify-content: flex-start;
 			flex-direction: column;
+		}
+
+		p.poll-title {
+			font-weight: bold;
 		}
 	}
 </style>
