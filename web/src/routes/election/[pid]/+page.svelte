@@ -87,7 +87,7 @@
 </script>
 
 {#if poll && isElectionPoll(poll)}
-	<PollHeader poll={poll}></PollHeader>
+	<PollHeader {poll} />
 
 	{#if !poll.candidates.some((c) => c.isMe)}
 		<Banner title="Interested in running?" kind="emphasis">
@@ -117,10 +117,13 @@
 						<span><small>You</small></span>
 					{/if}
 				</p>
-				{#if candidate.isMe }
+				{#if candidate.isMe}
 					<Button text="Withdraw" on:click={() => standOrWithdraw(poll.id ?? -1, false)} />
 				{:else if $user.isAdmin}
-					<Button text="Remove" on:click={() => standOrWithdraw(poll.id ?? -1, false, candidate.id)} />
+					<Button
+						text="Remove"
+						on:click={() => standOrWithdraw(poll.id ?? -1, false, candidate.id)}
+					/>
 				{/if}
 			</li>
 		</List>

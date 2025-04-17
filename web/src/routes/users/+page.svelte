@@ -41,7 +41,7 @@
 		});
 
 		if (response.ok) {
-			location.reload()
+			location.reload();
 		} else {
 			$error = new Error(await response.text());
 		}
@@ -86,7 +86,12 @@
 <Panel title="Manage users" headerIcon="admin_panel_settings">
 	<div slot="header-action" class="header-group">
 		<Button icon="search" kind="emphasis" text="Search users" />
-		<Button icon="person_remove" kind="danger" text="Delete all users" on:click={confirmDeleteAllUsers}/>
+		<Button
+			icon="person_remove"
+			kind="danger"
+			text="Delete all users"
+			on:click={confirmDeleteAllUsers}
+		/>
 	</div>
 	<List items={data.users} let:prop={user}>
 		<li class="user" class:restricted={user.isRestricted}>
@@ -137,8 +142,8 @@
 	on:submit={() => deleteAllUsers()}
 >
 	<p>
-		Once deleted, all users will have to sign up again and re-run for any elections they are currently
-		contesting. This includes yourself.
+		Once deleted, all users will have to sign up again and re-run for any elections they are
+		currently contesting. This includes yourself.
 	</p>
 	<svelte:fragment slot="actions">
 		<Button text="Cancel" />

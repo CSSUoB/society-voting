@@ -15,22 +15,22 @@ export interface PollType {
 export type Poll = ElectionPoll | ReferendumPoll;
 
 export interface ElectionPoll {
-    id: number;
-    isActive: boolean;
-    isConcluded: boolean;
-    pollType: PollType; 
-    election: Election;
+	id: number;
+	isActive: boolean;
+	isConcluded: boolean;
+	pollType: PollType;
+	election: Election;
 	candidates: Array<{ name: string; isMe: boolean; id?: string }>;
-	date: string;
+	date: Date;
 }
 
 export interface ReferendumPoll {
-    id: number;
-    isActive: boolean;
-    isConcluded: boolean;
-    pollType: PollType; 
-    referendum: Referendum;
-	date: string;
+	id: number;
+	isActive: boolean;
+	isConcluded: boolean;
+	pollType: PollType;
+	referendum: Referendum;
+	date: Date;
 }
 
 export interface Election {

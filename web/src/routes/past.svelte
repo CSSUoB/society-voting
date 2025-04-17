@@ -8,16 +8,18 @@
 	import { goto } from "$app/navigation";
 	import { getFriendlyName } from "$lib/poll";
 
-	// todo: see todo in archive page 
-	$: pollsToShow = $polls?.filter((p) => p.isConcluded && (new Date()).getTime() - (new Date(p.date)).getTime() < 60*60*24*30) ?? []
+	$: pollsToShow =
+		$polls
+			?.filter(
+				(p) => p.isConcluded && new Date().getTime() - p.date.getTime() < 1000 * 60 * 60 * 24 * 30,
+			)
+			.sort((a, b) => b.date.getTime() - a.date.getTime()) ?? [];
 </script>
 
 <Panel title="Archive" headerIcon="inventory_2">
 	<List items={pollsToShow} let:prop={poll}>
 		<li
-			class={`election ${
-				$page.url.pathname === `/results/${poll.id}` ? "election--selected" : ""
-			}`}
+			class={`election ${$page.url.pathname === `/results/${poll.id}` ? "election--selected" : ""}`}
 			on:click={() => goto(`/results/${poll.id}`)}
 		>
 			<p>{getFriendlyName(poll)}</p>
