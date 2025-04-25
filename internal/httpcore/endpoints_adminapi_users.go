@@ -33,6 +33,20 @@ func (endpoints) apiAdminDeleteUser(ctx *fiber.Ctx) error {
 	return nil
 }
 
+func (endpoints) apiAdminDeleteAllUsers(ctx *fiber.Ctx) error {
+	if err := database.DeleteAllUsers(); err != nil {
+		return fmt.Errorf("apiAdminDeleteAllUsers delete users: %w", err)
+	}
+
+	actor := ctx.Locals("userID").(string)
+	events.SendEvent(events.TopicUserDeletedAll, &events.UserDeletedAllData{
+		ActingUserID: actor,
+	})
+
+	ctx.Status(fiber.StatusNoContent)
+	return nil
+}
+
 func (endpoints) apiAdminListUsers(ctx *fiber.Ctx) error {
 	users, err := database.GetAllUsers()
 	if err != nil {

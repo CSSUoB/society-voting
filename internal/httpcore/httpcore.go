@@ -92,6 +92,7 @@ func ListenAndServe(ctx context.Context, addr string) error {
 	adminGroup.Get("/user", e.apiAdminListUsers)
 	adminGroup.Post("/user/restrict", e.apiAdminToggleRestrictUser)
 	adminGroup.Delete("/user/delete", e.apiAdminDeleteUser)
+	adminGroup.Delete("/user/delete/all", e.apiAdminDeleteAllUsers)
 
 	app.Get("/presenter", m.requireAuthenticated, m.requireAdmin, e.presenterPage)
 	app.Get("/presenter/qr", m.requireAuthenticated, m.requireAdmin, e.presenterQRCode)

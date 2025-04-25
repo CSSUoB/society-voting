@@ -5,16 +5,16 @@
 
 	export let poll: Poll;
 	export let prefix: string = "";
-	
+
 	$: title = "";
 	$: description = "";
 
 	$: if (isElectionPoll(poll)) {
-		title = `Election of ${poll.election.roleName}`
-		description = poll.election.description
+		title = `Election of ${poll.election.roleName}`;
+		description = poll.election.description;
 	} else {
-		title = `Referendum on ${poll.referendum.title}`
-		description = poll.referendum.description
+		title = `Referendum on ${poll.referendum.title}`;
+		description = poll.referendum.description;
 	}
 </script>
 
@@ -22,24 +22,28 @@
 	<title>{title}</title>
 </svelte:head>
 
-<Panel title="{prefix ? prefix + ": " : ""}{title}">
-	<p>{description}</p>
+<Panel title="{prefix ? prefix + ': ' : ''}{title}">
+	<p class="description">{description}</p>
 </Panel>
 
-{#if isReferendumPoll(poll)} 
-<Panel kind="primary">
-	<div class="question">
-		<span class="material-symbols-rounded">help_outline</span>
-		<p>{poll.referendum.question}</p>
-	</div>
-</Panel>
+{#if isReferendumPoll(poll)}
+	<Panel kind="primary">
+		<div class="question">
+			<span class="material-symbols-rounded">help_outline</span>
+			<p>{poll.referendum.question}</p>
+		</div>
+	</Panel>
 {/if}
 
 <style>
 	div.question {
 		display: flex;
-		flex-direction: row;		
+		flex-direction: row;
 		gap: 0.5rem;
 		align-items: center;
+	}
+
+	p.description {
+		white-space: pre-line;
 	}
 </style>

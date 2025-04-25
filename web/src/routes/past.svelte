@@ -7,20 +7,30 @@
 	import { _getPolls } from "./+layout";
 	import { goto } from "$app/navigation";
 	import { getFriendlyName } from "$lib/poll";
+
+	$: pollsToShow =
+		$polls
+			?.filter(
+				(p) => p.isConcluded && new Date().getTime() - p.date.getTime() < 1000 * 60 * 60 * 24 * 30,
+			)
+			.sort((a, b) => b.date.getTime() - a.date.getTime()) ?? [];
 </script>
 
 <Panel title="Archive" headerIcon="inventory_2">
-	<List items={$polls?.filter((p) => p.isConcluded) ?? []} let:prop={poll}>
+	<List items={pollsToShow} let:prop={poll}>
 		<li
-			class={`election ${
-				$page.url.pathname === `/results/${poll.id}` ? "election--selected" : ""
-			}`}
+			class={`election ${$page.url.pathname === `/results/${poll.id}` ? "election--selected" : ""}`}
 			on:click={() => goto(`/results/${poll.id}`)}
 		>
 			<p>{getFriendlyName(poll)}</p>
 			<Button icon="arrow_forward" on:click={() => goto(`/results/${poll.id}`)} />
 		</li>
 	</List>
+	{#if pollsToShow.length === 0}
+		<p>There are no concluded polls within the past 30 days</p>
+	{/if}
+	<br />
+	<Button text="View all" kind="emphasis" on:click={() => goto(`/archive`)} />
 </Panel>
 
 <style>
