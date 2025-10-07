@@ -213,5 +213,6 @@
 	div.header-group {
 		display: flex;
 		gap: 1rem;
+		align-items: center;
 	}
 </style>
