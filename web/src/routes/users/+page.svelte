@@ -85,6 +85,7 @@
 
 <Panel title="Manage users" headerIcon="admin_panel_settings">
 	<div slot="header-action" class="header-group">
+		<p>Currently {data.users.length} users</p>
 		<Button icon="search" kind="emphasis" text="Search users" />
 		<Button
 			icon="person_remove"
@@ -212,5 +213,6 @@
 	div.header-group {
 		display: flex;
 		gap: 1rem;
+		align-items: center;
 	}
 </style>
