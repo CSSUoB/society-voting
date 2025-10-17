@@ -49,7 +49,7 @@ func fetchMembershipPage() (string, error) {
 			"Expires":       {"0"},
 			"User-Agent":    {"Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/119.0"},
 		}).
-		Cookie(".ASPXAUTH", conf.SessionToken).
+		Cookie(".AspNet.SharedCookie", conf.SessionToken).
 		ToString(&pageData).
 		Fetch(ctx)
 
