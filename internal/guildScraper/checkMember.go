@@ -27,6 +27,8 @@ func GetMember(studentID string) (*GuildMember, error) {
 		if err == nil {
 			cachedMembershipList = members
 			cachedMembershipListLastRefreshed = time.Now()
+		} else if cachedMembershipListLastRefreshed.IsZero() {
+			return fmt.Errorf("initially load membership list: %w", err)
 		} else {
 			slog.Warn("failed to refresh cached membership list", "error", err)
 		}
