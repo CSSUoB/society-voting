@@ -4,6 +4,7 @@ package guildScraper
 
 import (
 	"fmt"
+	"log/slog"
 	"sync"
 	"time"
 )
@@ -19,20 +20,18 @@ func GetMember(studentID string) (*GuildMember, error) {
 
 	if time.Now().Sub(cachedMembershipListLastRefreshed) > time.Minute*5 {
 		cachedMembershipListLock.RUnlock()
-
 		cachedMembershipListLock.Lock()
+
 		members, err := GetMembersList()
 
-		if err != nil {
-			cachedMembershipListLock.Unlock()
-			return nil, fmt.Errorf("refresh cached membership list: %w", err)
+		if err == nil {
+			cachedMembershipList = members
+			cachedMembershipListLastRefreshed = time.Now()
+		} else {
+			slog.Warn("failed to refresh cached membership list", "error", err)
 		}
 
-		cachedMembershipList = members
-		cachedMembershipListLastRefreshed = time.Now()
-
 		cachedMembershipListLock.Unlock()
-
 		cachedMembershipListLock.RLock()
 	}
 
