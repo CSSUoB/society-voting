@@ -29,12 +29,18 @@ func GetMember(studentID string) (*GuildMember, error) {
 	cachedMembershipListLock.Lock()
 	defer cachedMembershipListLock.Unlock()
 
+	for _, x := range cachedMembershipList {
+		if x.ID == studentID {
+			return x, nil
+		}
+	}
+
 	members, err := GetMembersList()
 	if err == nil {
 		cachedMembershipList = members
 	} else {
 		slog.Warn("failed to refresh cached membership list", "error", err)
-		return nil, nil
+		return nil, err
 	}
 
 	for _, x := range cachedMembershipList {
