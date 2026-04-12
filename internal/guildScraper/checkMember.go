@@ -25,16 +25,15 @@ func GetMember(studentID string) (*GuildMember, error) {
 
 		if err != nil {
 			slog.Warn("failed to pull membership list", "error", err)
+			return nil, fmt.Errorf("pull membership list: %w", err)
 		}
-
-		var target *GuildMember
 
 		for _, x := range members {
 			if x.ID == studentID {
 				return x, nil
 			}
 		}
-		return target, nil
+		return nil, nil
 	}
 
 	cachedMembershipListLock.RLock()
