@@ -2,10 +2,11 @@ package config
 
 import (
 	"fmt"
-	"git.tdpain.net/pkg/cfger"
 	"log/slog"
 	"os"
 	"sync"
+
+	"git.tdpain.net/pkg/cfger"
 )
 
 type HTTP struct {
@@ -31,6 +32,7 @@ type Platform struct {
 	AdminToken          string
 	SessionSigningToken string
 	DiscordWebhook      *DiscordWebhook
+	Caching             bool
 }
 
 type DiscordWebhook struct {
@@ -81,6 +83,7 @@ func Get() *Config {
 					URL:      cl.Get("platform.discordWebhook.url").AsString(),
 					ThreadID: cl.Get("platform.discordWebhook.threadID").AsString(),
 				},
+				Caching: cl.WithDefault("platform.caching", false).AsBool(),
 			},
 		}
 
