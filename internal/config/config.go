@@ -33,6 +33,7 @@ type Platform struct {
 	AdminToken          string
 	SessionSigningToken string
 	DiscordWebhook      *DiscordWebhook
+	Caching             bool
 }
 
 type DiscordWebhook struct {
@@ -84,6 +85,7 @@ func Get() *Config {
 					URL:      cl.Get("platform.discordWebhook.url").AsString(),
 					ThreadID: cl.Get("platform.discordWebhook.threadID").AsString(),
 				},
+				Caching: cl.WithDefault("platform.caching", true).AsBool(),
 			},
 		}
 
