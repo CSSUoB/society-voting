@@ -23,15 +23,18 @@ func GetMember(studentID string) (*GuildMember, error) {
 	if !conf.Caching {
 		members, err := GetMembersList()
 
-		if err == nil {
-			cachedMembershipList = members
-			cachedMembershipListLastRefreshed = time.Now()
-		} else if cachedMembershipListLastRefreshed.IsZero() {
-			cachedMembershipListLock.Unlock()
-			return nil, fmt.Errorf("initially load membership list: %w", err)
-		} else {
+		if err != nil {
 			slog.Warn("failed to pull membership list", "error", err)
 		}
+
+		var target *GuildMember
+
+		for _, x := range members {
+			if x.ID == studentID {
+				return x, nil
+			}
+		}
+		return target, nil
 	}
 
 	cachedMembershipListLock.RLock()
