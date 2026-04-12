@@ -38,7 +38,7 @@ func GetMember(studentID string) (*GuildMember, error) {
 
 	cachedMembershipListLock.RLock()
 
-	if time.Now().Sub(cachedMembershipListLastRefreshed) > time.Minute*5 {
+	if time.Since(cachedMembershipListLastRefreshed) > time.Minute*5 {
 		cachedMembershipListLock.RUnlock()
 		cachedMembershipListLock.Lock()
 

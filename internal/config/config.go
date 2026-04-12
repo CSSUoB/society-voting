@@ -19,8 +19,9 @@ func (h *HTTP) Address() string {
 }
 
 type Guild struct {
-	SessionToken string
-	SocietyID    string
+	SessionToken            string
+	AutoRefreshSessionToken bool
+	SocietyID               string
 }
 
 type Database struct {
@@ -69,8 +70,9 @@ func Get() *Config {
 				Port: cl.WithDefault("http.port", 8080).AsInt(),
 			},
 			Guild: &Guild{
-				SessionToken: cl.Required("guild.sessionToken").AsString(),
-				SocietyID:    cl.Required("guild.societyID").AsString(),
+				SessionToken:            cl.Required("guild.sessionToken").AsString(),
+				AutoRefreshSessionToken: cl.WithDefault("guild.autoRefreshSessionToken", false).AsBool(),
+				SocietyID:               cl.Required("guild.societyID").AsString(),
 			},
 			Database: &Database{
 				DSN: cl.WithDefault("database.dsn", "voting.sqlite3.db").AsString(),
