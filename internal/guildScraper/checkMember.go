@@ -7,6 +7,8 @@ import (
 	"log/slog"
 	"sync"
 	"time"
+
+	"github.com/CSSUoB/society-voting/internal/config"
 )
 
 var (
@@ -16,6 +18,22 @@ var (
 )
 
 func GetMember(studentID string) (*GuildMember, error) {
+	conf := config.Get().Platform
+
+	if !conf.Caching {
+		members, err := GetMembersList()
+
+		if err == nil {
+			cachedMembershipList = members
+			cachedMembershipListLastRefreshed = time.Now()
+		} else if cachedMembershipListLastRefreshed.IsZero() {
+			cachedMembershipListLock.Unlock()
+			return nil, fmt.Errorf("initially load membership list: %w", err)
+		} else {
+			slog.Warn("failed to pull membership list", "error", err)
+		}
+	}
+
 	cachedMembershipListLock.RLock()
 
 	if time.Now().Sub(cachedMembershipListLastRefreshed) > time.Minute*5 {
