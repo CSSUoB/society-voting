@@ -48,6 +48,13 @@
 		$fetching = false;
 	};
 
+	const copyCSV = () => {
+		const headers = ["Student ID", "Name"];
+		const rows = data.users.map((u) => `"${u.studentID}","${u.name.replace(/"/g, '""')}"`);
+		const csvContent = [headers.join(","), ...rows].join("\n");
+		navigator.clipboard.writeText(csvContent);
+	};
+
 	const downloadCSV = () => {
 		const headers = ["Student ID", "Name"];
 		const rows = data.users.map((u) => `"${u.studentID}","${u.name.replace(/"/g, '""')}"`);
@@ -103,7 +110,8 @@
 <Panel title="Manage users" headerIcon="admin_panel_settings">
 	<div slot="header-action" class="header-group">
 		<p>Currently {data.users.length} users</p>
-		<Button icon="download" text="Download CSV" on:click={downloadCSV} />
+		<Button icon="download" text="Download" on:click={downloadCSV} />
+		<Button icon="copy" text="Copy" on:click={copyCSV} />
 		<Button icon="search" kind="emphasis" text="Search users" />
 		<Button
 			icon="person_remove"
