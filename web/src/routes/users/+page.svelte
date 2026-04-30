@@ -48,6 +48,23 @@
 		$fetching = false;
 	};
 
+	const downloadCSV = () => {
+		const headers = ["Student ID", "Name"];
+		const rows = data.users.map((u) => `"${u.studentID}","${u.name.replace(/"/g, '""')}"`);
+		const csvContent = [headers.join(","), ...rows].join("\n");
+		
+		const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement("a");
+		link.setAttribute("href", url);
+		link.setAttribute("download", "registered_users.csv");
+		link.style.visibility = "hidden";
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+		URL.revokeObjectURL(url);
+	};
+
 	let restrictUserDialog: HTMLDialogElement;
 	const confirmRestrictUser = (user: User) => {
 		if (user.isRestricted) return toggleUserRestriction(user.studentID, user.isRestricted);
@@ -86,6 +103,7 @@
 <Panel title="Manage users" headerIcon="admin_panel_settings">
 	<div slot="header-action" class="header-group">
 		<p>Currently {data.users.length} users</p>
+		<Button icon="download" text="Download CSV" on:click={downloadCSV} />
 		<Button icon="search" kind="emphasis" text="Search users" />
 		<Button
 			icon="person_remove"
